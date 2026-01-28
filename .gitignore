@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+.DS_Store
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.pyc
+.claude/
