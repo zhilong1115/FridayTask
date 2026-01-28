@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import CalendarView from './components/CalendarView';
 import ListView from './components/ListView';
 import TaskModal from './components/TaskModal';
+import SummaryModal from './components/SummaryModal';
 import MobileNav from './components/MobileNav';
 import type { Task, TaskFormData, SidebarView } from './types';
 
@@ -21,6 +22,7 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState('');
 
   // Modal state
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState('');
@@ -102,6 +104,7 @@ export default function App() {
         filterStatus={filterStatus}
         onFilterStatus={setFilterStatus}
         onCreateTask={() => openCreate()}
+        onOpenSummary={() => setSummaryOpen(true)}
       />
 
       {/* Mobile Nav */}
@@ -109,6 +112,7 @@ export default function App() {
         view={sidebarView}
         onViewChange={setSidebarView}
         onCreateTask={() => openCreate()}
+        onOpenSummary={() => setSummaryOpen(true)}
         filterAssignee={filterAssignee}
         onFilterAssignee={setFilterAssignee}
         filterStatus={filterStatus}
@@ -136,6 +140,13 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Summary Modal */}
+      <SummaryModal
+        isOpen={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        tasks={tasks}
+      />
 
       {/* Task Modal */}
       <TaskModal
