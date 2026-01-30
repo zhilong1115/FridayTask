@@ -5,6 +5,7 @@ import CalendarView from './components/CalendarView';
 import ListView from './components/ListView';
 import TaskModal from './components/TaskModal';
 import SummaryModal from './components/SummaryModal';
+import ArtifactsModal from './components/ArtifactsModal';
 import MobileNav from './components/MobileNav';
 import type { Task, TaskFormData, SidebarView } from './types';
 
@@ -15,6 +16,7 @@ export default function App() {
     approveTask, rejectTask,
     createSubtask, updateSubtask, deleteSubtask,
     fetchComments, createComment,
+    fetchArtifacts, createArtifact, deleteArtifact,
   } = useTasks();
 
   const [sidebarView, setSidebarView] = useState<SidebarView>('list');
@@ -23,6 +25,7 @@ export default function App() {
 
   // Modal state
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [artifactsOpen, setArtifactsOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState('');
@@ -105,6 +108,7 @@ export default function App() {
         onFilterStatus={setFilterStatus}
         onCreateTask={() => openCreate()}
         onOpenSummary={() => setSummaryOpen(true)}
+        onOpenArtifacts={() => setArtifactsOpen(true)}
       />
 
       {/* Mobile Nav */}
@@ -113,6 +117,7 @@ export default function App() {
         onViewChange={setSidebarView}
         onCreateTask={() => openCreate()}
         onOpenSummary={() => setSummaryOpen(true)}
+        onOpenArtifacts={() => setArtifactsOpen(true)}
         filterAssignee={filterAssignee}
         onFilterAssignee={setFilterAssignee}
         filterStatus={filterStatus}
@@ -148,6 +153,12 @@ export default function App() {
         tasks={tasks}
       />
 
+      {/* Artifacts Modal */}
+      <ArtifactsModal
+        isOpen={artifactsOpen}
+        onClose={() => setArtifactsOpen(false)}
+      />
+
       {/* Task Modal */}
       <TaskModal
         isOpen={modalOpen}
@@ -164,6 +175,9 @@ export default function App() {
         onDeleteSubtask={deleteSubtask}
         onFetchComments={fetchComments}
         onCreateComment={createComment}
+        onFetchArtifacts={fetchArtifacts}
+        onCreateArtifact={createArtifact}
+        onDeleteArtifact={deleteArtifact}
       />
     </div>
   );
