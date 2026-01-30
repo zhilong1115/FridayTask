@@ -76,6 +76,19 @@ db.exec(`
   );
 `);
 
+// Create artifacts table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS artifacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    type TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+  );
+`);
+
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 

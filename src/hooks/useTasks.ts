@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Task, CronJob, TaskFormData, Subtask, Comment } from '../types';
+import type { Task, CronJob, TaskFormData, Subtask, Comment, Artifact, ArtifactType } from '../types';
 
 const API = '/api';
 
@@ -184,6 +184,44 @@ export function useTasks() {
     }
   };
 
+  // Artifact operations
+  const fetchArtifacts = async (taskId: number): Promise<Artifact[]> => {
+    try {
+      const res = await fetch(`${API}/tasks/${taskId}/artifacts`);
+      return await res.json();
+    } catch (err) {
+      console.error('Failed to fetch artifacts:', err);
+      return [];
+    }
+  };
+
+  const createArtifact = async (taskId: number, name: string, url: string, type: ArtifactType): Promise<Artifact | null> => {
+    try {
+      const res = await fetch(`${API}/tasks/${taskId}/artifacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, url, type }),
+      });
+      const artifact = await res.json();
+      await fetchTasks(); // Refresh artifact counts
+      return artifact;
+    } catch (err) {
+      console.error('Failed to create artifact:', err);
+      return null;
+    }
+  };
+
+  const deleteArtifact = async (artifactId: number): Promise<boolean> => {
+    try {
+      await fetch(`${API}/artifacts/${artifactId}`, { method: 'DELETE' });
+      await fetchTasks();
+      return true;
+    } catch (err) {
+      console.error('Failed to delete artifact:', err);
+      return false;
+    }
+  };
+
   return {
     tasks,
     cronJobs,
@@ -198,6 +236,9 @@ export function useTasks() {
     deleteSubtask,
     fetchComments,
     createComment,
+    fetchArtifacts,
+    createArtifact,
+    deleteArtifact,
     refreshTasks: fetchTasks,
   };
 }

@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>胡 - 特殊牌与经济系统设计 v2</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-gold: #ffd700;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-pink: #ec4899;
+            --accent-orange: #f97316;
+            --accent-cyan: #06b6d4;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(59, 130, 246, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            padding: 1rem 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section Styling */
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Info box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .info-box .icon {
+            font-size: 2rem;
+        }
+
+        .info-box .text {
+            font-size: 1.1rem;
+        }
+
+        .info-box .text strong {
+            color: var(--accent-gold);
+        }
+
+        /* Rarity Colors */
+        .rarity-white { color: #ffffff; }
+        .rarity-green { color: #22c55e; }
+        .rarity-blue { color: #3b82f6; }
+        .rarity-purple { color: #a855f7; }
+        .rarity-gold { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Bond tags */
+        .bond-tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin: 0.1rem;
+        }
+
+        .bond-wealth { background: rgba(255, 215, 0, 0.2); color: #ffd700; }
+        .bond-combo { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
+        .bond-vision { background: rgba(138, 43, 226, 0.2); color: #da70d6; }
+        .bond-transform { background: rgba(0, 191, 255, 0.2); color: #00bfff; }
+        .bond-suit { background: rgba(255, 105, 180, 0.2); color: #ff69b4; }
+        .bond-triplet { background: rgba(255, 99, 71, 0.2); color: #ff6347; }
+        .bond-sequence { background: rgba(50, 205, 50, 0.2); color: #32cd32; }
+        .bond-gamble { background: rgba(220, 20, 60, 0.2); color: #dc143c; }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .card {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-price {
+            background: var(--accent-gold);
+            color: #000;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .card-bonds {
+            margin-bottom: 0.5rem;
+        }
+
+        .card-effect {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .card-side-effect {
+            color: var(--accent-orange);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        /* Build cards */
+        .build-card {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .build-card:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .build-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+        }
+
+        .build-section {
+            margin-bottom: 0.8rem;
+        }
+
+        .build-section strong {
+            color: var(--accent-gold);
+        }
+
+        .build-section .core-cards {
+            color: var(--accent-pink);
+        }
+
+        /* Flower card colors */
+        .flower-mei { border-left: 4px solid #f472b6; }
+        .flower-zhu { border-left: 4px solid #22c55e; }
+        .flower-lan { border-left: 4px solid #a78bfa; }
+        .flower-ju { border-left: 4px solid #fbbf24; }
+
+        /* Season card colors */
+        .season-spring { border-left: 4px solid #86efac; background: linear-gradient(135deg, rgba(134, 239, 172, 0.05), transparent); }
+        .season-summer { border-left: 4px solid #fbbf24; background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), transparent); }
+        .season-autumn { border-left: 4px solid #f97316; background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), transparent); }
+        .season-winter { border-left: 4px solid #60a5fa; background: linear-gradient(135deg, rgba(96, 165, 250, 0.05), transparent); }
+
+        /* Material badges */
+        .material-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin: 0.2rem;
+        }
+
+        .material-gold { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; }
+        .material-silver { background: linear-gradient(135deg, #c0c0c0, #808080); color: #000; }
+        .material-bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #fff; }
+        .material-glass { background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1)); border: 1px solid rgba(255,255,255,0.3); }
+        .material-fire { background: linear-gradient(135deg, #ff4500, #ff0000); color: #fff; }
+        .material-ice { background: linear-gradient(135deg, #00bfff, #1e90ff); color: #fff; }
+        .material-lucky { background: linear-gradient(135deg, #9333ea, #ec4899); color: #fff; }
+        .material-ghost { background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); }
+
+        /* Formula box */
+        .formula-box {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* Progress bar for difficulty */
+        .difficulty-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .difficulty-bar .label {
+            min-width: 80px;
+            font-weight: 600;
+        }
+
+        .difficulty-bar .bar {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .difficulty-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-gold), var(--accent-orange), var(--accent-pink));
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Blockquote */
+        blockquote {
+            border-left: 4px solid var(--accent-purple);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 0 12px 12px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Combo section */
+        .combo-section {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .combo-section h4 {
+            color: var(--accent-pink);
+            margin-bottom: 1rem;
+        }
+
+        /* Design principles */
+        .principles {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .principle {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .principle strong {
+            color: var(--accent-cyan);
+        }
+
+        /* Bond system table */
+        .bond-table td:first-child {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                gap: 0.3rem;
+            }
+
+            .tab-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-box {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🀄 胡 - 特殊牌与经济系统</h1>
+            <p>神牌 · 花牌 · 季节牌 · 经济系统 完整设计文档</p>
+            <span class="version-badge">v2.0 - 羁绊系统更新</span>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('gods')">🌟 神牌</button>
+            <button class="tab-btn" onclick="showTab('bonds')">🔗 羁绊</button>
+            <button class="tab-btn" onclick="showTab('builds')">🎯 组合</button>
+            <button class="tab-btn" onclick="showTab('flowers')">🌸 花牌</button>
+            <button class="tab-btn" onclick="showTab('seasons')">🗓️ 季节牌</button>
+            <button class="tab-btn" onclick="showTab('economy')">💰 经济系统</button>
+        </div>
+
+        <!-- 神牌 Tab -->
+        <div id="gods" class="tab-content active">
+            <div class="info-box">
+                <div class="icon">🎴</div>
+                <div class="text">
+                    神牌：被动效果，永久生效，商店购买获得<br>
+                    <strong>最大持有数量：7张</strong>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>稀有度 & 价格</h2>
+                <table>
+                    <tr>
+                        <th>稀有度</th>
+                        <th>出现概率</th>
+                        <th>商店价格</th>
+                    </tr>
+                    <tr><td class="rarity-white">⚪ 白神</td><td>40%</td><td>3-6 金币</td></tr>
+                    <tr><td class="rarity-green">🟢 绿神</td><td>30%</td><td>8-14 金币</td></tr>
+                    <tr><td class="rarity-blue">🔵 蓝神</td><td>18%</td><td>18-28 金币</td></tr>
+                    <tr><td class="rarity-purple">🟣 紫神</td><td>10%</td><td>30-45 金币</td></tr>
+                    <tr><td class="rarity-gold">🟡 金神</td><td>2%</td><td>55-80 金币</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="rarity-white">⚪ 白神牌（基础）</h2>
+                
+                <h3>💰 财运系</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">聚宝盆</span><span class="card-price">6💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">每回合开始 +3 金币</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">财神到</span><span class="card-price">4💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">每次胡牌 +2 金币</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">铜钱雨</span><span class="card-price">5💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">每次弃牌 +1 金币</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">压岁钱</span><span class="card-price">3💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">屁胡也能获得 +3 金币</div>
+                    </div>
+                </div>
+
+                <h3>⚡ 倍率系</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">福星</span><span class="card-price">5💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">基础倍率 +2</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">刻星</span><span class="card-price">4💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-triplet">🔺刻子</span></div>
+                        <div class="card-effect">每有1个刻子，倍率 +1</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">顺星</span><span class="card-price">4💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-sequence">📶顺子</span></div>
+                        <div class="card-effect">每有1个顺子，倍率 +1</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">对星</span><span class="card-price">4💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">将牌（最后的对子）倍率 +3</div>
+                    </div>
+                </div>
+
+                <h3>🔧 便利系</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">弃牌童子</span><span class="card-price">5💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-transform">🔄转化</span></div>
+                        <div class="card-effect">起始弃牌次数 +1</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">换牌仙</span><span class="card-price">6💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-transform">🔄转化</span></div>
+                        <div class="card-effect">每次弃牌可多弃1张多摸1张</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">千里眼</span><span class="card-price">5💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span></div>
+                        <div class="card-effect">可以看牌库顶3张牌</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">顺风耳</span><span class="card-price">4💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span></div>
+                        <div class="card-effect">弃牌时，显示将要摸到的3张牌</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="rarity-green">🟢 绿神牌（普通）</h2>
+                
+                <h3>🎴 花色专精</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">万字宗师</span><span class="card-price">10💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">每打出1张万子 +1 倍率</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">条子宗师</span><span class="card-price">10💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">每打出1张条子 +1 倍率</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">筒子宗师</span><span class="card-price">10💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">每打出1张筒子 +1 倍率</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">字牌大师</span><span class="card-price">12💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">每打出1张字牌 +2 倍率</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">幺九达人</span><span class="card-price">11💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">每打出1张1或9 +2 倍率</div>
+                    </div>
+                </div>
+
+                <h3>🔗 组合增强</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">碰碰大师</span><span class="card-price">12💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-triplet">🔺刻子</span></div>
+                        <div class="card-effect">碰给 ×2 倍率（原本×1）</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">杠上花</span><span class="card-price">14💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-triplet">🔺刻子</span></div>
+                        <div class="card-effect">杠给 ×5 倍率（原本×3）</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">吃吃大师</span><span class="card-price">10💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-sequence">📶顺子</span></div>
+                        <div class="card-effect">吃给 ×1.5 倍率（原本×1）</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">连环妙手</span><span class="card-price">13💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">连续出两个相同类型，第二个额外 ×2</div>
+                    </div>
+                </div>
+
+                <h3>🏆 特殊番型</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">七星阁</span><span class="card-price">11💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">七对子额外 ×3</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">清流居</span><span class="card-price">11💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">清一色额外 ×3</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">混元殿</span><span class="card-price">9💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">混一色额外 ×3</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">碰碰堂</span><span class="card-price">12💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-triplet">🔺刻子</span></div>
+                        <div class="card-effect">碰碰和额外 ×4</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="rarity-blue">🔵 蓝神牌（稀有）</h2>
+                
+                <h3>💎 高级经济</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">金山银山</span><span class="card-price">25💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">每次胡牌金币 ×2</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">利滚利</span><span class="card-price">22💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">当前金币每5个，胡牌时 +1 金币</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">税收官</span><span class="card-price">20💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">每回合收取 3 金币（共可收10回合）</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">长线投资</span><span class="card-price">18💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span><span class="bond-tag bond-gamble">🎲赌博</span></div>
+                        <div class="card-effect">本局不获得金币，但下局金币 ×4</div>
+                    </div>
+                </div>
+
+                <h3>📈 高级倍率</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">倍率宗师</span><span class="card-price">28💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">基础倍率 +8</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">步步高升</span><span class="card-price">24💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span><span class="bond-tag bond-sequence">📶顺子</span></div>
+                        <div class="card-effect">每打出一个面子，后续面子倍率 +2</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">完美主义</span><span class="card-price">22💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">不使用弃牌通关，最终倍率 ×3</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">速通达人</span><span class="card-price">20💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">2次出牌内胡牌，倍率 ×3</div>
+                    </div>
+                </div>
+
+                <h3>👁️ 牌库操控</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">天眼通</span><span class="card-price">22💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span></div>
+                        <div class="card-effect">可以看到牌库顶8张牌</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">乾坤手</span><span class="card-price">26💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span><span class="bond-tag bond-transform">🔄转化</span></div>
+                        <div class="card-effect">每回合可免费交换1张手牌和牌库顶牌</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">洗牌圣手</span><span class="card-price">20💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span></div>
+                        <div class="card-effect">每次弃牌后可重新洗牌库</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">命中注定</span><span class="card-price">28💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span><span class="bond-tag bond-transform">🔄转化</span></div>
+                        <div class="card-effect">每回合可指定下次摸到的1张牌</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="rarity-purple">🟣 紫神牌（史诗/有副作用）</h2>
+                
+                <h3>🎲 高风险高回报</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">赌神</span><span class="card-price">35💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-gamble">🎲赌博</span></div>
+                        <div class="card-effect">胡牌时50%概率倍率 ×5</div>
+                        <div class="card-side-effect">⚠️ 50%概率倍率 ×1（无加成）</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">玻璃大炮</span><span class="card-price">40💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">所有倍率 ×2</div>
+                        <div class="card-side-effect">⚠️ 弃牌次数 -2</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">贪婪之心</span><span class="card-price">32💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span><span class="bond-tag bond-gamble">🎲赌博</span></div>
+                        <div class="card-effect">金币获取 ×4</div>
+                        <div class="card-side-effect">⚠️ 基础分 ÷2</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">背水一战</span><span class="card-price">38💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span><span class="bond-tag bond-gamble">🎲赌博</span></div>
+                        <div class="card-effect">只剩1次弃牌机会时，倍率 ×5</div>
+                        <div class="card-side-effect">无副作用</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">孤注一掷</span><span class="card-price">42💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-combo">⚡连击</span><span class="bond-tag bond-gamble">🎲赌博</span></div>
+                        <div class="card-effect">最后1次出牌胡牌，倍率 ×6</div>
+                        <div class="card-side-effect">无副作用</div>
+                    </div>
+                </div>
+
+                <h3>🔄 规则改变</h3>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">小牌之王</span><span class="card-price">36💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">1-4的牌每张 +3 倍率</div>
+                        <div class="card-side-effect">⚠️ 6-9的牌不计入倍率</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">大牌之王</span><span class="card-price">36💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span></div>
+                        <div class="card-effect">6-9的牌每张 +3 倍率</div>
+                        <div class="card-side-effect">⚠️ 1-4的牌不计入倍率</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-name">字牌狂人</span><span class="card-price">38💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-suit">🎴花色</span><span class="bond-tag bond-triplet">🔺刻子</span></div>
+                        <div class="card-effect">字牌每张 +5 倍率</div>
+                        <div class="card-side-effect">⚠️ 不能胡清一色</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="rarity-gold">🟡 金神牌（传说/改变游戏）</h2>
+                <div class="cards-grid">
+                    <div class="card" style="border: 1px solid var(--accent-gold);">
+                        <div class="card-header"><span class="card-name" style="color: var(--accent-gold);">麻将之神</span><span class="card-price">70💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span></div>
+                        <div class="card-effect">起始看到所有牌的位置</div>
+                        <div class="card-side-effect" style="color: var(--accent-gold);">✨ 上帝视角</div>
+                    </div>
+                    <div class="card" style="border: 1px solid var(--accent-gold);">
+                        <div class="card-header"><span class="card-name" style="color: var(--accent-gold);">时间领主</span><span class="card-price">75💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-transform">🔄转化</span></div>
+                        <div class="card-effect">每回合可悔棋1次</div>
+                        <div class="card-side-effect" style="color: var(--accent-gold);">✨ 撤销上一步</div>
+                    </div>
+                    <div class="card" style="border: 1px solid var(--accent-gold);">
+                        <div class="card-header"><span class="card-name" style="color: var(--accent-gold);">点金手</span><span class="card-price">65💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span></div>
+                        <div class="card-effect">所有打出的牌自动变金牌材质</div>
+                        <div class="card-side-effect" style="color: var(--accent-gold);">✨ 胡牌金币 ×6</div>
+                    </div>
+                    <div class="card" style="border: 1px solid var(--accent-gold);">
+                        <div class="card-header"><span class="card-name" style="color: var(--accent-gold);">概率之神</span><span class="card-price">72💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-gamble">🎲赌博</span></div>
+                        <div class="card-effect">所有概率效果变成100%</div>
+                        <div class="card-side-effect" style="color: var(--accent-gold);">✨ 赌博系必备</div>
+                    </div>
+                    <div class="card" style="border: 1px solid var(--accent-gold);">
+                        <div class="card-header"><span class="card-name" style="color: var(--accent-gold);">轮回</span><span class="card-price">80💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-wealth">💰财运</span><span class="bond-tag bond-combo">⚡连击</span></div>
+                        <div class="card-effect">胡牌后可重开本回合（保留金币）</div>
+                        <div class="card-side-effect" style="color: var(--accent-gold);">✨ 刷分神器</div>
+                    </div>
+                    <div class="card" style="border: 1px solid var(--accent-gold);">
+                        <div class="card-header"><span class="card-name" style="color: var(--accent-gold);">命运编织</span><span class="card-price">78💰</span></div>
+                        <div class="card-bonds"><span class="bond-tag bond-vision">👁️洞察</span><span class="bond-tag bond-transform">🔄转化</span></div>
+                        <div class="card-effect">每回合可指定摸到的任意3张牌</div>
+                        <div class="card-side-effect" style="color: var(--accent-gold);">✨ 完全操控</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 羁绊 Tab -->
+        <div id="bonds" class="tab-content">
+            <blockquote>每张神牌带有1-2个羁绊标签。收集同羁绊的神牌可触发额外效果！</blockquote>
+
+            <div class="section">
+                <h2>🔗 羁绊系统</h2>
+                <table class="bond-table">
+                    <tr>
+                        <th>图标</th>
+                        <th>羁绊</th>
+                        <th>主题</th>
+                        <th>3张效果</th>
+                        <th>5张效果（全收集）</th>
+                    </tr>
+                    <tr>
+                        <td>💰</td>
+                        <td><span class="bond-tag bond-wealth">财运</span></td>
+                        <td>金币获取</td>
+                        <td>所有金币获取 +1</td>
+                        <td><strong>金币获取翻倍</strong></td>
+                    </tr>
+                    <tr>
+                        <td>⚡</td>
+                        <td><span class="bond-tag bond-combo">连击</span></td>
+                        <td>连续出牌</td>
+                        <td>连续出牌倍率 +2</td>
+                        <td><strong>连续3次出牌触发额外 ×3</strong></td>
+                    </tr>
+                    <tr>
+                        <td>👁️</td>
+                        <td><span class="bond-tag bond-vision">洞察</span></td>
+                        <td>看牌/预知</td>
+                        <td>额外看2张牌库</td>
+                        <td><strong>可以看到整个牌库顺序</strong></td>
+                    </tr>
+                    <tr>
+                        <td>🔄</td>
+                        <td><span class="bond-tag bond-transform">转化</span></td>
+                        <td>改变牌面</td>
+                        <td>转化不消耗弃牌</td>
+                        <td><strong>每回合免费转化3张牌</strong></td>
+                    </tr>
+                    <tr>
+                        <td>🎴</td>
+                        <td><span class="bond-tag bond-suit">花色</span></td>
+                        <td>花色专精</td>
+                        <td>清一色额外 ×3</td>
+                        <td><strong>任意花色都算作你专精的花色</strong></td>
+                    </tr>
+                    <tr>
+                        <td>🔺</td>
+                        <td><span class="bond-tag bond-triplet">刻子</span></td>
+                        <td>碰/杠增强</td>
+                        <td>碰的倍率 ×2</td>
+                        <td><strong>杠的倍率 ×5</strong></td>
+                    </tr>
+                    <tr>
+                        <td>📶</td>
+                        <td><span class="bond-tag bond-sequence">顺子</span></td>
+                        <td>吃/顺子增强</td>
+                        <td>吃给 ×1.5 倍率</td>
+                        <td><strong>连续3个顺子 ×10</strong></td>
+                    </tr>
+                    <tr>
+                        <td>🎲</td>
+                        <td><span class="bond-tag bond-gamble">赌博</span></td>
+                        <td>概率/风险</td>
+                        <td>所有概率 +20%</td>
+                        <td><strong>失败时保底50%效果</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>📐 羁绊设计原则</h2>
+                <div class="principles">
+                    <div class="principle"><strong>渐进收益</strong><br>3张给小加成，5张给大突破</div>
+                    <div class="principle"><strong>build导向</strong><br>鼓励玩家专注某个方向</div>
+                    <div class="principle"><strong>可混搭</strong><br>多羁绊牌可以跨build使用</div>
+                    <div class="principle"><strong>7张上限</strong><br>最多凑齐1个完整羁绊+1个半羁绊</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 组合 Tab -->
+        <div id="builds" class="tab-content">
+            <blockquote>推荐的Build思路，帮助玩家理解神牌的组合深度</blockquote>
+
+            <div class="build-card">
+                <div class="build-title">💰 财神爷 Build（经济流）</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">聚宝盆 + 财神到 + 金山银山 + 利滚利</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-wealth">💰财运</span> ×4（金币翻倍）</div>
+                <div class="build-section"><strong>玩法：</strong>前期疯狂攒钱，后期买顶级神牌碾压</div>
+                <div class="build-section"><strong>搭配花牌：</strong>秋牌（资源获取）</div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">⚡ 连击大师 Build（倍率叠加流）</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">步步高升 + 连环妙手 + 倍率宗师 + 福星</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-combo">⚡连击</span> ×3（连续出牌+2）</div>
+                <div class="build-section"><strong>玩法：</strong>一次打出多个面子，倍率指数增长</div>
+                <div class="build-section"><strong>关键：</strong>尽量一口气出完，配合"速通达人"更强</div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">🔺 碰碰胡 Build（刻子流）</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">碰碰大师 + 杠上花 + 刻星 + 碰碰堂</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-triplet">🔺刻子</span> ×4（碰×2，杠×5）</div>
+                <div class="build-section"><strong>玩法：</strong>全碰/杠，触发大量花牌+季节牌</div>
+                <div class="build-section"><strong>搭配：</strong>字牌狂人（字牌容易碰）</div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">📶 顺子流 Build</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">吃吃大师 + 顺星 + 步步高升 + 吞噬者</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-sequence">📶顺子</span> ×3 + <span class="bond-tag bond-transform">🔄转化</span></div>
+                <div class="build-section"><strong>玩法：</strong>大量吃牌缩小牌库，更容易凑牌</div>
+                <div class="build-section"><strong>优势：</strong>牌库越小，摸到需要的牌概率越高</div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">🎴 清一色专精 Build</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">万/条/筒宗师 + 清流居 + 幺九达人</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-suit">🎴花色</span> ×4（清一色额外×3）</div>
+                <div class="build-section"><strong>玩法：</strong>专注单一花色，清一色倍率爆炸</div>
+                <div class="build-section"><strong>组合计算：</strong>清一色(×5) × 额外(×3) × 花色羁绊(×3) = <strong style="color: var(--accent-gold);">×45</strong></div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">🎲 赌狗 Build（高风险）</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">赌神 + 背水一战 + 孤注一掷 + 概率之神</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-gamble">🎲赌博</span> ×4（概率+20%，失败保底50%）</div>
+                <div class="build-section"><strong>玩法：</strong>全靠概率，要么爆发要么寄</div>
+                <div class="build-section"><strong>终极：</strong>概率之神让所有赌变成100%必中！</div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">👁️ 先知 Build（完全控制）</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">千里眼 + 天眼通 + 乾坤手 + 命中注定</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-vision">👁️洞察</span> ×4（看到整个牌库）</div>
+                <div class="build-section"><strong>玩法：</strong>知道所有牌的位置，完美规划每一步</div>
+                <div class="build-section"><strong>终极：</strong>配合麻将之神 = 上帝视角</div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-title">🔄 炼金术士 Build（转化流）</div>
+                <div class="build-section"><strong>核心牌：</strong><span class="core-cards">炼金术士 + 吞噬者 + 乾坤手 + 花仙子</span></div>
+                <div class="build-section"><strong>羁绊：</strong><span class="bond-tag bond-transform">🔄转化</span> ×4（每回合免费转化3张）</div>
+                <div class="build-section"><strong>玩法：</strong>不断改变手牌和牌库，适应任何情况</div>
+                <div class="build-section"><strong>搭配：</strong>菊牌（转化系花牌）效果翻倍</div>
+            </div>
+        </div>
+
+        <!-- 花牌 Tab -->
+        <div id="flowers" class="tab-content">
+            <blockquote>花牌：出牌时获得，主动使用，一次性消耗</blockquote>
+
+            <div class="section">
+                <h2>获取规则</h2>
+                <table>
+                    <tr><th>出牌类型</th><th>花牌选择</th></tr>
+                    <tr><td>吃（顺子）</td><td>2选1</td></tr>
+                    <tr><td>碰（刻子）</td><td>3选1</td></tr>
+                    <tr><td>杠（四张）</td><td>4选1</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>花牌分类 & 稀有度</h2>
+                <table>
+                    <tr><th>花色</th><th>主题</th><th>图标</th></tr>
+                    <tr><td>🌸 梅</td><td>弃牌相关</td><td>梅花</td></tr>
+                    <tr><td>🎋 竹</td><td>摸牌/牌库</td><td>竹子</td></tr>
+                    <tr><td>🌺 兰</td><td>倍率/得分</td><td>兰花</td></tr>
+                    <tr><td>🏵️ 菊</td><td>牌面转化</td><td>菊花</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🌸 梅牌（弃牌系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-mei"><div class="card-name">梅开一度</div><div class="card-effect">+1 弃牌次数</div></div>
+                    <div class="card flower-mei"><div class="card-name">梅开二度</div><div class="card-effect">+2 弃牌次数</div></div>
+                    <div class="card flower-mei"><div class="card-name">梅花落</div><div class="card-effect">弃掉所有手牌，重新摸14张</div></div>
+                    <div class="card flower-mei"><div class="card-name">一剪梅</div><div class="card-effect">弃掉1张牌，从牌库精确找出1张指定的牌</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎋 竹牌（摸牌/牌库系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-zhu"><div class="card-name">翠竹引路</div><div class="card-effect">看牌库顶3张，选1张加入手牌</div></div>
+                    <div class="card flower-zhu"><div class="card-name">竹林七贤</div><div class="card-effect">从牌库找出7张任意牌，与手牌交换7张</div></div>
+                    <div class="card flower-zhu"><div class="card-name">胸有成竹</div><div class="card-effect">下次弃牌100%摸到你需要的牌</div></div>
+                    <div class="card flower-zhu"><div class="card-name">势如破竹</div><div class="card-effect">连续摸3张牌，然后弃3张</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🌺 兰牌（倍率/得分系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-lan"><div class="card-name">金兰之交</div><div class="card-effect">倍率 +5</div></div>
+                    <div class="card flower-lan"><div class="card-name">兰桂齐芳</div><div class="card-effect">倍率 ×2（本回合永久）</div></div>
+                    <div class="card flower-lan"><div class="card-name">兰亭集序</div><div class="card-effect">本回合所有倍率翻倍</div></div>
+                    <div class="card flower-lan"><div class="card-name">玉兰花开</div><div class="card-effect">如果胡清一色，倍率 ×5</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🏵️ 菊牌（转化系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-ju"><div class="card-name">菊花台</div><div class="card-effect">选中最多3张牌，变成同一个数字</div></div>
+                    <div class="card flower-ju"><div class="card-name">持菊问道</div><div class="card-effect">选中1张牌，变成任意指定的牌</div></div>
+                    <div class="card flower-ju"><div class="card-name">金菊绽放</div><div class="card-effect">选中1张牌变成金牌材质</div></div>
+                    <div class="card flower-ju"><div class="card-name">满城尽带黄金甲</div><div class="card-effect">所有手牌变成金牌材质</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 季节牌 Tab -->
+        <div id="seasons" class="tab-content">
+            <blockquote>季节牌：杠时额外获得，主动使用，效果更强</blockquote>
+
+            <div class="section">
+                <h2>🌱 春牌（番型增强系）</h2>
+                <div class="cards-grid">
+                    <div class="card season-spring"><div class="card-name">春风拂面</div><div class="card-effect">下次胡牌，所有番型 ×2</div></div>
+                    <div class="card season-spring"><div class="card-name">春暖花开</div><div class="card-effect">特殊牌型额外 ×3</div></div>
+                    <div class="card season-spring"><div class="card-name">春雷乍响</div><div class="card-effect">一次出完所有面子胡牌，倍率 ×8</div></div>
+                    <div class="card season-spring"><div class="card-name">春秋大梦</div><div class="card-effect">本回合所有倍率计算完后，再 ×3</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>☀️ 夏牌（材质改造系）</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;">
+                    <span class="material-badge material-gold">🥇 金牌</span>
+                    <span class="material-badge material-silver">🥈 银牌</span>
+                    <span class="material-badge material-bronze">🥉 铜牌</span>
+                    <span class="material-badge material-glass">🔮 玻璃牌</span>
+                    <span class="material-badge material-fire">🔥 火牌</span>
+                    <span class="material-badge material-ice">❄️ 冰牌</span>
+                    <span class="material-badge material-lucky">✨ 幸运牌</span>
+                    <span class="material-badge material-ghost">👻 幽灵牌</span>
+                </div>
+                <div class="cards-grid">
+                    <div class="card season-summer"><div class="card-name">点石成金</div><div class="card-effect">选中的刻子全部变成🥇金牌</div></div>
+                    <div class="card season-summer"><div class="card-name">流星雨</div><div class="card-effect">随机3张牌变成✨幸运牌</div></div>
+                    <div class="card season-summer"><div class="card-name">鬼影幢幢</div><div class="card-effect">选中1张牌变成👻幽灵牌（百搭）</div></div>
+                    <div class="card season-summer"><div class="card-name">盛夏狂欢</div><div class="card-effect">所有手牌随机获得材质</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🍂 秋牌（资源获取系）</h2>
+                <div class="cards-grid">
+                    <div class="card season-autumn"><div class="card-name">秋收万颗</div><div class="card-effect">立即获得 8 金币</div></div>
+                    <div class="card season-autumn"><div class="card-name">金秋时节</div><div class="card-effect">获得 3 张随机花牌</div></div>
+                    <div class="card season-autumn"><div class="card-name">秋高气爽</div><div class="card-effect">下次商店所有物品半价</div></div>
+                    <div class="card season-autumn"><div class="card-name">秋意浓</div><div class="card-effect">获得1张随机紫神牌（本局有效）</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>❄️ 冬牌（牌库操控系）</h2>
+                <div class="cards-grid">
+                    <div class="card season-winter"><div class="card-name">冬日暖阳</div><div class="card-effect">选中1张牌，在牌库中复制3张</div></div>
+                    <div class="card season-winter"><div class="card-name">寒冬腊月</div><div class="card-effect">从牌库删除所有指定类型的牌</div></div>
+                    <div class="card season-winter"><div class="card-name">冰河时代</div><div class="card-effect">牌库只保留3种牌（你选）</div></div>
+                    <div class="card season-winter"><div class="card-name">绝对零度</div><div class="card-effect">冻结游戏，任意重排手牌和牌库顶5张</div></div>
+                </div>
+            </div>
+
+            <div class="combo-section">
+                <h4>🔄 四季轮回（终极组合）</h4>
+                <p>同时持有春夏秋冬各1张：弃掉4张季节牌触发</p>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
+                    <li>倍率 ×5</li>
+                    <li>获得 25 金币</li>
+                    <li>刷新商店并全部免费</li>
+                    <li>获得1张随机🟡金神牌（永久）</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 经济系统 Tab -->
+        <div id="economy" class="tab-content">
+            <blockquote>金币、得分、倍率的完整系统设计</blockquote>
+
+            <div class="section">
+                <h2>📊 核心公式</h2>
+                <div class="formula-box">
+                    最终得分 = 基础分 × 出牌倍率 × 番型倍率 × 成就倍率 × 羁绊加成
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>✖️ 倍率系统（全部 ≥1）</h2>
+                <table>
+                    <tr><th>番型</th><th>倍率</th></tr>
+                    <tr><td>屁胡</td><td>×1</td></tr>
+                    <tr><td>平和</td><td>×2</td></tr>
+                    <tr><td>断幺九</td><td>×3</td></tr>
+                    <tr><td>混一色</td><td>×4</td></tr>
+                    <tr><td>对对和</td><td>×5</td></tr>
+                    <tr><td>七对</td><td>×6</td></tr>
+                    <tr><td>清一色</td><td>×8</td></tr>
+                    <tr><td>连七对</td><td>×15</td></tr>
+                    <tr><td>字一色</td><td>×20</td></tr>
+                    <tr><td>国士无双</td><td>×30</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>📈 难度曲线</h2>
+                <div class="difficulty-bar"><span class="label">回合 1</span><div class="bar"><div class="fill" style="width: 3%;">500</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 2</span><div class="bar"><div class="fill" style="width: 6%;">1,200</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 3</span><div class="bar"><div class="fill" style="width: 12%;">2,500</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 4</span><div class="bar"><div class="fill" style="width: 20%;">5,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 5</span><div class="bar"><div class="fill" style="width: 35%;">10,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 6</span><div class="bar"><div class="fill" style="width: 50%;">20,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 7</span><div class="bar"><div class="fill" style="width: 75%;">40,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 8</span><div class="bar"><div class="fill" style="width: 100%;">80,000</div></div></div>
+            </div>
+
+            <div class="section">
+                <h2>📐 设计原则</h2>
+                <div class="principles">
+                    <div class="principle"><strong>倍率正向</strong><br>所有倍率都 ≥1，数字好看</div>
+                    <div class="principle"><strong>7张上限</strong><br>逼迫玩家做选择</div>
+                    <div class="principle"><strong>羁绊激励</strong><br>鼓励收集同系神牌</div>
+                    <div class="principle"><strong>数字要大</strong><br>后期倍率爆炸才爽</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

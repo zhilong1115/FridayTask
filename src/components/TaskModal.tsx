@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import type { Task, TaskFormData, Subtask, TaskStatus, Comment } from '../types';
+import type { Task, TaskFormData, Subtask, TaskStatus, Comment, Artifact, ArtifactType } from '../types';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -16,6 +16,9 @@ interface TaskModalProps {
   onDeleteSubtask?: (subtaskId: number) => Promise<boolean>;
   onFetchComments?: (taskId: number) => Promise<Comment[]>;
   onCreateComment?: (taskId: number, author: string, content: string) => Promise<Comment | null>;
+  onFetchArtifacts?: (taskId: number) => Promise<Artifact[]>;
+  onCreateArtifact?: (taskId: number, name: string, url: string, type: ArtifactType) => Promise<Artifact | null>;
+  onDeleteArtifact?: (artifactId: number) => Promise<boolean>;
 }
 
 export default function TaskModal({
@@ -24,6 +27,7 @@ export default function TaskModal({
   task, defaultDate, defaultTime,
   onCreateSubtask, onUpdateSubtask, onDeleteSubtask,
   onFetchComments, onCreateComment,
+  onFetchArtifacts, onCreateArtifact, onDeleteArtifact,
 }: TaskModalProps) {
   const [form, setForm] = useState<TaskFormData>({
     title: '',
@@ -44,6 +48,12 @@ export default function TaskModal({
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [newArtifactName, setNewArtifactName] = useState('');
+  const [newArtifactUrl, setNewArtifactUrl] = useState('');
+  const [newArtifactType, setNewArtifactType] = useState<ArtifactType>('link');
+  const [loadingArtifacts, setLoadingArtifacts] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -80,6 +90,9 @@ export default function TaskModal({
     }
     setNewSubtask('');
     setNewComment('');
+    setNewArtifactName('');
+    setNewArtifactUrl('');
+    setNewArtifactType('link');
     setIsEditing(!task); // New task → edit mode; existing task → view mode
 
     // Load comments for existing tasks
@@ -91,6 +104,17 @@ export default function TaskModal({
       });
     } else {
       setComments([]);
+    }
+
+    // Load artifacts for existing tasks
+    if (task && onFetchArtifacts) {
+      setLoadingArtifacts(true);
+      onFetchArtifacts(task.id).then((a) => {
+        setArtifacts(a);
+        setLoadingArtifacts(false);
+      });
+    } else {
+      setArtifacts([]);
     }
   }, [task, defaultDate, defaultTime, isOpen]);
 
@@ -129,6 +153,25 @@ export default function TaskModal({
     }
   };
 
+  const handleAddArtifact = async () => {
+    if (!newArtifactName.trim() || !newArtifactUrl.trim() || !task || !onCreateArtifact) return;
+    const artifact = await onCreateArtifact(task.id, newArtifactName.trim(), newArtifactUrl.trim(), newArtifactType);
+    if (artifact) {
+      setArtifacts((prev) => [artifact, ...prev]);
+      setNewArtifactName('');
+      setNewArtifactUrl('');
+      setNewArtifactType('link');
+    }
+  };
+
+  const handleDeleteArtifact = async (artifactId: number) => {
+    if (!onDeleteArtifact) return;
+    const success = await onDeleteArtifact(artifactId);
+    if (success) {
+      setArtifacts((prev) => prev.filter((a) => a.id !== artifactId));
+    }
+  };
+
   const formatCommentTime = (dateStr: string) => {
     const date = new Date(dateStr + 'Z'); // UTC from SQLite
     const now = new Date();
@@ -142,6 +185,17 @@ export default function TaskModal({
     if (diffHr < 24) return `${diffHr}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getArtifactIcon = (type: ArtifactType) => {
+    switch (type) {
+      case 'doc': return '📄';
+      case 'pdf': return '📋';
+      case 'link': return '🔗';
+      case 'image': return '🖼️';
+      case 'file': return '📁';
+      default: return '📎';
+    }
   };
 
   const priorityOptions = [
@@ -412,6 +466,103 @@ export default function TaskModal({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                               d="M5 12h14m-7-7l7 7-7 7" />
                           </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Artifacts */}
+              <div className="border-t border-[#dadce0] pt-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-[#70757a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-[11px] font-semibold text-[#70757a] uppercase tracking-wider">
+                    Artifacts
+                    {artifacts.length > 0 && (
+                      <span className="ml-1.5 normal-case tracking-normal font-medium">
+                        ({artifacts.length})
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {/* Artifact list */}
+                {loadingArtifacts ? (
+                  <div className="text-xs text-[#70757a] py-2">Loading artifacts...</div>
+                ) : artifacts.length > 0 ? (
+                  <div className="flex flex-col gap-2 mb-3">
+                    {artifacts.map((artifact) => (
+                      <div key={artifact.id} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#f1f3f4] group transition-colors">
+                        <span className="text-lg shrink-0">{getArtifactIcon(artifact.type)}</span>
+                        <a
+                          href={artifact.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 text-sm text-[#1a73e8] hover:underline truncate"
+                        >
+                          {artifact.name}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteArtifact(artifact.id)}
+                          className="w-6 h-6 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100
+                            text-[#70757a] hover:text-[#c5221f] hover:bg-[#fce8e6] transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-[#70757a] py-2 mb-2">No artifacts yet</div>
+                )}
+
+                {/* Add artifact form */}
+                {onCreateArtifact && (
+                  <div className="flex flex-col gap-2 p-3 border border-[#dadce0] rounded-xl">
+                    <input
+                      type="text"
+                      value={newArtifactName}
+                      onChange={(e) => setNewArtifactName(e.target.value)}
+                      placeholder="Artifact name"
+                      className="w-full px-2 py-1.5 text-sm text-[#3c4043] placeholder-[#70757a] bg-transparent border-0 border-b border-[#dadce0]
+                        focus:outline-none focus:border-[#1a73e8]"
+                    />
+                    <input
+                      type="url"
+                      value={newArtifactUrl}
+                      onChange={(e) => setNewArtifactUrl(e.target.value)}
+                      placeholder="URL"
+                      className="w-full px-2 py-1.5 text-sm text-[#3c4043] placeholder-[#70757a] bg-transparent border-0 border-b border-[#dadce0]
+                        focus:outline-none focus:border-[#1a73e8]"
+                    />
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={newArtifactType}
+                        onChange={(e) => setNewArtifactType(e.target.value as ArtifactType)}
+                        className="flex-1 px-2 py-1.5 text-sm text-[#3c4043] bg-transparent border border-[#dadce0] rounded-lg
+                          focus:outline-none focus:border-[#1a73e8]"
+                      >
+                        <option value="link">🔗 Link</option>
+                        <option value="doc">📄 Document</option>
+                        <option value="pdf">📋 PDF</option>
+                        <option value="image">🖼️ Image</option>
+                        <option value="file">📁 File</option>
+                      </select>
+                      {newArtifactName.trim() && newArtifactUrl.trim() && (
+                        <button
+                          type="button"
+                          onClick={handleAddArtifact}
+                          className="px-4 py-1.5 text-xs font-medium text-white bg-[#1a73e8] rounded-lg
+                            hover:bg-[#1765cc] transition-colors active:scale-[0.98]"
+                        >
+                          Add
                         </button>
                       )}
                     </div>

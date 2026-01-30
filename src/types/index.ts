@@ -18,6 +18,17 @@ export interface Comment {
   created_at: string;
 }
 
+export type ArtifactType = 'doc' | 'pdf' | 'link' | 'image' | 'file';
+
+export interface Artifact {
+  id: number;
+  task_id: number;
+  name: string;
+  url: string;
+  type: ArtifactType;
+  created_at: string;
+}
+
 export interface Task {
   id: number;
   title: string;
@@ -36,6 +47,7 @@ export interface Task {
   subtask_count: number;
   subtask_completed: number;
   comment_count: number;
+  artifact_count: number;
 }
 
 export interface CronJob {

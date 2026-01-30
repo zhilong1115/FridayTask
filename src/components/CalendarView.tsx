@@ -155,59 +155,70 @@ export default function CalendarView({
     }
   };
 
+  // Mobile-friendly view labels
+  const getViewLabel = (v: ViewMode, short: boolean) => {
+    if (!short) return v;
+    switch (v) {
+      case 'day': return 'D';
+      case 'week': return 'W';
+      case 'month': return 'M';
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header Bar — Google Calendar Style */}
-      <div className="flex items-center justify-between px-2 pb-5 shrink-0">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-2 pb-4 sm:pb-5 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Today button — outlined style */}
           <button
             onClick={goToday}
-            className="px-4 py-1.5 rounded-2xl border border-[#dadce0] text-sm font-medium text-[#3c4043]
+            className="px-3 sm:px-4 py-1.5 rounded-2xl border border-[#dadce0] text-xs sm:text-sm font-medium text-[#3c4043]
               hover:bg-[#f1f3f4] transition-colors"
           >
             Today
           </button>
 
           {/* Navigation arrows */}
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 sm:gap-1">
             <button
               onClick={goPrev}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a]"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a]"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={goNext}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a]"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a]"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
 
           {/* Title */}
-          <h2 className="text-xl font-semibold text-[#3c4043] tracking-wide">
+          <h2 className="text-base sm:text-xl font-semibold text-[#3c4043] tracking-wide">
             {headerTitle}
           </h2>
         </div>
 
         {/* View Toggle — pill-shaped selector */}
-        <div className="flex gap-0.5 bg-[#f1f3f4] rounded-2xl p-1 border border-[#dadce0]">
+        <div className="flex gap-0.5 bg-[#f1f3f4] rounded-2xl p-0.5 sm:p-1 border border-[#dadce0]">
           {(['day', 'week', 'month'] as ViewMode[]).map((v) => (
             <button
               key={v}
               onClick={() => setViewMode(v)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-medium capitalize transition-all
+              className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-medium transition-all
                 ${viewMode === v
                   ? 'bg-[#1a73e8] text-white shadow-sm'
                   : 'text-[#70757a] hover:text-[#3c4043] hover:bg-[#e8eaed]'
                 }`}
             >
-              {v}
+              <span className="hidden sm:inline capitalize">{v}</span>
+              <span className="sm:hidden">{getViewLabel(v, true)}</span>
             </button>
           ))}
         </div>
