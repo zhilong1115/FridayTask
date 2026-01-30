@@ -31,10 +31,15 @@ export default function MobileNav({
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#dadce0] bg-white">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#f9ab00] flex items-center justify-center font-bold text-white text-xs">
-            F
-          </div>
-          <span className="font-semibold text-sm text-[#3c4043]">Friday Tasks</span>
+          <svg width="32" height="32" viewBox="0 0 80 80" className="shrink-0">
+            <rect width="80" height="80" rx="16" fill="#f9ab00"/>
+            <rect x="12" y="12" width="20" height="20" rx="4" fill="white"/>
+            <path d="M17 22l4 4 7-7" stroke="#f9ab00" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="38" y="26" fontFamily="-apple-system, system-ui, sans-serif" fontSize="11" fontWeight="600" fill="white">TGIF!</text>
+            <rect x="12" y="38" width="20" height="20" rx="4" fill="white" opacity="0.5"/>
+            <rect x="38" y="44" width="28" height="4" rx="2" fill="white" opacity="0.7"/>
+          </svg>
+          <span className="font-semibold text-sm text-[#3c4043]">TGIF!</span>
         </div>
         <div className="flex items-center gap-2">
           <button

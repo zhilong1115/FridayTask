@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friday Task Logo Concepts</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a; 
+      color: #fff;
+      padding: 40px;
+    }
+    h1 { text-align: center; margin-bottom: 40px; font-weight: 300; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #2a2a2a;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+    }
+    .card h3 { margin: 20px 0 10px; font-weight: 500; }
+    .card p { color: #888; font-size: 14px; }
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .size-label { font-size: 12px; color: #666; margin-top: 5px; }
+    svg { display: block; }
+  </style>
+</head>
+<body>
+  <h1>Friday Task Logo Concepts</h1>
+  
+  <div class="grid">
+    <!-- Concept 1: F with integrated checkmark -->
+    <div class="card">
+      <div class="logo-container">
+        <div>
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="#4285f4"/>
+            <path d="M22 20h28v8H32v10h16v8H32v18h-10V20z" fill="white"/>
+            <path d="M44 48l8 8 16-16" stroke="#34a853" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="size-label">80px</div>
+        </div>
+        <div>
+          <svg width="32" height="32" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="#4285f4"/>
+            <path d="M22 20h28v8H32v10h16v8H32v18h-10V20z" fill="white"/>
+            <path d="M44 48l8 8 16-16" stroke="#34a853" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="size-label">32px</div>
+        </div>
+      </div>
+      <h3>Concept 1: F + Checkmark</h3>
+      <p>Google blue with green checkmark accent</p>
+    </div>
+
+    <!-- Concept 2: Rounded F with task lines -->
+    <div class="card">
+      <div class="logo-container">
+        <div>
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="20" fill="#000"/>
+            <rect x="4" y="4" width="72" height="72" rx="16" fill="none" stroke="#4285f4" stroke-width="3"/>
+            <text x="40" y="54" font-family="SF Pro Display, -apple-system, sans-serif" font-size="42" font-weight="600" fill="#4285f4" text-anchor="middle">F</text>
+            <circle cx="58" cy="22" r="8" fill="#34a853"/>
+            <path d="M54 22l3 3 6-6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="size-label">80px</div>
+        </div>
+        <div>
+          <svg width="32" height="32" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="20" fill="#000"/>
+            <rect x="4" y="4" width="72" height="72" rx="16" fill="none" stroke="#4285f4" stroke-width="3"/>
+            <text x="40" y="54" font-family="SF Pro Display, -apple-system, sans-serif" font-size="42" font-weight="600" fill="#4285f4" text-anchor="middle">F</text>
+            <circle cx="58" cy="22" r="8" fill="#34a853"/>
+            <path d="M54 22l3 3 6-6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="size-label">32px</div>
+        </div>
+      </div>
+      <h3>Concept 2: Outlined + Badge</h3>
+      <p>Black background, blue outline, green notification badge</p>
+    </div>
+
+    <!-- Concept 3: Minimal gradient -->
+    <div class="card">
+      <div class="logo-container">
+        <div>
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#667eea"/>
+                <stop offset="100%" style="stop-color:#764ba2"/>
+              </linearGradient>
+            </defs>
+            <rect width="80" height="80" rx="18" fill="url(#grad1)"/>
+            <path d="M24 18h32v10H36v8h18v10H36v16H24V18z" fill="white" opacity="0.95"/>
+          </svg>
+          <div class="size-label">80px</div>
+        </div>
+        <div>
+          <svg width="32" height="32" viewBox="0 0 80 80">
+            <defs>
+              <linearGradient id="grad1b" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#667eea"/>
+                <stop offset="100%" style="stop-color:#764ba2"/>
+              </linearGradient>
+            </defs>
+            <rect width="80" height="80" rx="18" fill="url(#grad1b)"/>
+            <path d="M24 18h32v10H36v8h18v10H36v16H24V18z" fill="white" opacity="0.95"/>
+          </svg>
+          <div class="size-label">32px</div>
+        </div>
+      </div>
+      <h3>Concept 3: Purple Gradient</h3>
+      <p>Modern gradient style, clean F</p>
+    </div>
+
+    <!-- Concept 4: Checkbox style -->
+    <div class="card">
+      <div class="logo-container">
+        <div>
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="#1a73e8"/>
+            <rect x="12" y="12" width="24" height="24" rx="4" fill="white"/>
+            <path d="M18 24l5 5 9-9" stroke="#1a73e8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="44" y="16" width="24" height="4" rx="2" fill="white" opacity="0.9"/>
+            <rect x="44" y="28" width="18" height="4" rx="2" fill="white" opacity="0.6"/>
+            <rect x="12" y="44" width="24" height="24" rx="4" fill="white" opacity="0.3"/>
+            <rect x="44" y="48" width="24" height="4" rx="2" fill="white" opacity="0.5"/>
+            <rect x="44" y="60" width="18" height="4" rx="2" fill="white" opacity="0.3"/>
+          </svg>
+          <div class="size-label">80px</div>
+        </div>
+        <div>
+          <svg width="32" height="32" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="#1a73e8"/>
+            <rect x="12" y="12" width="24" height="24" rx="4" fill="white"/>
+            <path d="M18 24l5 5 9-9" stroke="#1a73e8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="44" y="16" width="24" height="4" rx="2" fill="white" opacity="0.9"/>
+            <rect x="44" y="28" width="18" height="4" rx="2" fill="white" opacity="0.6"/>
+            <rect x="12" y="44" width="24" height="24" rx="4" fill="white" opacity="0.3"/>
+            <rect x="44" y="48" width="24" height="4" rx="2" fill="white" opacity="0.5"/>
+            <rect x="44" y="60" width="18" height="4" rx="2" fill="white" opacity="0.3"/>
+          </svg>
+          <div class="size-label">32px</div>
+        </div>
+      </div>
+      <h3>Concept 4: Task List</h3>
+      <p>Literal task list representation</p>
+    </div>
+
+    <!-- Concept 5: Minimal dark -->
+    <div class="card">
+      <div class="logo-container">
+        <div>
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="#000"/>
+            <text x="40" y="56" font-family="SF Pro Display, -apple-system, sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle">F</text>
+            <circle cx="60" cy="20" r="10" fill="#00c853"/>
+          </svg>
+          <div class="size-label">80px</div>
+        </div>
+        <div>
+          <svg width="32" height="32" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="#000"/>
+            <text x="40" y="56" font-family="SF Pro Display, -apple-system, sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle">F</text>
+            <circle cx="60" cy="20" r="10" fill="#00c853"/>
+          </svg>
+          <div class="size-label">32px</div>
+        </div>
+      </div>
+      <h3>Concept 5: Minimal Dark</h3>
+      <p>Black + white F with green dot (notification/active)</p>
+    </div>
+
+    <!-- Concept 6: Calendar F -->
+    <div class="card">
+      <div class="logo-container">
+        <div>
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="white"/>
+            <rect y="0" width="80" height="22" rx="16" fill="#ea4335"/>
+            <rect x="16" y="22" width="80" height="58" fill="white"/>
+            <text x="40" y="60" font-family="SF Pro Display, -apple-system, sans-serif" font-size="38" font-weight="700" fill="#3c4043" text-anchor="middle">F</text>
+            <!-- Calendar holes -->
+            <circle cx="26" cy="12" r="4" fill="white"/>
+            <circle cx="54" cy="12" r="4" fill="white"/>
+          </svg>
+          <div class="size-label">80px</div>
+        </div>
+        <div>
+          <svg width="32" height="32" viewBox="0 0 80 80">
+            <rect width="80" height="80" rx="16" fill="white"/>
+            <rect y="0" width="80" height="22" rx="16" fill="#ea4335"/>
+            <rect x="16" y="22" width="80" height="58" fill="white"/>
+            <text x="40" y="60" font-family="SF Pro Display, -apple-system, sans-serif" font-size="38" font-weight="700" fill="#3c4043" text-anchor="middle">F</text>
+            <circle cx="26" cy="12" r="4" fill="white"/>
+            <circle cx="54" cy="12" r="4" fill="white"/>
+          </svg>
+          <div class="size-label">32px</div>
+        </div>
+      </div>
+      <h3>Concept 6: Calendar Style</h3>
+      <p>Google Calendar inspired with Friday</p>
+    </div>
+
+  </div>
+
+</body>
+</html>
