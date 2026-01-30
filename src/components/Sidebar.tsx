@@ -27,11 +27,20 @@ export default function Sidebar({
     <aside className="w-60 shrink-0 border-r border-[#dadce0] bg-white p-5 flex flex-col gap-6 max-md:hidden">
       {/* Logo */}
       <div className="flex items-center gap-3 px-1 py-1">
-        <div className="w-9 h-9 rounded-xl bg-[#f9ab00] flex items-center justify-center font-bold text-white text-sm">
-          F
-        </div>
+        <svg width="36" height="36" viewBox="0 0 80 80" className="shrink-0">
+          <rect width="80" height="80" rx="16" fill="#f9ab00"/>
+          <rect x="12" y="12" width="20" height="20" rx="4" fill="white"/>
+          <path d="M17 22l4 4 7-7" stroke="#f9ab00" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          <text x="38" y="26" fontFamily="-apple-system, system-ui, sans-serif" fontSize="11" fontWeight="600" fill="white">TGIF!</text>
+          <rect x="12" y="38" width="20" height="20" rx="4" fill="white" opacity="0.5"/>
+          <rect x="38" y="44" width="28" height="4" rx="2" fill="white" opacity="0.7"/>
+          <rect x="38" y="52" width="20" height="3" rx="1.5" fill="white" opacity="0.4"/>
+          <rect x="12" y="62" width="14" height="14" rx="3" fill="white" opacity="0.25"/>
+          <rect x="32" y="66" width="22" height="3" rx="1.5" fill="white" opacity="0.3"/>
+        </svg>
         <div>
           <h1 className="text-base font-semibold text-[#3c4043] tracking-wide">Friday Tasks</h1>
+          <p className="text-xs text-[#70757a] -mt-0.5">Thank God It's Friday</p>
         </div>
       </div>
 
