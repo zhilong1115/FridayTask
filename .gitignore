@@ -8,3 +8,6 @@ data/
 __pycache__/
 *.pyc
 .claude/
+
+# Personal artifacts - not part of app source
+public/artifacts/
