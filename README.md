@@ -1,11 +1,26 @@
-# Friday Tasks
+<p align="center">
+  <img src="public/logo-final.svg" alt="Friday Tasks Logo" width="120" height="120">
+</p>
 
-A minimal, personal task management app built for human–AI collaboration. Designed for use with [Clawdbot](https://github.com/clawdbot/clawdbot), where an AI assistant (Friday) and a human (you) share a task board — creating, assigning, and completing tasks together.
+<h1 align="center">Friday Tasks</h1>
 
-![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+<p align="center">
+  <strong>✨ Thank God It's Friday ✨</strong>
+</p>
+
+<p align="center">
+  A minimal, personal task management app built for human–AI collaboration.<br>
+  Designed for use with <a href="https://github.com/clawdbot/clawdbot">Clawdbot</a>, where an AI assistant (Friday) and a human (you) share a task board — creating, assigning, and completing tasks together.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white" alt="SQLite">
+</p>
+
+---
 
 ## Features
 
