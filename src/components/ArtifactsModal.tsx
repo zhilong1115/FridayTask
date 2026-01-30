@@ -69,6 +69,7 @@ export default function ArtifactsModal({ isOpen, onClose }: ArtifactsModalProps)
     'Aspen': '🌲',
     'Task App': '✅',
     'Clawdbot': '🤖',
+    'HU!': '🀄',
     'Uncategorized': '📁',
   };
 
