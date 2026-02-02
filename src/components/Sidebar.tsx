@@ -10,6 +10,7 @@ interface SidebarProps {
   onCreateTask: () => void;
   onOpenSummary: () => void;
   onOpenArtifacts: () => void;
+  onOpenKnowledge: () => void;
 }
 
 export default function Sidebar({
@@ -22,6 +23,7 @@ export default function Sidebar({
   onCreateTask,
   onOpenSummary,
   onOpenArtifacts,
+  onOpenKnowledge,
 }: SidebarProps) {
   return (
     <aside className="w-60 shrink-0 border-r border-[#dadce0] bg-white p-5 flex flex-col gap-6 max-md:hidden">
@@ -109,6 +111,16 @@ export default function Sidebar({
                 d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
             Artifacts
+          </button>
+          <button
+            onClick={onOpenKnowledge}
+            className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
+              text-[#70757a] hover:text-[#3c4043] hover:bg-[#f1f3f4]"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6A4.997 4.997 0 017 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/>
+            </svg>
+            Knowledge
           </button>
         </div>
       </div>
