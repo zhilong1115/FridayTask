@@ -53,6 +53,8 @@ export default function CalendarView({
   const cronByDate = useMemo(() => {
     const map: Record<string, CronJob[]> = {};
     cronJobs.forEach((job) => {
+      // Only process cron-type schedules with expr, skip 'every' and 'at' types
+      if (job.schedule.kind !== 'cron' || !job.schedule.expr) return;
       const dates = getNextCronDates(job.schedule.expr, 90);
       dates.forEach((d) => {
         if (!map[d]) map[d] = [];
