@@ -865,66 +865,88 @@
 
         <!-- 季节牌 Tab -->
         <div id="seasons" class="tab-content">
-            <blockquote>季节牌：杠时额外获得，<strong style="color: var(--accent-gold);">商店中使用</strong>，效果更强</blockquote>
+            <blockquote>季节牌：杠时额外获得，<strong style="color: var(--accent-gold);">商店中使用</strong>，立即生效</blockquote>
 
             <div class="section">
-                <h2>🌱 春牌（番型增强系）</h2>
-                <div class="cards-grid">
-                    <div class="card season-spring"><div class="card-name">春风拂面</div><div class="card-effect">下次胡牌，所有番型 ×2</div></div>
-                    <div class="card season-spring"><div class="card-name">春暖花开</div><div class="card-effect">特殊牌型额外 ×3</div></div>
-                    <div class="card season-spring"><div class="card-name">春雷乍响</div><div class="card-effect">一次出完所有面子胡牌，倍率 ×8</div></div>
-                    <div class="card season-spring"><div class="card-name">春秋大梦</div><div class="card-effect">本回合所有倍率计算完后，再 ×3</div></div>
-                </div>
+                <h2>🌱 春牌 — 番型增强（10张）</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">每种番型对应一张春牌，使用后该番型永久 <strong style="color: var(--accent-green);">+3 倍率</strong></p>
+                <table>
+                    <tr><th>春牌</th><th>效果</th><th>原倍率→新倍率</th></tr>
+                    <tr><td>🌱 屁胡春</td><td>屁胡永久 +3 倍率</td><td>×1 → ×4</td></tr>
+                    <tr><td>🌱 平和春</td><td>平和永久 +3 倍率</td><td>×2 → ×5</td></tr>
+                    <tr><td>🌱 断幺春</td><td>断幺九永久 +3 倍率</td><td>×3 → ×6</td></tr>
+                    <tr><td>🌱 混一春</td><td>混一色永久 +3 倍率</td><td>×4 → ×7</td></tr>
+                    <tr><td>🌱 碰碰春</td><td>对对和永久 +3 倍率</td><td>×5 → ×8</td></tr>
+                    <tr><td>🌱 七对春</td><td>七对永久 +3 倍率</td><td>×6 → ×9</td></tr>
+                    <tr><td>🌱 清一春</td><td>清一色永久 +3 倍率</td><td>×8 → ×11</td></tr>
+                    <tr><td>🌱 连七春</td><td>连七对永久 +3 倍率</td><td>×15 → ×18</td></tr>
+                    <tr><td>🌱 字一春</td><td>字一色永久 +3 倍率</td><td>×20 → ×23</td></tr>
+                    <tr><td>🌱 国士春</td><td>国士无双永久 +3 倍率</td><td>×30 → ×33</td></tr>
+                </table>
             </div>
 
             <div class="section">
-                <h2>☀️ 夏牌（材质改造系）</h2>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;">
-                    <span class="material-badge material-gold">🥇 金牌</span>
-                    <span class="material-badge material-silver">🥈 银牌</span>
-                    <span class="material-badge material-bronze">🥉 铜牌</span>
-                    <span class="material-badge material-glass">🔮 玻璃牌</span>
-                    <span class="material-badge material-fire">🔥 火牌</span>
-                    <span class="material-badge material-ice">❄️ 冰牌</span>
-                    <span class="material-badge material-lucky">✨ 幸运牌</span>
-                    <span class="material-badge material-ghost">👻 幽灵牌</span>
-                </div>
-                <div class="cards-grid">
-                    <div class="card season-summer"><div class="card-name">点石成金</div><div class="card-effect">选中的刻子全部变成🥇金牌</div></div>
-                    <div class="card season-summer"><div class="card-name">流星雨</div><div class="card-effect">随机3张牌变成✨幸运牌</div></div>
-                    <div class="card season-summer"><div class="card-name">鬼影幢幢</div><div class="card-effect">选中1张牌变成👻幽灵牌（百搭）</div></div>
-                    <div class="card season-summer"><div class="card-name">盛夏狂欢</div><div class="card-effect">所有手牌随机获得材质</div></div>
-                </div>
+                <h2>☀️ 夏牌 — 材质改造（10张）</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">每种材质对应一张夏牌，使用后立即为牌库中的牌添加材质</p>
+                <table>
+                    <tr><th>夏牌</th><th>效果</th></tr>
+                    <tr><td>☀️ 镀铜术</td><td>牌库中随机 <strong>5张牌</strong> 变成 🥉铜牌</td></tr>
+                    <tr><td>☀️ 镀银术</td><td>牌库中随机 <strong>3张牌</strong> 变成 🥈银牌</td></tr>
+                    <tr><td>☀️ 点石成金</td><td>牌库中随机 <strong>2张牌</strong> 变成 🥇金牌</td></tr>
+                    <tr><td>☀️ 竹编术</td><td>牌库中随机 <strong>5张牌</strong> 变成 🎋竹牌</td></tr>
+                    <tr><td>☀️ 冰封术</td><td>牌库中随机 <strong>3张牌</strong> 变成 🧊冰牌</td></tr>
+                    <tr><td>☀️ 玻璃工艺</td><td>牌库中随机 <strong>2张牌</strong> 变成 🫧玻璃牌</td></tr>
+                    <tr><td>☀️ 琉璃秘法</td><td>牌库中随机 <strong>1张牌</strong> 变成 🔮琉璃牌</td></tr>
+                    <tr><td>☀️ 玉化之术</td><td>牌库中随机 <strong>2张牌</strong> 变成 🍀玉牌</td></tr>
+                    <tr><td>☀️ 瓷器烧制</td><td>牌库中随机 <strong>1张牌</strong> 变成 🏺瓷牌</td></tr>
+                    <tr><td>☀️ 翡翠雕琢</td><td>牌库中随机 <strong>1张牌</strong> 变成 💎翡翠牌</td></tr>
+                </table>
             </div>
 
             <div class="section">
-                <h2>🍂 秋牌（资源获取系）</h2>
-                <div class="cards-grid">
-                    <div class="card season-autumn"><div class="card-name">秋收万颗</div><div class="card-effect">立即获得 8 金币</div></div>
-                    <div class="card season-autumn"><div class="card-name">金秋时节</div><div class="card-effect">获得 3 张随机花牌</div></div>
-                    <div class="card season-autumn"><div class="card-name">秋高气爽</div><div class="card-effect">下次商店所有物品半价</div></div>
-                    <div class="card season-autumn"><div class="card-name">秋意浓</div><div class="card-effect">获得1张随机紫神牌（本局有效）</div></div>
-                </div>
+                <h2>🍂 秋牌 — 资源获取（10张）</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">使用后立即获得对应资源</p>
+                <table>
+                    <tr><th>秋牌</th><th>效果</th></tr>
+                    <tr><td>🍂 秋收</td><td>立即获得 <strong>+15 金币</strong></td></tr>
+                    <tr><td>🍂 丰收</td><td>立即获得 <strong>+25 金币</strong></td></tr>
+                    <tr><td>🍂 五谷丰登</td><td>立即获得 <strong>当前金币 50%</strong> 的额外金币</td></tr>
+                    <tr><td>🍂 花开富贵</td><td>立即获得 <strong>3张随机花牌</strong></td></tr>
+                    <tr><td>🍂 百花齐放</td><td>立即获得 <strong>每种花色各1张</strong> 花牌</td></tr>
+                    <tr><td>🍂 神降临</td><td>商店立即刷新，出现 <strong>1张紫神牌</strong></td></tr>
+                    <tr><td>🍂 天降横财</td><td>下次商店 <strong>全部半价</strong></td></tr>
+                    <tr><td>🍂 财源滚滚</td><td>本局每次胡牌 <strong>额外+10金币</strong></td></tr>
+                    <tr><td>🍂 金玉满堂</td><td>立即获得 <strong>1张随机夏牌</strong></td></tr>
+                    <tr><td>🍂 紫气东来</td><td>下次购买神牌 <strong>免费</strong></td></tr>
+                </table>
             </div>
 
             <div class="section">
-                <h2>❄️ 冬牌（牌库操控系）</h2>
-                <div class="cards-grid">
-                    <div class="card season-winter"><div class="card-name">冬日暖阳</div><div class="card-effect">选中1张牌，在牌库中复制3张</div></div>
-                    <div class="card season-winter"><div class="card-name">寒冬腊月</div><div class="card-effect">从牌库删除所有指定类型的牌</div></div>
-                    <div class="card season-winter"><div class="card-name">冰河时代</div><div class="card-effect">牌库只保留3种牌（你选）</div></div>
-                    <div class="card season-winter"><div class="card-name">绝对零度</div><div class="card-effect">冻结游戏，任意重排手牌和牌库顶5张</div></div>
-                </div>
+                <h2>❄️ 冬牌 — 牌库操控（10张）</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">使用后立即改变牌库结构</p>
+                <table>
+                    <tr><th>冬牌</th><th>效果</th></tr>
+                    <tr><td>❄️ 复制</td><td>选择1张牌，在牌库中 <strong>复制3张</strong></td></tr>
+                    <tr><td>❄️ 删除</td><td>从牌库中 <strong>删除所有</strong> 指定数字的牌</td></tr>
+                    <tr><td>❄️ 过滤</td><td>从牌库中 <strong>删除所有</strong> 指定花色的牌</td></tr>
+                    <tr><td>❄️ 精简</td><td>牌库只保留 <strong>3种花色</strong>（你选择删除哪种）</td></tr>
+                    <tr><td>❄️ 净化</td><td>从牌库中 <strong>删除所有字牌</strong></td></tr>
+                    <tr><td>❄️ 增殖</td><td>牌库中所有 <strong>1和9</strong> 的牌数量翻倍</td></tr>
+                    <tr><td>❄️ 统一</td><td>选择1种花色，牌库中该花色牌 <strong>数量翻倍</strong></td></tr>
+                    <tr><td>❄️ 冻结</td><td><strong>锁定牌库顺序</strong>，本局不再洗牌</td></tr>
+                    <tr><td>❄️ 预知</td><td>查看并 <strong>重排牌库顶10张</strong> 的顺序</td></tr>
+                    <tr><td>❄️ 轮回</td><td>将 <strong>弃牌堆</strong> 全部洗入牌库</td></tr>
+                </table>
             </div>
 
             <div class="combo-section">
                 <h4>🔄 四季轮回（终极组合）</h4>
-                <p>同时持有春夏秋冬各1张：弃掉4张季节牌触发</p>
+                <p>同时消耗春夏秋冬各1张：</p>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
-                    <li>倍率 ×5</li>
-                    <li>获得 25 金币</li>
-                    <li>刷新商店并全部免费</li>
-                    <li>获得1张随机🟡金神牌（永久）</li>
+                    <li>所有番型永久 <strong>+5 倍率</strong></li>
+                    <li>获得 <strong>50 金币</strong></li>
+                    <li>牌库中所有牌获得 <strong>随机材质</strong></li>
+                    <li>获得 <strong>1张金神牌</strong>（永久）</li>
                 </ul>
             </div>
         </div>
