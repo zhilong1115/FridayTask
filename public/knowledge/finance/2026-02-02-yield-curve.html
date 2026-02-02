@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-02 - 收益率曲线：经济的"水晶球"</title>
+  <style>
+    body { 
+      font-family: -apple-system, system-ui, sans-serif; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px; 
+      line-height: 1.8;
+      color: #333;
+    }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 600px) {
+      .bilingual { grid-template-columns: 1fr; }
+    }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #5f6368; margin-top: 30px; }
+    .impact { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .terms { background: #e8f0fe; padding: 15px; border-radius: 8px; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    .market-data { background: #1a1a2e; color: #eee; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .market-data code { background: #2d2d44; padding: 2px 6px; border-radius: 4px; color: #00ff88; }
+    .chart-placeholder { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px;
+      border-radius: 8px;
+      text-align: center;
+      color: white;
+      margin: 20px 0;
+    }
+    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+    .success { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .yield-up { color: #00C805; }
+    .yield-down { color: #FF5000; }
+  </style>
+</head>
+<body>
+  <h1>📈 收益率曲线：经济的"水晶球"<br><small>The Yield Curve: The Economy's Crystal Ball</small></h1>
+  
+  <p><strong>日期 / Date:</strong> 2026年2月2日 (Monday)</p>
+  <p><strong>课程关联 / Curriculum:</strong> Phase 2.2 - 收益率曲线与经济预测</p>
+
+  <div class="market-data">
+    <h3>📊 今日市场快照 / Today's Market Snapshot</h3>
+    <p>
+      <strong>US 10-Year Treasury:</strong> <code>4.24%</code> (-0.001)<br>
+      <strong>S&P 500:</strong> 6,974.59 <span class="yield-up">(+0.51%)</span><br>
+      <strong>Gold:</strong> $4,640 <span class="yield-down">(-1.57%)</span><br>
+      <strong>Brent Oil:</strong> $66.25 <span class="yield-down">(-4.43%)</span>
+    </p>
+  </div>
+
+  <h2>一、什么是收益率曲线？</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>收益率曲线</strong>是一张图，显示不同期限国债的利率。</p>
+      <p>想象你把钱借给政府：</p>
+      <ul>
+        <li>借 3 个月 → 政府给你 X% 利息</li>
+        <li>借 2 年 → 政府给你 Y% 利息</li>
+        <li>借 10 年 → 政府给你 Z% 利息</li>
+        <li>借 30 年 → 政府给你 W% 利息</li>
+      </ul>
+      <p>把这些点连起来，就是收益率曲线！</p>
+    </div>
+    <div class="en">
+      <p>The <strong>yield curve</strong> is a graph showing interest rates on government bonds of different maturities.</p>
+      <p>Imagine lending money to the government:</p>
+      <ul>
+        <li>Lend for 3 months → X% interest</li>
+        <li>Lend for 2 years → Y% interest</li>
+        <li>Lend for 10 years → Z% interest</li>
+        <li>Lend for 30 years → W% interest</li>
+      </ul>
+      <p>Connect these dots — that's the yield curve!</p>
+    </div>
+  </div>
+
+  <h2>二、三种形态，三种信号</h2>
+  
+  <table>
+    <tr>
+      <th>形态 / Shape</th>
+      <th>特征 / Characteristic</th>
+      <th>信号 / Signal</th>
+    </tr>
+    <tr>
+      <td>📈 <strong>正常 (Normal)</strong></td>
+      <td>长期利率 > 短期利率<br>Long-term > Short-term</td>
+      <td>✅ 经济健康，正常扩张<br>Economy expanding normally</td>
+    </tr>
+    <tr>
+      <td>📉 <strong>倒挂 (Inverted)</strong></td>
+      <td>短期利率 > 长期利率<br>Short-term > Long-term</td>
+      <td>⚠️ 经济衰退预警！<br>Recession warning!</td>
+    </tr>
+    <tr>
+      <td>➖ <strong>平坦 (Flat)</strong></td>
+      <td>各期限利率相近<br>All rates similar</td>
+      <td>🤔 经济转折期，不确定性高<br>Transitional, uncertain</td>
+    </tr>
+  </table>
+
+  <h2>三、为什么倒挂预测衰退？</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>直觉理解：</strong></p>
+      <p>正常情况下，借钱时间越长，风险越大，所以要求的利息越高。这很直观。</p>
+      <p>但当投资者觉得<strong>未来经济会变差</strong>时：</p>
+      <ul>
+        <li>大家都想买长期债券"锁定"现在的高利率</li>
+        <li>长期债券需求↑ → 价格↑ → 收益率↓</li>
+        <li>短期债券被抛售 → 价格↓ → 收益率↑</li>
+        <li>结果：短期收益率反超长期 = 倒挂！</li>
+      </ul>
+      
+      <div class="warning">
+        <strong>🎯 历史战绩：</strong>过去 50 年，每次经济衰退前 6-18 个月，收益率曲线都出现过倒挂。准确率接近 100%！
+      </div>
+    </div>
+    <div class="en">
+      <p><strong>Intuition:</strong></p>
+      <p>Normally, longer loans = more risk = higher interest. Simple.</p>
+      <p>But when investors expect <strong>future economy to worsen</strong>:</p>
+      <ul>
+        <li>Everyone wants long-term bonds to "lock in" current high rates</li>
+        <li>Long-term bond demand↑ → Price↑ → Yield↓</li>
+        <li>Short-term bonds sold off → Price↓ → Yield↑</li>
+        <li>Result: Short-term yield exceeds long-term = Inversion!</li>
+      </ul>
+      
+      <div class="warning">
+        <strong>🎯 Track Record:</strong> In the past 50 years, the yield curve inverted 6-18 months before EVERY recession. Nearly 100% accuracy!
+      </div>
+    </div>
+  </div>
+
+  <h2>四、关键利差：2Y-10Y Spread</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>最受关注的指标是 <strong>2年期与10年期国债利差</strong>（2Y-10Y Spread）：</p>
+      <ul>
+        <li><strong>正值（如 +0.5%）</strong>：正常，长期高于短期</li>
+        <li><strong>接近零</strong>：曲线变平，需警惕</li>
+        <li><strong>负值（如 -0.5%）</strong>：倒挂！衰退信号</li>
+      </ul>
+      
+      <p><strong>如何查看：</strong></p>
+      <ol>
+        <li>Google 搜索 "US 2Y 10Y spread"</li>
+        <li>使用 TradingView、FRED 等网站</li>
+        <li>财经新闻经常会报道</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p>The most watched indicator is the <strong>2-Year vs 10-Year Treasury Spread</strong>:</p>
+      <ul>
+        <li><strong>Positive (e.g., +0.5%)</strong>: Normal, long-term higher</li>
+        <li><strong>Near zero</strong>: Flattening, caution</li>
+        <li><strong>Negative (e.g., -0.5%)</strong>: Inverted! Recession signal</li>
+      </ul>
+      
+      <p><strong>How to check:</strong></p>
+      <ol>
+        <li>Google "US 2Y 10Y spread"</li>
+        <li>Use TradingView, FRED</li>
+        <li>Financial news often reports it</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>五、今日实例分析</h2>
+
+  <div class="impact">
+    <h3>📊 当前市场环境 / Current Market Environment</h3>
+    
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>今日 10 年期国债收益率：4.24%</strong></p>
+        <p>这意味着：</p>
+        <ul>
+          <li>市场预期利率会在较高水平维持一段时间</li>
+          <li>通胀虽然下降，但 Fed 仍保持谨慎</li>
+          <li>Kevin Warsh 即将上任，市场在观望他的政策倾向</li>
+        </ul>
+        
+        <p><strong>今日其他资产表现：</strong></p>
+        <ul>
+          <li>黄金 -1.57%、原油 -4.43% → 避险资产下跌</li>
+          <li>股市小幅上涨 → 风险偏好略有恢复</li>
+          <li>这种组合暗示：市场对经济"软着陆"有一定信心</li>
+        </ul>
+      </div>
+      <div class="en">
+        <p><strong>Today's 10Y Treasury Yield: 4.24%</strong></p>
+        <p>This means:</p>
+        <ul>
+          <li>Markets expect rates to stay elevated</li>
+          <li>Inflation falling, but Fed remains cautious</li>
+          <li>Markets watching Kevin Warsh's policy stance</li>
+        </ul>
+        
+        <p><strong>Other assets today:</strong></p>
+        <ul>
+          <li>Gold -1.57%, Oil -4.43% → Safe havens falling</li>
+          <li>Stocks slightly up → Risk appetite improving</li>
+          <li>This combo suggests: Some confidence in "soft landing"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>六、投资者如何使用收益率曲线</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <table>
+        <tr>
+          <th>曲线形态</th>
+          <th>策略考虑</th>
+        </tr>
+        <tr>
+          <td>陡峭向上</td>
+          <td>可考虑更多股票配置<br>周期性股票可能跑赢</td>
+        </tr>
+        <tr>
+          <td>趋于平坦</td>
+          <td>开始增加防御性资产<br>关注公用事业、消费必需品</td>
+        </tr>
+        <tr>
+          <td>倒挂</td>
+          <td>考虑减少股票仓位<br>增加现金和短期债券</td>
+        </tr>
+        <tr>
+          <td>从倒挂恢复</td>
+          <td>衰退可能即将结束<br>逐步增加风险资产</td>
+        </tr>
+      </table>
+    </div>
+    <div class="en">
+      <table>
+        <tr>
+          <th>Curve Shape</th>
+          <th>Strategy Consideration</th>
+        </tr>
+        <tr>
+          <td>Steep upward</td>
+          <td>Consider more equity allocation<br>Cyclicals may outperform</td>
+        </tr>
+        <tr>
+          <td>Flattening</td>
+          <td>Start adding defensive assets<br>Utilities, consumer staples</td>
+        </tr>
+        <tr>
+          <td>Inverted</td>
+          <td>Consider reducing equity<br>More cash, short-term bonds</td>
+        </tr>
+        <tr>
+          <td>Un-inverting</td>
+          <td>Recession may be ending<br>Gradually add risk assets</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="terms">
+    <h3>📚 关键术语 / Key Terms</h3>
+    <ul>
+      <li><strong>Yield Curve (收益率曲线)</strong> — 不同期限债券收益率的图形表示</li>
+      <li><strong>Inverted Yield Curve (收益率曲线倒挂)</strong> — 短期利率高于长期利率的异常现象</li>
+      <li><strong>2Y-10Y Spread (两年-十年利差)</strong> — 最常用的曲线斜率衡量指标</li>
+      <li><strong>Treasury (国债)</strong> — 美国政府发行的债券，被视为无风险资产</li>
+      <li><strong>Soft Landing (软着陆)</strong> — 经济减速但避免衰退的理想情景</li>
+      <li><strong>Bond Vigilantes (债券义警)</strong> — 通过买卖债券影响利率的大型投资者</li>
+    </ul>
+  </div>
+
+  <div class="success">
+    <h3>🎯 今日核心收获 / Key Takeaways</h3>
+    <ol>
+      <li><strong>收益率曲线是经济健康的"体检报告"</strong> — 它反映市场对未来经济的集体预期</li>
+      <li><strong>倒挂是最可靠的衰退预警指标</strong> — 历史准确率近 100%</li>
+      <li><strong>关注 2Y-10Y 利差</strong> — 负值是危险信号</li>
+      <li><strong>与昨天的知识联系</strong> — Fed 加息首先影响短期利率，曲线形态随之变化</li>
+    </ol>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 后续讨论 / Follow-up Discussion</h3>
+    <p>今天的内容和昨天的"利率如何影响股市"紧密相连：</p>
+    <ul>
+      <li>Fed 加息 → 短期利率上升 → 曲线可能变平或倒挂</li>
+      <li>收益率曲线 → 预测经济周期 → 指导资产配置</li>
+    </ul>
+    <p><strong>明日预告：</strong>什么是 QE 和 QT？Fed 除了调利率还有什么大招？</p>
+    <p><em>有任何问题，随时问 Friday！</em></p>
+  </div>
+
+  <hr>
+  <p style="color: #666; font-size: 0.9em;">
+    📅 由 Friday 生成于 2026-02-02<br>
+    📚 课程：Phase 2.2 - 收益率曲线与经济预测<br>
+    🔗 相关：<a href="2026-02-01-interest-rates-and-stock-market.html">利率如何影响股市</a> | <a href="2026-01-31-what-is-fomc.html">什么是 FOMC</a>
+  </p>
+</body>
+</html>

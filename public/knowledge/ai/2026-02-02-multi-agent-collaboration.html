@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-02 - Multi-Agent 协作架构: CrewAI vs AutoGen</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+    @media (max-width: 768px) { .bilingual { grid-template-columns: 1fr; } }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #1a1a1a; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #3c4043; margin-top: 30px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Monaco, 'Courier New', monospace; }
+    .inline-code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f9ab00; }
+    .highlight-blue { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #1a73e8; }
+    .diagram { background: #fafafa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; overflow-x: auto; font-size: 12px; line-height: 1.4; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+    @media (max-width: 768px) { .comparison { grid-template-columns: 1fr; } }
+    .comparison > div { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; }
+    .tag-interview { background: #e8f5e9; color: #2e7d32; }
+    .tag-practical { background: #fff3e0; color: #e65100; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; background: #fafafa; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    th { background: #f5f5f5; font-weight: 600; }
+    .stars { color: #f9ab00; }
+    a { color: #1a73e8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>🤝 Multi-Agent 协作架构: CrewAI vs AutoGen</h1>
+  <p>
+    <span class="tag tag-interview">面试热点</span>
+    <span class="tag tag-practical">实用开发</span>
+    <a href="https://github.com/crewAIInc/crewAI">CrewAI GitHub</a> | <span class="stars">⭐ 30k+</span> |
+    <a href="https://github.com/microsoft/autogen">AutoGen GitHub</a> | <span class="stars">⭐ 40k+</span>
+  </p>
+
+  <h2>📖 概述 / Overview</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p>昨天我们学了 ReAct（单 Agent 的思考-行动循环）和 Tool Use。今天进入 <strong>Multi-Agent</strong> 领域——当一个 Agent 不够用时，如何让多个 Agent 协作？</p>
+      <p>两大主流框架：</p>
+      <ul>
+        <li><strong>CrewAI</strong>：角色扮演式协作，像组建一个"团队"</li>
+        <li><strong>AutoGen</strong>（微软）：对话式协作，Agent 之间互相"聊天"</li>
+      </ul>
+      <p>核心问题：如何设计 Agent 之间的<strong>通信</strong>、<strong>任务分配</strong>和<strong>状态管理</strong>？</p>
+    </div>
+    <div class="en">
+      <p>Yesterday we learned ReAct (single agent reasoning-acting loop) and Tool Use. Today we enter <strong>Multi-Agent</strong> territory—when one Agent isn't enough, how do multiple Agents collaborate?</p>
+      <p>Two major frameworks:</p>
+      <ul>
+        <li><strong>CrewAI</strong>: Role-playing collaboration, like building a "team"</li>
+        <li><strong>AutoGen</strong> (Microsoft): Conversation-based, Agents "chat" with each other</li>
+      </ul>
+      <p>Core questions: How to design <strong>communication</strong>, <strong>task assignment</strong>, and <strong>state management</strong> between Agents?</p>
+    </div>
+  </div>
+
+  <h2>🏗️ 架构对比 / Architecture Comparison</h2>
+  
+  <h3>CrewAI: 角色扮演 + 任务驱动</h3>
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                           CREW                                   │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │   Agent 1   │    │   Agent 2   │    │   Agent 3   │         │
+│  │ "Researcher"│    │  "Analyst"  │    │  "Writer"   │         │
+│  │  role+goal  │    │  role+goal  │    │  role+goal  │         │
+│  │  backstory  │    │  backstory  │    │  backstory  │         │
+│  │  [tools]    │    │  [tools]    │    │  [tools]    │         │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘         │
+│         │                  │                  │                 │
+│         ▼                  ▼                  ▼                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │   Task 1    │───▶│   Task 2    │───▶│   Task 3    │         │
+│  │ "Research"  │    │  "Analyze"  │    │   "Write"   │         │
+│  │ expected_   │    │ expected_   │    │ expected_   │         │
+│  │   output    │    │   output    │    │   output    │         │
+│  └─────────────┘    └─────────────┘    └─────────────┘         │
+│                                                                 │
+│  Process: sequential | hierarchical                             │
+│  Memory: short-term | long-term | entity                        │
+└─────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h3>AutoGen: 对话驱动 + Agent 作为 Tool</h3>
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONVERSATION FLOW                             │
+│                                                                 │
+│  ┌─────────────┐                                                │
+│  │   User /    │                                                │
+│  │  Orchestrator│                                               │
+│  └──────┬──────┘                                                │
+│         │ task                                                  │
+│         ▼                                                       │
+│  ┌─────────────┐      ┌─────────────┐                          │
+│  │  Assistant  │◀────▶│  AgentTool  │──▶ math_expert           │
+│  │   Agent     │      │  (wrapper)  │──▶ chemistry_expert      │
+│  │             │      └─────────────┘                          │
+│  │  tools=[    │                                                │
+│  │   AgentTool │      Agent 被包装成 Tool！                     │
+│  │  ]          │      Agent wrapped as Tool!                    │
+│  └─────────────┘                                                │
+│                                                                 │
+│  Pattern: Agent calls other Agents like calling functions       │
+└─────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>✨ 设计亮点 / Design Highlights</h2>
+
+  <div class="highlight">
+    <h4>亮点 1: CrewAI 的 "Backstory" 设计</h4>
+    <p><strong>为什么好</strong>：每个 Agent 有 <code class="inline-code">backstory</code>（背景故事），不只是简单的 system prompt。这让 LLM 更好地"进入角色"，输出更符合预期。</p>
+    <pre><code>researcher:
+  role: "Senior Data Researcher"
+  goal: "Uncover cutting-edge developments in AI"
+  backstory: >
+    You're a seasoned researcher with a knack for uncovering 
+    the latest developments. Known for your ability to find 
+    the most relevant information and present it clearly.</code></pre>
+    <p><strong>面试点</strong>：这是 <strong>Persona Engineering</strong> 的实践——给 Agent 一个"人设"能显著提升输出质量。</p>
+  </div>
+
+  <div class="highlight-blue">
+    <h4>亮点 2: AutoGen 的 "Agent as Tool" 模式</h4>
+    <p><strong>为什么好</strong>：把 Agent 包装成 <code class="inline-code">AgentTool</code>，主 Agent 可以像调用普通函数一样调用其他 Agent。简洁优雅，复用性强。</p>
+    <pre><code>math_agent = AssistantAgent("math_expert", ...)
+math_tool = AgentTool(math_agent, return_value_as_last_message=True)
+
+# 主 Agent 把其他 Agent 当作 Tool 使用
+main_agent = AssistantAgent(
+    tools=[math_tool, chemistry_tool],  # Agents as Tools!
+)</code></pre>
+    <p><strong>面试点</strong>：这种设计体现了<strong>组合优于继承</strong>的原则——Agent 的能力通过组合 Tool（包括其他 Agent）来扩展。</p>
+  </div>
+
+  <div class="highlight">
+    <h4>亮点 3: CrewAI 的 Process 模式</h4>
+    <p><strong>Sequential vs Hierarchical</strong>：</p>
+    <ul>
+      <li><strong>Sequential</strong>：任务按顺序执行，Task 1 → Task 2 → Task 3</li>
+      <li><strong>Hierarchical</strong>：有一个 "Manager Agent" 负责分配任务，其他 Agent 汇报结果</li>
+    </ul>
+    <pre><code># Sequential: 简单流水线
+crew = Crew(process=Process.sequential, ...)
+
+# Hierarchical: 需要 manager_llm
+crew = Crew(
+    process=Process.hierarchical,
+    manager_llm=ChatOpenAI(model="gpt-4"),  # Manager 负责协调
+    ...
+)</code></pre>
+  </div>
+
+  <div class="highlight-blue">
+    <h4>亮点 4: CrewAI Flow 的状态管理</h4>
+    <p><strong>为什么好</strong>：Flow 提供 <strong>结构化状态</strong>（Pydantic BaseModel）和 <strong>持久化</strong>（@persist 装饰器），让复杂工作流的状态管理变得可靠。</p>
+    <pre><code>class MarketResearchState(BaseModel):
+    product: str = ""
+    analysis: MarketAnalysis | None = None
+
+@persist  # 自动持久化状态到 SQLite
+class MarketResearchFlow(Flow[MarketResearchState]):
+    @start()
+    def initialize(self):
+        self.state.product = "AI Assistant"
+    
+    @listen(initialize)
+    async def analyze(self):
+        # 状态在 self.state 中，类型安全
+        ...</code></pre>
+  </div>
+
+  <h2>🔄 执行流程对比 / Execution Flow</h2>
+  
+  <table>
+    <tr>
+      <th>特性</th>
+      <th>CrewAI</th>
+      <th>AutoGen</th>
+    </tr>
+    <tr>
+      <td>协作模式</td>
+      <td>任务驱动（Task-based）</td>
+      <td>对话驱动（Conversation-based）</td>
+    </tr>
+    <tr>
+      <td>Agent 定义</td>
+      <td>role + goal + backstory</td>
+      <td>system_message + description</td>
+    </tr>
+    <tr>
+      <td>任务传递</td>
+      <td>显式 Task 定义，expected_output</td>
+      <td>通过对话消息传递</td>
+    </tr>
+    <tr>
+      <td>编排方式</td>
+      <td>Crew (sequential/hierarchical)</td>
+      <td>AgentTool / GroupChat</td>
+    </tr>
+    <tr>
+      <td>状态管理</td>
+      <td>Memory + Flow State</td>
+      <td>Conversation history</td>
+    </tr>
+    <tr>
+      <td>适用场景</td>
+      <td>结构化流程（报告生成、分析）</td>
+      <td>灵活对话（问答、辩论）</td>
+    </tr>
+  </table>
+
+  <h2>💻 关键代码 / Key Code</h2>
+
+  <h3>CrewAI: 完整的 Research Crew</h3>
+  <pre><code>from crewai import Agent, Crew, Task, Process
+
+# 1. 定义 Agents
+researcher = Agent(
+    role="Senior Research Analyst",
+    goal="Find and synthesize information about {topic}",
+    backstory="Expert researcher with 10+ years experience",
+    tools=[search_tool, scrape_tool],
+    verbose=True
+)
+
+writer = Agent(
+    role="Technical Writer",
+    goal="Write clear, engaging content about {topic}",
+    backstory="Former journalist, now AI technical writer",
+    verbose=True
+)
+
+# 2. 定义 Tasks
+research_task = Task(
+    description="Research the latest trends in {topic}",
+    expected_output="Bullet points of key findings",
+    agent=researcher
+)
+
+write_task = Task(
+    description="Write a blog post based on the research",
+    expected_output="A 500-word blog post in markdown",
+    agent=writer,
+    context=[research_task]  # 依赖研究结果
+)
+
+# 3. 组建 Crew
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, write_task],
+    process=Process.sequential,
+    memory=True,  # 启用记忆
+    verbose=True
+)
+
+# 4. 执行
+result = crew.kickoff(inputs={"topic": "AI Agents"})
+print(result.raw)</code></pre>
+
+  <h3>AutoGen: Agent 作为 Tool 的编排</h3>
+  <pre><code>import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.tools import AgentTool
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+async def main():
+    model = OpenAIChatCompletionClient(model="gpt-4o")
+    
+    # 1. 创建专家 Agents
+    researcher = AssistantAgent(
+        "researcher",
+        model_client=model,
+        system_message="You are a research expert. Find facts.",
+        description="A research expert for finding information."
+    )
+    
+    analyst = AssistantAgent(
+        "analyst", 
+        model_client=model,
+        system_message="You analyze data and provide insights.",
+        description="A data analyst for synthesizing research."
+    )
+    
+    # 2. 包装成 Tools
+    research_tool = AgentTool(researcher, return_value_as_last_message=True)
+    analysis_tool = AgentTool(analyst, return_value_as_last_message=True)
+    
+    # 3. 主 Agent 使用这些 Tools
+    orchestrator = AssistantAgent(
+        "orchestrator",
+        model_client=model,
+        system_message="You coordinate research and analysis tasks.",
+        tools=[research_tool, analysis_tool],
+        max_tool_iterations=10
+    )
+    
+    # 4. 执行
+    result = await orchestrator.run(
+        task="Research AI agent frameworks and analyze their trade-offs"
+    )
+    print(result)
+
+asyncio.run(main())</code></pre>
+
+  <h2>📚 可学习的模式 / Patterns to Learn</h2>
+
+  <div class="comparison">
+    <div>
+      <h4>1. Persona Engineering</h4>
+      <p><strong>模式</strong>：给 Agent 详细的角色设定（role, goal, backstory）</p>
+      <p><strong>效果</strong>：输出更专业、更一致</p>
+      <p><strong>应用</strong>：OpenClaw 的 SOUL.md 就是这个思想！</p>
+    </div>
+    <div>
+      <h4>2. Task Decomposition</h4>
+      <p><strong>模式</strong>：大任务拆成小任务，每个任务有明确的 expected_output</p>
+      <p><strong>效果</strong>：可控性强，容易调试</p>
+      <p><strong>应用</strong>：任何复杂工作流</p>
+    </div>
+  </div>
+
+  <div class="comparison">
+    <div>
+      <h4>3. Agent as Tool</h4>
+      <p><strong>模式</strong>：把 Agent 封装成 Tool，统一接口</p>
+      <p><strong>效果</strong>：组合灵活，可以嵌套</p>
+      <p><strong>应用</strong>：Agent 可以"委托"给专家 Agent</p>
+    </div>
+    <div>
+      <h4>4. Structured State (Flow)</h4>
+      <p><strong>模式</strong>：用 Pydantic 定义状态 Schema</p>
+      <p><strong>效果</strong>：类型安全，IDE 补全</p>
+      <p><strong>应用</strong>：复杂多步骤工作流</p>
+    </div>
+  </div>
+
+  <h2>🎤 面试题 / Interview Questions</h2>
+
+  <div class="highlight">
+    <h4>Q: 设计一个 Multi-Agent 系统来做代码审查，你会怎么设计？</h4>
+    <p><strong>参考答案</strong>：</p>
+    <ol>
+      <li><strong>Agent 角色划分</strong>：
+        <ul>
+          <li>Security Reviewer: 检查安全漏洞</li>
+          <li>Performance Reviewer: 检查性能问题</li>
+          <li>Style Reviewer: 检查代码风格</li>
+          <li>Summarizer: 汇总审查结果</li>
+        </ul>
+      </li>
+      <li><strong>协作模式</strong>：
+        <ul>
+          <li>可以用 Sequential：安全 → 性能 → 风格 → 汇总</li>
+          <li>或者 Parallel：三个 Reviewer 并行，最后 Summarizer 合并</li>
+        </ul>
+      </li>
+      <li><strong>状态管理</strong>：共享 code_context 和 review_findings</li>
+      <li><strong>关键考虑</strong>：
+        <ul>
+          <li>如何处理 Reviewer 之间的冲突建议？</li>
+          <li>如何防止 hallucination（瞎编问题）？</li>
+          <li>成本优化：小模型做初筛，大模型做最终判断</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+
+  <div class="highlight-blue">
+    <h4>Q: CrewAI 和 AutoGen 的核心区别是什么？什么场景用哪个？</h4>
+    <p><strong>参考答案</strong>：</p>
+    <ul>
+      <li><strong>CrewAI</strong>：任务驱动，适合结构化流程（报告生成、数据分析流水线）。特点是每个任务有明确的 expected_output，可预测性强。</li>
+      <li><strong>AutoGen</strong>：对话驱动，适合需要灵活交互的场景（辩论、头脑风暴、探索性对话）。Agent 通过对话协作，更动态。</li>
+      <li><strong>关键洞察</strong>：如果你的工作流可以画成固定的流程图 → CrewAI；如果需要 Agent 之间动态讨论 → AutoGen。</li>
+    </ul>
+  </div>
+
+  <h2>🔗 与昨天内容的联系</h2>
+  <div class="architecture">
+    <p>昨天学的 <strong>ReAct + Tool Use</strong> 是 Multi-Agent 的基础：</p>
+    <ul>
+      <li>每个 Agent 内部仍然是 ReAct 循环（Thought → Action → Observation）</li>
+      <li>Tool Use 让 Agent 能调用外部能力——而 <strong>AgentTool</strong> 把其他 Agent 也变成了 Tool！</li>
+      <li><strong>递归结构</strong>：Agent 可以调用 Agent，形成嵌套的 ReAct 循环</li>
+    </ul>
+    <p>这就是为什么理解 ReAct 是理解 Multi-Agent 的前提。</p>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 后续讨论 / Follow-up</h3>
+    <p>明天可以继续深入：</p>
+    <ul>
+      <li><strong>Agent Memory</strong>：短期 vs 长期记忆如何设计？</li>
+      <li><strong>RAG + Agent</strong>：如何让 Agent 检索知识库？</li>
+      <li><strong>设计 ChatGPT</strong>：面试经典题，端到端系统设计</li>
+    </ul>
+    <p>有问题随时问！🚀</p>
+  </div>
+
+  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 14px;">
+    <p>Friday's Daily AI Push | 2026-02-02 | Topic: Multi-Agent Collaboration</p>
+  </footer>
+</body>
+</html>
