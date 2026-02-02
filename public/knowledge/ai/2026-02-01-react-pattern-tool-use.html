@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-01 - ReAct Pattern & Tool Use Design</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #fafafa; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; }
+    h2 { color: #5f6368; margin-top: 30px; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Consolas, monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #f0f4f8; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; font-size: 12px; line-height: 1.4; }
+    .interview { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4caf50; }
+    .pattern { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .warning { background: #ffebee; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f44336; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; }
+    .tag-interview { background: #4caf50; color: white; }
+    .tag-practical { background: #2196f3; color: white; }
+  </style>
+</head>
+<body>
+  <h1>🤖 ReAct Pattern & Tool Use Design</h1>
+  <p>
+    <span class="tag tag-interview">🎤 面试高频</span>
+    <span class="tag tag-practical">💻 实战必备</span>
+    | 📅 2026-02-01
+  </p>
+  
+  <h2>📖 概述 / Overview</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>ReAct (Reasoning + Acting)</strong> 是现代 AI Agent 的核心设计模式。与传统的单轮问答不同，ReAct 让 LLM 能够「思考-行动-观察」循环迭代，直到完成复杂任务。</p>
+      <p>你每天用的 Friday (我!) 就是基于这个模式：收到任务 → 思考需要什么工具 → 调用工具 → 观察结果 → 继续思考或返回答案。</p>
+    </div>
+    <div class="en">
+      <p><strong>ReAct (Reasoning + Acting)</strong> is the core design pattern for modern AI agents. Unlike single-turn Q&A, ReAct enables LLMs to iterate through "think-act-observe" loops until complex tasks are completed.</p>
+      <p>Friday (me!) that you use daily is built on this pattern: receive task → think about what tools needed → call tools → observe results → continue thinking or return answer.</p>
+    </div>
+  </div>
+
+  <h2>🏗️ 核心循环 / The Core Loop</h2>
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                        ReAct Loop                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   User Query: "北京今天天气怎么样？"                               │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌─────────────┐                                               │
+│   │   THOUGHT   │  "用户问天气，我需要调用 weather 工具"           │
+│   └──────┬──────┘                                               │
+│          │                                                       │
+│          ▼                                                       │
+│   ┌─────────────┐                                               │
+│   │   ACTION    │  weather_tool(location="北京")                 │
+│   └──────┬──────┘                                               │
+│          │                                                       │
+│          ▼                                                       │
+│   ┌─────────────┐                                               │
+│   │ OBSERVATION │  {"temp": 5, "condition": "晴", ...}          │
+│   └──────┬──────┘                                               │
+│          │                                                       │
+│          ▼                                                       │
+│   ┌─────────────┐                                               │
+│   │   THOUGHT   │  "已获取数据，可以回复用户了"                    │
+│   └──────┬──────┘                                               │
+│          │                                                       │
+│          ▼                                                       │
+│   ┌─────────────┐                                               │
+│   │   ANSWER    │  "北京今天晴天，气温5°C..."                      │
+│   └─────────────┘                                               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>✨ 设计亮点 / Design Highlights</h2>
+  
+  <div class="highlight">
+    <h4>亮点 1: 交错思考 (Interleaved Reasoning)</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>关键洞察</strong>：让 LLM 在每一步行动前后都进行推理，而不是一次性规划所有步骤。</p>
+        <p><strong>为什么好</strong>：实际任务中，下一步往往依赖上一步的结果。先规划再执行的方式无法应对动态情况。</p>
+      </div>
+      <div class="en">
+        <p><strong>Key insight</strong>: Let LLM reason before and after each action, rather than planning all steps upfront.</p>
+        <p><strong>Why it works</strong>: In real tasks, next steps often depend on previous results. Plan-then-execute can't handle dynamic situations.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <h4>亮点 2: 工具作为接口 (Tools as Interfaces)</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>关键洞察</strong>：工具定义清晰的输入/输出 schema，LLM 只需要理解「用途」而非「实现」。</p>
+        <p><strong>为什么好</strong>：解耦 LLM 能力和外部系统。工具可以随时升级，不影响 Agent 逻辑。</p>
+      </div>
+      <div class="en">
+        <p><strong>Key insight</strong>: Tools define clear input/output schemas; LLM only needs to understand "purpose", not "implementation".</p>
+        <p><strong>Why it works</strong>: Decouples LLM capability from external systems. Tools can be upgraded anytime without affecting Agent logic.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <h4>亮点 3: 观察驱动迭代 (Observation-Driven Iteration)</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>关键洞察</strong>：每次工具调用的结果被注入上下文，成为下一步推理的依据。</p>
+        <p><strong>为什么好</strong>：Agent 能处理失败、修正错误、探索多条路径。这是「智能」的核心体现。</p>
+      </div>
+      <div class="en">
+        <p><strong>Key insight</strong>: Results from each tool call are injected into context, becoming the basis for next reasoning step.</p>
+        <p><strong>Why it works</strong>: Agent can handle failures, correct mistakes, explore multiple paths. This is the core of "intelligence".</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>💻 Tool 定义最佳实践 / Tool Definition Best Practices</h2>
+
+  <div class="interview">
+    <h4>🎤 面试考点：如何设计一个好的 Tool Schema?</h4>
+  </div>
+
+  <div class="pattern">
+    <h4>Pattern 1: 精准的命名和描述</h4>
+<pre><code>// ❌ Bad
+{
+  "name": "do_stuff",
+  "description": "Does things with data"
+}
+
+// ✅ Good
+{
+  "name": "search_web",
+  "description": "Search the web using Brave Search API. Returns titles, URLs, and snippets. Use for finding current information, news, or documentation."
+}</code></pre>
+    <p><strong>原则</strong>：描述要说明「何时使用」和「返回什么」，而非实现细节。</p>
+  </div>
+
+  <div class="pattern">
+    <h4>Pattern 2: 参数约束明确</h4>
+<pre><code>{
+  "name": "send_email",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "to": {
+        "type": "string",
+        "description": "Recipient email address",
+        "format": "email"  // 明确格式
+      },
+      "priority": {
+        "type": "string",
+        "enum": ["low", "normal", "high"],  // 限定选项
+        "default": "normal"
+      },
+      "body": {
+        "type": "string",
+        "maxLength": 10000  // 限制长度
+      }
+    },
+    "required": ["to", "body"]  // 必填项明确
+  }
+}</code></pre>
+  </div>
+
+  <div class="pattern">
+    <h4>Pattern 3: 错误信息结构化</h4>
+<pre><code>// Tool 返回结构
+{
+  "success": true,
+  "data": { ... },
+  "error": null
+}
+
+// 失败时
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "RATE_LIMITED",
+    "message": "Too many requests. Retry after 60 seconds.",
+    "retryable": true,
+    "retryAfterMs": 60000
+  }
+}</code></pre>
+    <p><strong>原则</strong>：结构化错误让 LLM 知道是否应该重试、如何调整。</p>
+  </div>
+
+  <h2>🔧 实现架构 / Implementation Architecture</h2>
+  
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                     Agent Runtime                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐    │
+│  │   Message    │     │    Tool      │     │   Context    │    │
+│  │   Manager    │────▶│   Router     │────▶│   Window     │    │
+│  └──────────────┘     └──────────────┘     └──────────────┘    │
+│         │                    │                    │             │
+│         │                    ▼                    │             │
+│         │           ┌──────────────┐              │             │
+│         │           │  Tool Pool   │              │             │
+│         │           │ ┌──────────┐ │              │             │
+│         │           │ │ weather  │ │              │             │
+│         │           │ │ search   │ │              │             │
+│         │           │ │ calendar │ │              │             │
+│         │           │ │ email    │ │              │             │
+│         │           │ └──────────┘ │              │             │
+│         │           └──────────────┘              │             │
+│         │                    │                    │             │
+│         ▼                    ▼                    ▼             │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                     LLM API Call                         │   │
+│  │  messages: [...history, tool_results]                    │   │
+│  │  tools: [available_tool_schemas]                         │   │
+│  │  tool_choice: "auto" | "required" | "none"              │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>💻 核心代码 / Key Code</h2>
+
+  <h4>TypeScript Agent Loop 实现</h4>
+<pre><code>interface Tool {
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+  execute: (params: unknown) => Promise&lt;ToolResult&gt;;
+}
+
+interface ToolResult {
+  success: boolean;
+  data?: unknown;
+  error?: { code: string; message: string; retryable: boolean };
+}
+
+async function runAgentLoop(
+  query: string,
+  tools: Tool[],
+  maxIterations = 10
+): Promise&lt;string&gt; {
+  const messages: Message[] = [{ role: 'user', content: query }];
+  
+  for (let i = 0; i &lt; maxIterations; i++) {
+    // 1. Call LLM with tools
+    const response = await llm.chat({
+      messages,
+      tools: tools.map(t => ({
+        type: 'function',
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        }
+      })),
+      tool_choice: 'auto',
+    });
+
+    // 2. Check if done (no tool calls)
+    if (!response.tool_calls?.length) {
+      return response.content;
+    }
+
+    // 3. Execute tool calls (可并行)
+    const toolResults = await Promise.all(
+      response.tool_calls.map(async (call) => {
+        const tool = tools.find(t => t.name === call.function.name);
+        if (!tool) {
+          return { call, result: { success: false, error: 'Tool not found' }};
+        }
+        const params = JSON.parse(call.function.arguments);
+        const result = await tool.execute(params);
+        return { call, result };
+      })
+    );
+
+    // 4. Add assistant message and tool results to history
+    messages.push({
+      role: 'assistant',
+      content: response.content,
+      tool_calls: response.tool_calls,
+    });
+    
+    for (const { call, result } of toolResults) {
+      messages.push({
+        role: 'tool',
+        tool_call_id: call.id,
+        content: JSON.stringify(result),
+      });
+    }
+  }
+
+  throw new Error('Max iterations reached');
+}</code></pre>
+
+  <h2>📊 tool_choice 策略 / tool_choice Strategies</h2>
+  
+  <table>
+    <tr>
+      <th>策略</th>
+      <th>行为</th>
+      <th>使用场景</th>
+    </tr>
+    <tr>
+      <td><code>"auto"</code></td>
+      <td>LLM 自行决定是否调用工具</td>
+      <td>通用对话 Agent (最常用)</td>
+    </tr>
+    <tr>
+      <td><code>"required"</code></td>
+      <td>强制至少调用一个工具</td>
+      <td>明确需要工具的场景，如"查天气"</td>
+    </tr>
+    <tr>
+      <td><code>"none"</code></td>
+      <td>禁止调用工具</td>
+      <td>纯对话、总结、或成本控制</td>
+    </tr>
+    <tr>
+      <td><code>{"type":"function", "function":{"name":"xxx"}}</code></td>
+      <td>强制调用指定工具</td>
+      <td>确定性流程，如表单填写</td>
+    </tr>
+  </table>
+
+  <h2>⚠️ 常见陷阱 / Common Pitfalls</h2>
+
+  <div class="warning">
+    <h4>陷阱 1: 工具过多导致选择困难</h4>
+    <p><strong>问题</strong>：工具太多 (>20)，LLM 难以选择正确的工具，且 token 成本高。</p>
+    <p><strong>解决</strong>：工具分组 + 动态加载。根据对话上下文只注入相关工具。</p>
+<pre><code>// 动态工具选择
+const relevantTools = await selectToolsByContext(query, allTools);
+// 使用 embedding 相似度或简单规则筛选</code></pre>
+  </div>
+
+  <div class="warning">
+    <h4>陷阱 2: 无限循环</h4>
+    <p><strong>问题</strong>：LLM 陷入无意义的工具调用循环。</p>
+    <p><strong>解决</strong>：设置 maxIterations + 检测重复调用 + 超时机制。</p>
+  </div>
+
+  <div class="warning">
+    <h4>陷阱 3: 工具失败时没有恢复策略</h4>
+    <p><strong>问题</strong>：工具报错后 LLM 不知道该怎么办。</p>
+    <p><strong>解决</strong>：在错误返回中提供建议，如 "try alternative search terms"。</p>
+  </div>
+
+  <div class="warning">
+    <h4>陷阱 4: Context 爆炸</h4>
+    <p><strong>问题</strong>：长对话 + 大量工具结果超出 token 限制。</p>
+    <p><strong>解决</strong>：压缩历史 + 摘要工具结果 + 滑动窗口。</p>
+  </div>
+
+  <h2>🎤 面试题 / Interview Questions</h2>
+
+  <div class="interview">
+    <h4>Q1: 如何设计一个能使用外部工具的 ChatGPT 系统？</h4>
+    <p><strong>考点</strong>：ReAct loop、工具定义、并行调用、错误处理、context 管理</p>
+    <p><strong>加分项</strong>：提及 streaming tool calls、工具权限控制、成本优化</p>
+  </div>
+
+  <div class="interview">
+    <h4>Q2: Agent 如何处理工具调用失败？</h4>
+    <p><strong>标准答案</strong>：</p>
+    <ul>
+      <li>结构化错误返回 (retryable, error code)</li>
+      <li>LLM 根据错误信息决定：重试 / 换工具 / 放弃并告知用户</li>
+      <li>设置最大重试次数防止无限循环</li>
+      <li>Graceful degradation: 部分工具失败时仍能完成任务</li>
+    </ul>
+  </div>
+
+  <div class="interview">
+    <h4>Q3: 如何减少 Agent 的 token 消耗和延迟？</h4>
+    <p><strong>答案</strong>：</p>
+    <ul>
+      <li>动态工具加载 (只注入相关工具)</li>
+      <li>工具结果摘要 (大量数据先摘要再给 LLM)</li>
+      <li>并行工具调用 (independent calls in parallel)</li>
+      <li>Context 压缩 (历史消息定期摘要)</li>
+      <li>缓存常见工具结果</li>
+    </ul>
+  </div>
+
+  <h2>📚 可学习的模式 / Patterns to Learn</h2>
+
+  <div class="pattern">
+    <h4>Pattern: Streaming Tool Calls</h4>
+    <p>Claude 和 GPT-4 支持流式返回 tool calls，可以边解析边执行，降低感知延迟。</p>
+<pre><code>// 流式处理
+for await (const chunk of stream) {
+  if (chunk.type === 'tool_call_delta') {
+    // 边解析边构建 tool call
+    partialCall.arguments += chunk.delta;
+  }
+  if (chunk.type === 'tool_call_complete') {
+    // 立即执行，不等待其他 tool calls
+    executeInBackground(partialCall);
+  }
+}</code></pre>
+  </div>
+
+  <div class="pattern">
+    <h4>Pattern: Tool Permission Levels</h4>
+    <p>不同工具有不同风险等级，需要不同的确认策略。</p>
+<pre><code>const toolPermissions = {
+  read_file: { level: 'low', requireConfirm: false },
+  write_file: { level: 'medium', requireConfirm: false },
+  send_email: { level: 'high', requireConfirm: true },
+  delete_data: { level: 'critical', requireConfirm: true, doubleConfirm: true },
+};</code></pre>
+    <p>这正是 OpenClaw 的 AGENTS.md 所说的 "External vs Internal" 原则！</p>
+  </div>
+
+  <h2>🔗 相关资源 / Resources</h2>
+  <ul>
+    <li><a href="https://arxiv.org/abs/2210.03629">ReAct: Synergizing Reasoning and Acting in Language Models (原论文)</a></li>
+    <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/tool-use">Claude Tool Use 文档</a></li>
+    <li><a href="https://platform.openai.com/docs/guides/function-calling">OpenAI Function Calling Guide</a></li>
+  </ul>
+
+  <div class="follow-up" style="margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px;">
+    <h3>💬 后续讨论 / Follow-up Discussion</h3>
+    <p>想深入聊聊 OpenClaw 的 tool 设计？或者其他 Agent 架构问题？</p>
+    <p><em>（Zhilong 提问后补充）</em></p>
+  </div>
+
+  <hr style="margin-top: 40px;">
+  <p style="color: #666; font-size: 12px;">
+    Generated by Friday 🟡 | 2026-02-01 | Part of Daily AI Knowledge Push
+  </p>
+</body>
+</html>

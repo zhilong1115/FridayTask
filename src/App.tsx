@@ -6,6 +6,7 @@ import ListView from './components/ListView';
 import TaskModal from './components/TaskModal';
 import SummaryModal from './components/SummaryModal';
 import ArtifactsModal from './components/ArtifactsModal';
+import KnowledgeModal from './components/KnowledgeModal';
 import MobileNav from './components/MobileNav';
 import type { Task, TaskFormData, SidebarView } from './types';
 
@@ -26,6 +27,7 @@ export default function App() {
   // Modal state
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
+  const [knowledgeOpen, setKnowledgeOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState('');
@@ -109,6 +111,7 @@ export default function App() {
         onCreateTask={() => openCreate()}
         onOpenSummary={() => setSummaryOpen(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
+        onOpenKnowledge={() => setKnowledgeOpen(true)}
       />
 
       {/* Mobile Nav */}
@@ -118,6 +121,7 @@ export default function App() {
         onCreateTask={() => openCreate()}
         onOpenSummary={() => setSummaryOpen(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
+        onOpenKnowledge={() => setKnowledgeOpen(true)}
         filterAssignee={filterAssignee}
         onFilterAssignee={setFilterAssignee}
         filterStatus={filterStatus}
@@ -157,6 +161,12 @@ export default function App() {
       <ArtifactsModal
         isOpen={artifactsOpen}
         onClose={() => setArtifactsOpen(false)}
+      />
+
+      {/* Knowledge Modal */}
+      <KnowledgeModal
+        isOpen={knowledgeOpen}
+        onClose={() => setKnowledgeOpen(false)}
       />
 
       {/* Task Modal */}

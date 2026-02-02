@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-01 - 利率如何影响股市</title>
+  <style>
+    body { 
+      font-family: -apple-system, system-ui, sans-serif; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px; 
+      line-height: 1.7;
+      color: #3c4043;
+    }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 600px) {
+      .bilingual { grid-template-columns: 1fr; }
+    }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 30px; }
+    .impact { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .terms { background: #e8f0fe; padding: 15px; border-radius: 8px; }
+    .terms dt { font-weight: bold; color: #1a73e8; }
+    .terms dd { margin-left: 0; margin-bottom: 10px; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    .news-hook { background: linear-gradient(135deg, #fff3e0, #ffe0b2); padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .news-hook h2 { margin-top: 0; color: #e65100; }
+    .example { background: #fff8e1; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107; }
+    .formula { background: #e3f2fd; padding: 15px; border-radius: 8px; font-family: monospace; margin: 15px 0; }
+    .chart-placeholder { background: #f5f5f5; padding: 30px; text-align: center; border-radius: 8px; color: #666; margin: 20px 0; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    .highlight { background: #fff9c4; padding: 2px 6px; border-radius: 3px; }
+    .red { color: #d32f2f; }
+    .green { color: #388e3c; }
+  </style>
+</head>
+<body>
+  <h1>📈 利率如何影响股市<br><small style="font-weight:normal;font-size:0.6em">How Interest Rates Affect the Stock Market</small></h1>
+  
+  <p><em>2026年2月1日 · Phase 2.2 货币政策与股市</em></p>
+  
+  <div class="news-hook">
+    <h2>🔥 今日新闻切入点</h2>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>市场反应：</strong>标普500下跌0.43%，纳斯达克下跌0.94%，比特币跌破$80,000。</p>
+        <p>Trump 开玩笑说如果 Kevin Warsh 不降息就要起诉他——这说明利率预期对市场影响有多大！</p>
+      </div>
+      <div class="en">
+        <p><strong>Market Reaction:</strong> S&P 500 down 0.43%, Nasdaq down 0.94%, Bitcoin below $80,000.</p>
+        <p>Trump joked about suing Kevin Warsh if he doesn't lower rates—showing how much rate expectations matter!</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>1️⃣ 核心机制：为什么利率影响股价？</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>股票的价值 = 未来所有现金流的<strong>现值</strong>。利率是计算现值的关键参数。</p>
+      
+      <div class="formula">
+        股票价值 = Σ (未来现金流 ÷ (1 + 利率)^年数)
+      </div>
+      
+      <p>简单理解：</p>
+      <ul>
+        <li><span class="red">利率上升</span> → 分母变大 → 股票价值<span class="red">下降</span></li>
+        <li><span class="green">利率下降</span> → 分母变小 → 股票价值<span class="green">上升</span></li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>Stock value = <strong>Present Value</strong> of all future cash flows. Interest rate is the key parameter in this calculation.</p>
+      
+      <div class="formula">
+        Stock Value = Σ (Future Cash Flow ÷ (1 + rate)^years)
+      </div>
+      
+      <p>Simply put:</p>
+      <ul>
+        <li><span class="red">Rates rise</span> → Denominator grows → Stock value <span class="red">falls</span></li>
+        <li><span class="green">Rates fall</span> → Denominator shrinks → Stock value <span class="green">rises</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="example">
+    <strong>🎯 直观例子：</strong><br>
+    假设一家公司明年赚 $100。<br>
+    • 利率 5%：这 $100 今天值 $100 ÷ 1.05 = <strong>$95.24</strong><br>
+    • 利率 10%：这 $100 今天值 $100 ÷ 1.10 = <strong>$90.91</strong><br>
+    仅仅因为利率变化，同样的未来收益，今天就少值 $4.33！
+  </div>
+
+  <h2>2️⃣ 三条传导路径</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <h3>路径一：估值效应（最直接）</h3>
+      <p>如上所述，利率是股票估值公式的分母。这就是为什么<span class="highlight">成长股对利率最敏感</span>——它们的价值主要来自遥远的未来。</p>
+      
+      <h3>路径二：企业成本</h3>
+      <p>利率上升 → 借钱更贵 → 企业利润下降 → 股价下跌</p>
+      <p>高杠杆行业（房地产、公用事业）受影响最大。</p>
+      
+      <h3>路径三：替代效应</h3>
+      <p>利率上升 → 债券收益变高 → 投资者把钱从股市转到债市 → 股票抛压</p>
+    </div>
+    <div class="en">
+      <h3>Path 1: Valuation Effect (Most Direct)</h3>
+      <p>As explained above, rate is the denominator in valuation. This is why <span class="highlight">growth stocks are most rate-sensitive</span>—their value comes from distant future earnings.</p>
+      
+      <h3>Path 2: Corporate Costs</h3>
+      <p>Rates rise → Borrowing costs up → Profits down → Stock prices fall</p>
+      <p>High-leverage sectors (real estate, utilities) get hit hardest.</p>
+      
+      <h3>Path 3: Substitution Effect</h3>
+      <p>Rates rise → Bond yields look better → Money flows from stocks to bonds → Selling pressure</p>
+    </div>
+  </div>
+
+  <h2>3️⃣ 不同股票的敏感度</h2>
+  
+  <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background: #e8f0fe;">
+      <th style="padding: 10px; text-align: left;">股票类型</th>
+      <th style="padding: 10px; text-align: left;">利率敏感度</th>
+      <th style="padding: 10px; text-align: left;">原因</th>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>成长股</strong><br>(Growth: NVDA, TSLA)</td>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><span class="red">🔴 极高</span></td>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;">价值来自未来，折现影响大</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>价值股</strong><br>(Value: JPM, XOM)</td>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;">🟡 中等</td>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;">当前盈利稳定，受折现影响较小</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>银行股</strong><br>(Banks: BAC, WFC)</td>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;"><span class="green">🟢 反向受益</span></td>
+      <td style="padding: 10px; border-bottom: 1px solid #ddd;">利差扩大 = 赚更多钱</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px;"><strong>REITs/公用事业</strong><br>(Utilities)</td>
+      <td style="padding: 10px;"><span class="red">🔴 高</span></td>
+      <td style="padding: 10px;">高负债 + 与债券竞争收益</td>
+    </tr>
+  </table>
+
+  <h2>4️⃣ 今天的市场在告诉我们什么？</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>纳斯达克跌幅（-0.94%）> 标普500跌幅（-0.43%）</strong></p>
+      <p>这完美印证了上面说的：纳斯达克以科技成长股为主，对利率预期更敏感。</p>
+      
+      <p><strong>比特币暴跌至 $78,000</strong></p>
+      <p>Bitcoin 常被视为"风险资产"，当利率预期上升时，投资者逃离高风险资产。</p>
+      
+      <p><strong>Trump 开玩笑起诉 Warsh</strong></p>
+      <p>这是政治信号：总统希望低利率刺激经济。但 Fed 的独立性意味着 Warsh 不一定会听话——市场在定价这种不确定性。</p>
+    </div>
+    <div class="en">
+      <p><strong>Nasdaq (-0.94%) fell more than S&P 500 (-0.43%)</strong></p>
+      <p>This perfectly confirms the theory: Nasdaq is tech/growth heavy, more rate-sensitive.</p>
+      
+      <p><strong>Bitcoin crashed to $78,000</strong></p>
+      <p>BTC is often treated as a "risk asset"—when rate expectations rise, investors flee to safety.</p>
+      
+      <p><strong>Trump's joke about suing Warsh</strong></p>
+      <p>Political signal: Presidents want low rates to boost the economy. But Fed independence means Warsh might not comply—markets are pricing in this uncertainty.</p>
+    </div>
+  </div>
+
+  <div class="impact">
+    <h3>📊 实用投资启示 / Practical Takeaways</h3>
+    <div class="bilingual">
+      <div class="zh">
+        <ol>
+          <li><strong>关注 FOMC 会议</strong>：每次会议后，观察纳斯达克vs标普的表现差异</li>
+          <li><strong>利率上升周期</strong>：考虑减少成长股仓位，增加银行股和价值股</li>
+          <li><strong>利率下降周期</strong>：成长股和科技股通常表现更好</li>
+          <li><strong>看"预期"不只是"实际"</strong>：市场提前定价，等利率真的变了可能已经晚了</li>
+        </ol>
+      </div>
+      <div class="en">
+        <ol>
+          <li><strong>Watch FOMC meetings</strong>: Observe Nasdaq vs S&P divergence after each</li>
+          <li><strong>Rising rate cycle</strong>: Consider reducing growth stocks, adding banks and value</li>
+          <li><strong>Falling rate cycle</strong>: Growth and tech typically outperform</li>
+          <li><strong>Focus on "expectations"</strong>: Markets price ahead; waiting for actual changes may be too late</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="terms">
+    <h3>📚 关键术语 / Key Terms</h3>
+    <dl>
+      <dt>现值 / Present Value (PV)</dt>
+      <dd>未来现金流按利率折现后的今天价值。利率越高，现值越低。</dd>
+      
+      <dt>折现率 / Discount Rate</dt>
+      <dd>用来计算现值的利率。通常与联邦基金利率挂钩。</dd>
+      
+      <dt>利率敏感性 / Interest Rate Sensitivity</dt>
+      <dd>资产价格对利率变化的反应程度。成长股 > 价值股。</dd>
+      
+      <dt>风险资产 / Risk Assets</dt>
+      <dd>波动大、收益不确定的资产（股票、加密货币）。利率上升时通常下跌。</dd>
+      
+      <dt>避险资产 / Safe Haven Assets</dt>
+      <dd>危机时投资者涌入的资产（国债、黄金）。利率上升时国债更有吸引力。</dd>
+    </dl>
+  </div>
+
+  <h2>5️⃣ 回顾：与之前内容的联系</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>📅 <strong>1月30日</strong>：我们聊了 Kevin Warsh 被提名为 Fed 主席<br>
+      → 他被认为是"鹰派"（倾向于高利率抗通胀）</p>
+      
+      <p>📅 <strong>1月31日</strong>：我们学了 FOMC 是什么，1月会议维持 3.5-3.75%<br>
+      → 有两位委员投反对票想要降息</p>
+      
+      <p>📅 <strong>今天</strong>：理解利率如何影响股市<br>
+      → 现在你能看懂为什么 Warsh 的鹰派立场让市场紧张！</p>
+    </div>
+    <div class="en">
+      <p>📅 <strong>Jan 30</strong>: Kevin Warsh nominated as Fed Chair<br>
+      → He's seen as "hawkish" (prefers higher rates to fight inflation)</p>
+      
+      <p>📅 <strong>Jan 31</strong>: Learned about FOMC, Jan meeting held rates at 3.5-3.75%<br>
+      → Two members dissented wanting to cut rates</p>
+      
+      <p>📅 <strong>Today</strong>: Understanding how rates affect stocks<br>
+      → Now you see why Warsh's hawkish stance makes markets nervous!</p>
+    </div>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 思考题 / Discussion Questions</h3>
+    <ol>
+      <li>如果你现在持有科技股，FOMC 预告要加息，你会怎么做？</li>
+      <li>为什么银行股在加息周期反而可能上涨？</li>
+      <li>Trump 为什么希望低利率？对经济有什么好处？</li>
+    </ol>
+    <p><em>（有问题随时问我！）</em></p>
+  </div>
+
+  <hr style="margin-top: 40px; border: none; border-top: 1px solid #e0e0e0;">
+  <p style="color: #666; font-size: 0.9em;">
+    📖 下一课预告：收益率曲线与经济预测 (Yield Curve & Economic Forecasting)<br>
+    🗓️ 系列：Phase 2 货币政策 | 进度：2.2 利率影响
+  </p>
+</body>
+</html>

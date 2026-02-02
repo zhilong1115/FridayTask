@@ -448,6 +448,88 @@ app.get('/api/cron-jobs', (_req, res) => {
   }
 });
 
+// ─── Knowledge Base API ──────────────────────────────────
+
+const knowledgePath = path.join(__dirname, '..', 'public', 'knowledge');
+
+// List all knowledge articles
+app.get('/api/knowledge', (_req, res) => {
+  try {
+    const articles = [];
+    const folders = ['ai', 'finance'];
+
+    for (const folder of folders) {
+      const folderPath = path.join(knowledgePath, folder);
+      if (fs.existsSync(folderPath)) {
+        const files = fs.readdirSync(folderPath).filter((f) => f.endsWith('.html'));
+        for (const file of files) {
+          // Parse filename: YYYY-MM-DD-topic.html
+          const match = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.html$/);
+          let title = file.replace('.html', '');
+          let date = new Date().toISOString().split('T')[0];
+
+          if (match) {
+            date = match[1];
+            // Convert kebab-case to Title Case
+            title = match[2]
+              .split('-')
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          } else {
+            // Try to extract title from HTML file
+            const content = fs.readFileSync(path.join(folderPath, file), 'utf-8');
+            const titleMatch = content.match(/<title>([^<]+)<\/title>/i);
+            if (titleMatch) {
+              title = titleMatch[1];
+            }
+          }
+
+          articles.push({
+            folder,
+            filename: file,
+            title,
+            date,
+          });
+        }
+      }
+    }
+
+    // Sort by date descending
+    articles.sort((a, b) => b.date.localeCompare(a.date));
+    res.json(articles);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get specific article content
+app.get('/api/knowledge/:folder/:filename', (req, res) => {
+  const { folder, filename } = req.params;
+
+  // Validate folder
+  if (!['ai', 'finance'].includes(folder)) {
+    return res.status(400).json({ error: 'Invalid folder' });
+  }
+
+  // Validate filename (prevent path traversal)
+  if (filename.includes('..') || filename.includes('/') || !filename.endsWith('.html')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+
+  const filePath = path.join(knowledgePath, folder, filename);
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    res.type('html').send(content);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── SPA fallback ────────────────────────────────────────
 
 app.get('*', (_req, res) => {
