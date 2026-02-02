@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>胡 - 特殊牌与经济系统设计 v2</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-gold: #ffd700;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-pink: #ec4899;
+            --accent-orange: #f97316;
+            --accent-cyan: #06b6d4;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(59, 130, 246, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            padding: 1rem 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section Styling */
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Info box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .info-box .icon {
+            font-size: 2rem;
+        }
+
+        .info-box .text {
+            font-size: 1.1rem;
+        }
+
+        .info-box .text strong {
+            color: var(--accent-gold);
+        }
+
+        /* Rarity Colors */
+        .rarity-white { color: #ffffff; }
+        .rarity-green { color: #22c55e; }
+        .rarity-blue { color: #3b82f6; }
+        .rarity-purple { color: #a855f7; }
+        .rarity-gold { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Bond tags */
+        .bond-tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin: 0.1rem;
+        }
+
+        .bond-wealth { background: rgba(255, 215, 0, 0.2); color: #ffd700; }
+        .bond-combo { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
+        .bond-vision { background: rgba(138, 43, 226, 0.2); color: #da70d6; }
+        .bond-transform { background: rgba(0, 191, 255, 0.2); color: #00bfff; }
+        .bond-suit { background: rgba(255, 105, 180, 0.2); color: #ff69b4; }
+        .bond-triplet { background: rgba(255, 99, 71, 0.2); color: #ff6347; }
+        .bond-sequence { background: rgba(50, 205, 50, 0.2); color: #32cd32; }
+        .bond-gamble { background: rgba(220, 20, 60, 0.2); color: #dc143c; }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .card {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-price {
+            background: var(--accent-gold);
+            color: #000;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .card-bonds {
+            margin-bottom: 0.5rem;
+        }
+
+        .card-effect {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .card-side-effect {
+            color: var(--accent-orange);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        /* Build cards */
+        .build-card {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .build-card:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .build-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+        }
+
+        .build-section {
+            margin-bottom: 0.8rem;
+        }
+
+        .build-section strong {
+            color: var(--accent-gold);
+        }
+
+        .build-section .core-cards {
+            color: var(--accent-pink);
+        }
+
+        /* Flower card colors */
+        .flower-mei { border-left: 4px solid #f472b6; }
+        .flower-zhu { border-left: 4px solid #22c55e; }
+        .flower-lan { border-left: 4px solid #a78bfa; }
+        .flower-ju { border-left: 4px solid #fbbf24; }
+
+        /* Season card colors */
+        .season-spring { border-left: 4px solid #86efac; background: linear-gradient(135deg, rgba(134, 239, 172, 0.05), transparent); }
+        .season-summer { border-left: 4px solid #fbbf24; background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), transparent); }
+        .season-autumn { border-left: 4px solid #f97316; background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), transparent); }
+        .season-winter { border-left: 4px solid #60a5fa; background: linear-gradient(135deg, rgba(96, 165, 250, 0.05), transparent); }
+
+        /* Material badges */
+        .material-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin: 0.2rem;
+        }
+
+        .material-gold { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; }
+        .material-silver { background: linear-gradient(135deg, #c0c0c0, #808080); color: #000; }
+        .material-bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #fff; }
+        .material-glass { background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1)); border: 1px solid rgba(255,255,255,0.3); }
+        .material-fire { background: linear-gradient(135deg, #ff4500, #ff0000); color: #fff; }
+        .material-ice { background: linear-gradient(135deg, #00bfff, #1e90ff); color: #fff; }
+        .material-lucky { background: linear-gradient(135deg, #9333ea, #ec4899); color: #fff; }
+        .material-ghost { background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); }
+
+        /* Formula box */
+        .formula-box {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* Progress bar for difficulty */
+        .difficulty-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .difficulty-bar .label {
+            min-width: 80px;
+            font-weight: 600;
+        }
+
+        .difficulty-bar .bar {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .difficulty-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-gold), var(--accent-orange), var(--accent-pink));
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Blockquote */
+        blockquote {
+            border-left: 4px solid var(--accent-purple);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 0 12px 12px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Combo section */
+        .combo-section {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .combo-section h4 {
+            color: var(--accent-pink);
+            margin-bottom: 1rem;
+        }
+
+        /* Design principles */
+        .principles {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .principle {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .principle strong {
+            color: var(--accent-cyan);
+        }
+
+        /* Bond system table */
+        .bond-table td:first-child {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                gap: 0.3rem;
+            }
+
+            .tab-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-box {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🀄 胡 - 特殊牌与经济系统</h1>
+            <p>神牌 · 花牌 · 季节牌 · 经济系统 完整设计文档</p>
+            <span class="version-badge">v4.0 - 基础规则 + 整合文档</span>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('rules')">📋 基础规则</button>
+            <button class="tab-btn" onclick="showTab('gods')">🌟 神牌与羁绊</button>
+            <button class="tab-btn" onclick="showTab('materials')">💎 材质</button>
+            <button class="tab-btn" onclick="showTab('flowers')">🌸 花牌</button>
+            <button class="tab-btn" onclick="showTab('seasons')">🗓️ 季节牌</button>
+            <button class="tab-btn" onclick="showTab('economy')">💰 经济系统</button>
+        </div>
+
+        <!-- 基础规则 Tab -->
+        <div id="rules" class="tab-content active">
+            <div class="info-box">
+                <div class="icon">🀄</div>
+                <div class="text">
+                    <strong>HU!</strong> — 麻将 × Roguelike × Deck Builder<br>
+                    Balatro 风格的单人麻将游戏
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎮 核心玩法</h2>
+                <table>
+                    <tr><th>规则</th><th>说明</th></tr>
+                    <tr><td>起手牌</td><td><strong>14 张</strong>麻将牌</td></tr>
+                    <tr><td>弃牌次数</td><td><strong>5 次</strong>（弃牌后从牌堆摸等量牌）</td></tr>
+                    <tr><td>出牌次数</td><td><strong>不限</strong>（直到胡牌或放弃）</td></tr>
+                    <tr><td>胡牌条件</td><td>组成有效牌型（4面子+1对 或 特殊牌型）</td></tr>
+                    <tr><td>屁胡保底</td><td>没胡牌也给 <strong>50 基础分</strong></td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🀄 出牌系统</h2>
+                <table>
+                    <tr><th>出牌类型</th><th>组成</th><th>倍率</th><th>获得花牌</th></tr>
+                    <tr><td>吃（顺子）</td><td>3张连续同花色</td><td>×1</td><td>2选1</td></tr>
+                    <tr><td>碰（刻子）</td><td>3张相同</td><td>×1</td><td>3选1</td></tr>
+                    <tr><td>杠（四张）</td><td>4张相同</td><td><strong>×3</strong></td><td>5选1 + 季节牌</td></tr>
+                </table>
+                <p style="color: var(--text-secondary); margin-top: 1rem;">💡 杠牌额外获得1张当前季节的季节牌</p>
+            </div>
+
+            <div class="section">
+                <h2>🌟 特殊牌系统</h2>
+                <table>
+                    <tr><th>类型</th><th>获取方式</th><th>使用方式</th><th>上限</th></tr>
+                    <tr><td>🌟 神牌</td><td>商店购买</td><td>被动效果，永久生效</td><td><strong>7张</strong></td></tr>
+                    <tr><td>🌸 花牌</td><td>吃/碰/杠时选择</td><td>主动使用，一次性消耗</td><td>无限制</td></tr>
+                    <tr><td>🗓️ 季节牌</td><td>杠时额外获得</td><td>主动使用，效果更强</td><td>无限制</td></tr>
+                    <tr><td>💎 材质</td><td>神牌/商店/季节牌</td><td>附加在麻将牌上，胡牌时生效</td><td>每牌1种</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🔗 羁绊系统</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">每张神牌属于一个羁绊，收集同羁绊神牌触发 2/4/6 层递进效果</p>
+                <table>
+                    <tr><th>羁绊</th><th>主题</th><th>Lv.6 终极效果</th></tr>
+                    <tr><td>🎲 赌博</td><td>概率与风险</td><td>每次结算转轮盘 (+/-/×) × (1/3/5/9)</td></tr>
+                    <tr><td>👁️ 洞察</td><td>看牌与预知</td><td>牌堆全部变明牌</td></tr>
+                    <tr><td>💰 财运</td><td>金币转倍率</td><td>每20金币 → ×1.5倍率</td></tr>
+                    <tr><td>🔄 转化</td><td>材质强化</td><td>材质不碎裂，每张材质牌 → ×1.5倍率</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🏪 商店系统</h2>
+                <div class="principles">
+                    <div class="principle"><strong>回合间商店</strong><br>每回合结束后进入商店</div>
+                    <div class="principle"><strong>购买神牌</strong><br>随机3-5张神牌可选</div>
+                    <div class="principle"><strong>刷新商店</strong><br>花费金币重新随机</div>
+                    <div class="principle"><strong>卖出神牌</strong><br>获得购买价50%金币</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📈 游戏流程</h2>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem;">
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 10px; text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem;">🎴</div>
+                        <div style="font-weight: 600; margin: 0.5rem 0;">开局</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">摸14张牌</div>
+                    </div>
+                    <div style="font-size: 2rem; display: flex; align-items: center;">→</div>
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 10px; text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem;">🔄</div>
+                        <div style="font-weight: 600; margin: 0.5rem 0;">弃牌</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">最多5次</div>
+                    </div>
+                    <div style="font-size: 2rem; display: flex; align-items: center;">→</div>
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 10px; text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem;">🀄</div>
+                        <div style="font-weight: 600; margin: 0.5rem 0;">出牌</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">吃/碰/杠</div>
+                    </div>
+                    <div style="font-size: 2rem; display: flex; align-items: center;">→</div>
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 10px; text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem;">🏆</div>
+                        <div style="font-weight: 600; margin: 0.5rem 0;">胡牌</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">计算得分</div>
+                    </div>
+                    <div style="font-size: 2rem; display: flex; align-items: center;">→</div>
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 10px; text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem;">🏪</div>
+                        <div style="font-weight: 600; margin: 0.5rem 0;">商店</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">买神牌</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 神牌与羁绊 Tab -->
+        <div id="gods" class="tab-content">
+            <div class="info-box">
+                <div class="icon">🎴</div>
+                <div class="text">
+                    神牌：被动效果，永久生效，商店购买获得<br>
+                    <strong>最大持有数量：7张</strong> · 每张神牌属于一个羁绊 · 收集同羁绊触发 2/4/6 层效果
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📊 稀有度系统</h2>
+                <table>
+                    <tr>
+                        <th>稀有度</th>
+                        <th>出现概率</th>
+                        <th>商店价格</th>
+                        <th>每羁绊数量</th>
+                    </tr>
+                    <tr><td class="rarity-green">🟢 绿神</td><td>50%</td><td>5-10 金币</td><td>3张</td></tr>
+                    <tr><td class="rarity-blue">🔵 蓝神</td><td>30%</td><td>15-22 金币</td><td>2张</td></tr>
+                    <tr><td class="rarity-purple">🟣 紫神</td><td>15%</td><td>30-40 金币</td><td>1-2张</td></tr>
+                    <tr><td class="rarity-gold">🟡 金神</td><td>5%</td><td>55-60 金币</td><td>1张</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🎲 赌博羁绊 — 概率与风险</h2>
+                <table>
+                    <tr><th>等级</th><th>名称</th><th>所需</th><th>效果</th></tr>
+                    <tr><td>Lv.1</td><td>🃏 赌侠</td><td>2张</td><td>所有概率效果 <strong>+10%</strong></td></tr>
+                    <tr><td>Lv.2</td><td>👑 赌王</td><td>4张</td><td>概率失败时 <strong>无负面效果</strong></td></tr>
+                    <tr><td>Lv.3</td><td>🏆 赌神</td><td>6张</td><td>每次结算 <strong>转轮盘</strong>：(+/-/×) × (1/3/5/9)</td></tr>
+                </table>
+                <h3>赌博系神牌</h3>
+                <table>
+                    <tr><th>稀有度</th><th>名称</th><th>效果</th><th>价格</th></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>赌运初开</td><td>出牌时 <strong>20%</strong> 概率额外选一张花牌</td><td>8💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>浑水摸鱼</td><td>弃牌摸牌时 <strong>20%</strong> 概率多摸2张再选</td><td>9💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>细水长流</td><td>使用花牌时 <strong>20%</strong> 概率不消耗</td><td>10💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>豪赌一番</td><td>结算时 <strong>50%</strong> 得分+30%，失败-10%</td><td>18💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>财运亨通</td><td>回合结束 <strong>50%</strong> +15金币，失败-5金币</td><td>20💰</td></tr>
+                    <tr><td class="rarity-purple">🟣紫</td><td>孤注一掷</td><td>胡牌时 <strong>75%</strong> 得分×神牌数，失败-50%金币</td><td>35💰</td></tr>
+                    <tr><td class="rarity-gold">🟡金</td><td>概率之骰</td><td>所有概率变 <strong>100%</strong>（集齐其他6张赌博神牌自动获得）</td><td>—</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>👁️ 洞察羁绊 — 看牌与预知</h2>
+                <table>
+                    <tr><th>等级</th><th>名称</th><th>所需</th><th>效果</th></tr>
+                    <tr><td>Lv.1</td><td>🔮 读心者</td><td>2张</td><td>每次出牌后，牌堆顶 <strong>2张</strong> 变明牌</td></tr>
+                    <tr><td>Lv.2</td><td>🎭 操纵师</td><td>4张</td><td>每局1次，弃牌时可从 <strong>明牌中选摸</strong>（限3张）</td></tr>
+                    <tr><td>Lv.3</td><td>🌌 空想家</td><td>6张</td><td>牌堆 <strong>全部变明牌</strong></td></tr>
+                </table>
+                <h3>洞察系神牌</h3>
+                <table>
+                    <tr><th>稀有度</th><th>名称</th><th>效果</th><th>价格</th></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>千里眼</td><td>游戏开始时，牌堆顶 <strong>5张</strong> 变明牌</td><td>8💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>顺风耳</td><td>每次摸牌后，下一张自动变明牌</td><td>9💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>灵光一闪</td><td>抽花牌时，额外多看 <strong>1张</strong> 再选</td><td>7💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>乾坤手</td><td>每回合可将 <strong>1张明牌</strong> 移到牌堆顶</td><td>18💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>洗牌圣手</td><td>每回合1次，明牌洗入牌堆并重抽同等数量</td><td>16💰</td></tr>
+                    <tr><td class="rarity-purple">🟣紫</td><td>拾遗者</td><td>每局1次，弃牌时可从 <strong>已弃牌堆</strong> 中换牌</td><td>32💰</td></tr>
+                    <tr><td class="rarity-gold">🟡金</td><td>命运编织</td><td>开局可将 <strong>2张手牌</strong> 替换成牌堆任意牌</td><td>55💰</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>💰 财运羁绊 — 金币转倍率</h2>
+                <table>
+                    <tr><th>等级</th><th>名称</th><th>所需</th><th>效果</th></tr>
+                    <tr><td>Lv.1</td><td>💵 财源广进</td><td>2张</td><td>胡牌时，每 <strong>50金币</strong> → +1倍率</td></tr>
+                    <tr><td>Lv.2</td><td>💎 点石成金</td><td>4张</td><td>胡牌时，每 <strong>30金币</strong> → +1倍率</td></tr>
+                    <tr><td>Lv.3</td><td>🏆 富可敌国</td><td>6张</td><td>胡牌时，每 <strong>20金币</strong> → ×1.5倍率</td></tr>
+                </table>
+                <h3>财运系神牌</h3>
+                <table>
+                    <tr><th>稀有度</th><th>名称</th><th>效果</th><th>价格</th></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>招财猫</td><td>每次吃/碰/杠获得 <strong>+8金币</strong></td><td>7💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>聚宝盆</td><td>回合结束时，获得 <strong>当前金币10%</strong> 的额外金币</td><td>9💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>金蟾</td><td>弃牌时，每弃1张 <strong>+3金币</strong></td><td>8💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>摇钱树</td><td>每持有1张花牌，回合结束 <strong>+5金币</strong></td><td>18💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>貔貅</td><td>所有金币获取 <strong>+50%</strong>，但无法在商店卖牌</td><td>22💰</td></tr>
+                    <tr><td class="rarity-purple">🟣紫</td><td>财神</td><td>每回合开始 <strong>+15金币</strong>，胡牌时金币奖励 ×1.5</td><td>38💰</td></tr>
+                    <tr><td class="rarity-gold">🟡金</td><td>福禄寿</td><td>金币上限提升至 <strong>999</strong>，超过200金币时所有倍率 <strong>×2</strong></td><td>60💰</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🔄 转化羁绊 — 材质强化</h2>
+                <table>
+                    <tr><th>等级</th><th>名称</th><th>所需</th><th>效果</th></tr>
+                    <tr><td>Lv.1</td><td>🔀 偷天换日</td><td>2张</td><td>胡牌时，每张材质牌 → <strong>+1倍率</strong></td></tr>
+                    <tr><td>Lv.2</td><td>⚗️ 造物主</td><td>4张</td><td>材质碎裂概率 <strong>减半</strong>，每张材质牌 → <strong>+2倍率</strong></td></tr>
+                    <tr><td>Lv.3</td><td>🌌 万象归一</td><td>6张</td><td>材质 <strong>不会碎裂</strong>，每张材质牌 → <strong>×1.5倍率</strong></td></tr>
+                </table>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">💡 材质牌 = 拥有材质的麻将牌（参与胡牌的才计算）</p>
+                <p style="color: var(--accent-cyan); margin-top: 0.5rem;">⚡ 转化系神牌效果：<strong>每局游戏开始时</strong>自动触发（每局限1次）</p>
+                <h3>转化系神牌</h3>
+                <table>
+                    <tr><th>稀有度</th><th>名称</th><th>效果</th><th>价格</th></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>镀铜匠</td><td>每局开始时，随机 <strong>3张牌</strong> 变成铜牌</td><td>6💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>冰封师</td><td>每局开始时，随机 <strong>2张牌</strong> 变成冰牌</td><td>8💰</td></tr>
+                    <tr><td class="rarity-green">🟢绿</td><td>竹编匠</td><td>每局开始时，随机 <strong>3张牌</strong> 变成竹牌</td><td>5💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>银匠</td><td>每局开始时，随机 <strong>2张牌</strong> 变成银牌</td><td>15💰</td></tr>
+                    <tr><td class="rarity-blue">🔵蓝</td><td>玻璃工</td><td>每局开始时，随机 <strong>1张牌</strong> 变成玻璃牌</td><td>18💰</td></tr>
+                    <tr><td class="rarity-purple">🟣紫</td><td>点石成金</td><td>每局开始时，<strong>所有铜/银牌</strong> 变成金牌</td><td>32💰</td></tr>
+                    <tr><td class="rarity-purple">🟣紫</td><td>琉璃匠</td><td>每局开始时，随机 <strong>1张牌</strong> 变成琉璃牌</td><td>38💰</td></tr>
+                    <tr><td class="rarity-gold">🟡金</td><td>点石成玉</td><td>每局开始时，<strong>所有铜/银牌</strong> 升级为玉牌</td><td>55💰</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>📐 羁绊设计原则</h2>
+                <div class="principles">
+                    <div class="principle"><strong>2/4/6 递进</strong><br>2张入门，4张强化，6张究极</div>
+                    <div class="principle"><strong>4 大羁绊</strong><br>赌博、洞察、财运、转化</div>
+                    <div class="principle"><strong>7张上限</strong><br>最多1个满羁绊(6)+1张其他</div>
+                    <div class="principle"><strong>各7张神牌</strong><br>每个羁绊正好7张可选</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 材质 Tab -->
+        <div id="materials" class="tab-content">
+            <blockquote>材质是牌面的增强状态，每张牌只能拥有一种材质。<strong style="color: var(--accent-gold);">材质效果仅在胡牌时生效</strong>（参与胡牌的牌才计算材质加成）</blockquote>
+
+            <div class="section">
+                <h2>💎 材质列表</h2>
+                <table>
+                    <tr><th>材质</th><th>稀有度</th><th>效果</th><th>特殊</th></tr>
+                    <tr><td>🥉 铜牌</td><td class="rarity-green">普通</td><td><strong>+5</strong> 筹码</td><td>—</td></tr>
+                    <tr><td>🥈 银牌</td><td class="rarity-blue">稀有</td><td><strong>+15</strong> 筹码</td><td>—</td></tr>
+                    <tr><td>🥇 金牌</td><td class="rarity-purple">史诗</td><td><strong>+20</strong> 筹码, <strong>+2</strong> 倍率</td><td>—</td></tr>
+                    <tr><td>🎋 竹牌</td><td class="rarity-green">普通</td><td>被弃时 <strong>+5</strong> 金币</td><td>—</td></tr>
+                    <tr><td>🧊 冰牌</td><td class="rarity-blue">稀有</td><td><strong>+50</strong> 筹码</td><td>3回合后融化</td></tr>
+                    <tr><td>🫧 玻璃牌</td><td class="rarity-blue">稀有</td><td><strong>×2</strong> 倍率</td><td>胡牌后 25% 碎裂消失</td></tr>
+                    <tr><td>🔮 琉璃牌</td><td class="rarity-purple">史诗</td><td><strong>×3</strong> 倍率</td><td>胡牌后 25% 碎裂 → 玻璃牌</td></tr>
+                    <tr><td>🍀 玉牌</td><td class="rarity-purple">史诗</td><td><strong>+10</strong> 筹码</td><td>20% 触发额外 <strong>+1</strong> 倍率</td></tr>
+                    <tr><td>🏺 瓷牌</td><td class="rarity-gold">传说</td><td><strong>×4</strong> 倍率</td><td>25% 碎裂，碎裂时 <strong>+50</strong> 金币</td></tr>
+                    <tr><td>💎 翡翠牌</td><td class="rarity-gold">传说</td><td>每持有1张翡翠牌 → 所有牌 <strong>+3</strong> 筹码</td><td>养成型</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🔄 材质降级链</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">部分高级材质碎裂后会降级而非消失：</p>
+                <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; padding:1.5rem; background:var(--bg-tertiary); border-radius:12px; justify-content:center;">
+                    <div style="text-align:center;">
+                        <div style="font-size:2.5rem;">🔮</div>
+                        <div style="font-size:1rem; color:var(--accent-purple); font-weight:600;">琉璃牌</div>
+                        <div style="font-size:0.85rem; color:var(--text-secondary);">×3 倍率</div>
+                    </div>
+                    <div style="font-size:1.5rem; color:var(--text-secondary);">→<br><span style="font-size:0.75rem;">25%碎</span></div>
+                    <div style="text-align:center;">
+                        <div style="font-size:2.5rem;">🫧</div>
+                        <div style="font-size:1rem; color:var(--accent-blue); font-weight:600;">玻璃牌</div>
+                        <div style="font-size:0.85rem; color:var(--text-secondary);">×2 倍率</div>
+                    </div>
+                    <div style="font-size:1.5rem; color:var(--text-secondary);">→<br><span style="font-size:0.75rem;">25%碎</span></div>
+                    <div style="text-align:center;">
+                        <div style="font-size:2.5rem;">💨</div>
+                        <div style="font-size:1rem; color:var(--text-secondary);">消失</div>
+                        <div style="font-size:0.85rem; color:var(--text-secondary);">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🛠️ 获取方式</h2>
+                <table>
+                    <tr><th>途径</th><th>说明</th></tr>
+                    <tr><td>☀️ 夏季牌</td><td>夏季牌可以将普通牌升级为铜/银/金材质</td></tr>
+                    <tr><td>🔄 转化神牌</td><td>转化系神牌在每局开始时自动为牌加材质</td></tr>
+                    <tr><td>🏪 商店</td><td>购买材质升级道具（消耗品）</td></tr>
+                    <tr><td>🎁 奖励</td><td>通关奖励、成就解锁</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>📋 规则说明</h2>
+                <div class="principles">
+                    <div class="principle"><strong>单一材质</strong><br>每张牌只能有1种材质</div>
+                    <div class="principle"><strong>可覆盖</strong><br>新材质会覆盖旧材质</div>
+                    <div class="principle"><strong>胡牌生效</strong><br>材质效果仅在胡牌时计算</div>
+                    <div class="principle"><strong>结算后碎裂</strong><br>碎裂判定在胡牌结算后进行</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 花牌 Tab -->
+        <div id="flowers" class="tab-content">
+            <blockquote>花牌：出牌时获得，主动使用，一次性消耗</blockquote>
+
+            <div class="section">
+                <h2>获取规则</h2>
+                <table>
+                    <tr><th>出牌类型</th><th>花牌选择</th></tr>
+                    <tr><td>吃（顺子）</td><td>2选1</td></tr>
+                    <tr><td>碰（刻子）</td><td>3选1</td></tr>
+                    <tr><td>杠（四张）</td><td>4选1</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>花牌分类 & 稀有度</h2>
+                <table>
+                    <tr><th>花色</th><th>主题</th><th>图标</th></tr>
+                    <tr><td>🌸 梅</td><td>弃牌相关</td><td>梅花</td></tr>
+                    <tr><td>🎋 竹</td><td>摸牌/牌库</td><td>竹子</td></tr>
+                    <tr><td>🌺 兰</td><td>倍率/得分</td><td>兰花</td></tr>
+                    <tr><td>🏵️ 菊</td><td>牌面转化</td><td>菊花</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>🌸 梅牌（弃牌系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-mei"><div class="card-name">梅开一度</div><div class="card-effect">+1 弃牌次数</div></div>
+                    <div class="card flower-mei"><div class="card-name">梅开二度</div><div class="card-effect">+2 弃牌次数</div></div>
+                    <div class="card flower-mei"><div class="card-name">梅花落</div><div class="card-effect">弃掉所有手牌，重新摸14张</div></div>
+                    <div class="card flower-mei"><div class="card-name">一剪梅</div><div class="card-effect">弃掉1张牌，从牌库精确找出1张指定的牌</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎋 竹牌（摸牌/牌库系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-zhu"><div class="card-name">翠竹引路</div><div class="card-effect">看牌库顶3张，选1张加入手牌</div></div>
+                    <div class="card flower-zhu"><div class="card-name">竹林七贤</div><div class="card-effect">从牌库找出7张任意牌，与手牌交换7张</div></div>
+                    <div class="card flower-zhu"><div class="card-name">胸有成竹</div><div class="card-effect">下次弃牌100%摸到你需要的牌</div></div>
+                    <div class="card flower-zhu"><div class="card-name">势如破竹</div><div class="card-effect">连续摸3张牌，然后弃3张</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🌺 兰牌（倍率/得分系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-lan"><div class="card-name">金兰之交</div><div class="card-effect">倍率 +5</div></div>
+                    <div class="card flower-lan"><div class="card-name">兰桂齐芳</div><div class="card-effect">倍率 ×2（本回合永久）</div></div>
+                    <div class="card flower-lan"><div class="card-name">兰亭集序</div><div class="card-effect">本回合所有倍率翻倍</div></div>
+                    <div class="card flower-lan"><div class="card-name">玉兰花开</div><div class="card-effect">如果胡清一色，倍率 ×5</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🏵️ 菊牌（转化系）</h2>
+                <div class="cards-grid">
+                    <div class="card flower-ju"><div class="card-name">菊花台</div><div class="card-effect">选中最多3张牌，变成同一个数字</div></div>
+                    <div class="card flower-ju"><div class="card-name">持菊问道</div><div class="card-effect">选中1张牌，变成任意指定的牌</div></div>
+                    <div class="card flower-ju"><div class="card-name">金菊绽放</div><div class="card-effect">选中1张牌变成金牌材质</div></div>
+                    <div class="card flower-ju"><div class="card-name">满城尽带黄金甲</div><div class="card-effect">所有手牌变成金牌材质</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 季节牌 Tab -->
+        <div id="seasons" class="tab-content">
+            <blockquote>季节牌：杠时额外获得，主动使用，效果更强</blockquote>
+
+            <div class="section">
+                <h2>🌱 春牌（番型增强系）</h2>
+                <div class="cards-grid">
+                    <div class="card season-spring"><div class="card-name">春风拂面</div><div class="card-effect">下次胡牌，所有番型 ×2</div></div>
+                    <div class="card season-spring"><div class="card-name">春暖花开</div><div class="card-effect">特殊牌型额外 ×3</div></div>
+                    <div class="card season-spring"><div class="card-name">春雷乍响</div><div class="card-effect">一次出完所有面子胡牌，倍率 ×8</div></div>
+                    <div class="card season-spring"><div class="card-name">春秋大梦</div><div class="card-effect">本回合所有倍率计算完后，再 ×3</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>☀️ 夏牌（材质改造系）</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;">
+                    <span class="material-badge material-gold">🥇 金牌</span>
+                    <span class="material-badge material-silver">🥈 银牌</span>
+                    <span class="material-badge material-bronze">🥉 铜牌</span>
+                    <span class="material-badge material-glass">🔮 玻璃牌</span>
+                    <span class="material-badge material-fire">🔥 火牌</span>
+                    <span class="material-badge material-ice">❄️ 冰牌</span>
+                    <span class="material-badge material-lucky">✨ 幸运牌</span>
+                    <span class="material-badge material-ghost">👻 幽灵牌</span>
+                </div>
+                <div class="cards-grid">
+                    <div class="card season-summer"><div class="card-name">点石成金</div><div class="card-effect">选中的刻子全部变成🥇金牌</div></div>
+                    <div class="card season-summer"><div class="card-name">流星雨</div><div class="card-effect">随机3张牌变成✨幸运牌</div></div>
+                    <div class="card season-summer"><div class="card-name">鬼影幢幢</div><div class="card-effect">选中1张牌变成👻幽灵牌（百搭）</div></div>
+                    <div class="card season-summer"><div class="card-name">盛夏狂欢</div><div class="card-effect">所有手牌随机获得材质</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🍂 秋牌（资源获取系）</h2>
+                <div class="cards-grid">
+                    <div class="card season-autumn"><div class="card-name">秋收万颗</div><div class="card-effect">立即获得 8 金币</div></div>
+                    <div class="card season-autumn"><div class="card-name">金秋时节</div><div class="card-effect">获得 3 张随机花牌</div></div>
+                    <div class="card season-autumn"><div class="card-name">秋高气爽</div><div class="card-effect">下次商店所有物品半价</div></div>
+                    <div class="card season-autumn"><div class="card-name">秋意浓</div><div class="card-effect">获得1张随机紫神牌（本局有效）</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>❄️ 冬牌（牌库操控系）</h2>
+                <div class="cards-grid">
+                    <div class="card season-winter"><div class="card-name">冬日暖阳</div><div class="card-effect">选中1张牌，在牌库中复制3张</div></div>
+                    <div class="card season-winter"><div class="card-name">寒冬腊月</div><div class="card-effect">从牌库删除所有指定类型的牌</div></div>
+                    <div class="card season-winter"><div class="card-name">冰河时代</div><div class="card-effect">牌库只保留3种牌（你选）</div></div>
+                    <div class="card season-winter"><div class="card-name">绝对零度</div><div class="card-effect">冻结游戏，任意重排手牌和牌库顶5张</div></div>
+                </div>
+            </div>
+
+            <div class="combo-section">
+                <h4>🔄 四季轮回（终极组合）</h4>
+                <p>同时持有春夏秋冬各1张：弃掉4张季节牌触发</p>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
+                    <li>倍率 ×5</li>
+                    <li>获得 25 金币</li>
+                    <li>刷新商店并全部免费</li>
+                    <li>获得1张随机🟡金神牌（永久）</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 经济系统 Tab -->
+        <div id="economy" class="tab-content">
+            <blockquote>金币、得分、倍率的完整系统设计</blockquote>
+
+            <div class="section">
+                <h2>📊 核心公式</h2>
+                <div class="formula-box">
+                    最终得分 = 基础分 × 出牌倍率 × 番型倍率 × 成就倍率 × 羁绊加成
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>✖️ 倍率系统（全部 ≥1）</h2>
+                <table>
+                    <tr><th>番型</th><th>倍率</th></tr>
+                    <tr><td>屁胡</td><td>×1</td></tr>
+                    <tr><td>平和</td><td>×2</td></tr>
+                    <tr><td>断幺九</td><td>×3</td></tr>
+                    <tr><td>混一色</td><td>×4</td></tr>
+                    <tr><td>对对和</td><td>×5</td></tr>
+                    <tr><td>七对</td><td>×6</td></tr>
+                    <tr><td>清一色</td><td>×8</td></tr>
+                    <tr><td>连七对</td><td>×15</td></tr>
+                    <tr><td>字一色</td><td>×20</td></tr>
+                    <tr><td>国士无双</td><td>×30</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>📈 难度曲线</h2>
+                <div class="difficulty-bar"><span class="label">回合 1</span><div class="bar"><div class="fill" style="width: 3%;">500</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 2</span><div class="bar"><div class="fill" style="width: 6%;">1,200</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 3</span><div class="bar"><div class="fill" style="width: 12%;">2,500</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 4</span><div class="bar"><div class="fill" style="width: 20%;">5,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 5</span><div class="bar"><div class="fill" style="width: 35%;">10,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 6</span><div class="bar"><div class="fill" style="width: 50%;">20,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 7</span><div class="bar"><div class="fill" style="width: 75%;">40,000</div></div></div>
+                <div class="difficulty-bar"><span class="label">回合 8</span><div class="bar"><div class="fill" style="width: 100%;">80,000</div></div></div>
+            </div>
+
+            <div class="section">
+                <h2>📐 设计原则</h2>
+                <div class="principles">
+                    <div class="principle"><strong>倍率正向</strong><br>所有倍率都 ≥1，数字好看</div>
+                    <div class="principle"><strong>7张上限</strong><br>逼迫玩家做选择</div>
+                    <div class="principle"><strong>羁绊激励</strong><br>鼓励收集同系神牌</div>
+                    <div class="principle"><strong>数字要大</strong><br>后期倍率爆炸才爽</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
