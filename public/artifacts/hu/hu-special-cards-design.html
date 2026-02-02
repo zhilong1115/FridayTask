@@ -799,7 +799,7 @@
 
         <!-- 花牌 Tab -->
         <div id="flowers" class="tab-content">
-            <blockquote>花牌：出牌时获得，<strong style="color: var(--accent-gold);">局内使用</strong>，一次性消耗</blockquote>
+            <blockquote>花牌：出牌时获得，<strong style="color: var(--accent-gold);">局内使用</strong>，一次性消耗。注意：手牌始终保持14张！</blockquote>
 
             <div class="section">
                 <h2>获取规则</h2>
@@ -807,59 +807,80 @@
                     <tr><th>出牌类型</th><th>花牌选择</th></tr>
                     <tr><td>吃（顺子）</td><td>2选1</td></tr>
                     <tr><td>碰（刻子）</td><td>3选1</td></tr>
-                    <tr><td>杠（四张）</td><td>4选1</td></tr>
+                    <tr><td>杠（四张）</td><td>5选1</td></tr>
                 </table>
             </div>
 
             <div class="section">
-                <h2>花牌分类 & 稀有度</h2>
+                <h2>花牌分类</h2>
                 <table>
-                    <tr><th>花色</th><th>主题</th><th>图标</th></tr>
-                    <tr><td>🌸 梅</td><td>弃牌相关</td><td>梅花</td></tr>
-                    <tr><td>🎋 竹</td><td>摸牌/牌库</td><td>竹子</td></tr>
-                    <tr><td>🌺 兰</td><td>倍率/得分</td><td>兰花</td></tr>
-                    <tr><td>🏵️ 菊</td><td>牌面转化</td><td>菊花</td></tr>
+                    <tr><th>花色</th><th>主题</th><th>数量</th></tr>
+                    <tr><td>🌸 梅</td><td>弃牌增强</td><td>8张</td></tr>
+                    <tr><td>🎋 竹</td><td>牌库窥探/交换</td><td>8张</td></tr>
+                    <tr><td>🌺 兰</td><td>倍率/得分</td><td>8张</td></tr>
+                    <tr><td>🏵️ 菊</td><td>牌面转化</td><td>8张</td></tr>
                 </table>
             </div>
 
             <div class="section">
-                <h2>🌸 梅牌（弃牌系）</h2>
-                <div class="cards-grid">
-                    <div class="card flower-mei"><div class="card-name">梅开一度</div><div class="card-effect">+1 弃牌次数</div></div>
-                    <div class="card flower-mei"><div class="card-name">梅开二度</div><div class="card-effect">+2 弃牌次数</div></div>
-                    <div class="card flower-mei"><div class="card-name">梅花落</div><div class="card-effect">弃掉所有手牌，重新摸14张</div></div>
-                    <div class="card flower-mei"><div class="card-name">一剪梅</div><div class="card-effect">弃掉1张牌，从牌库精确找出1张指定的牌</div></div>
-                </div>
+                <h2>🌸 梅牌 — 弃牌增强（8张）</h2>
+                <table>
+                    <tr><th>名称</th><th>效果</th></tr>
+                    <tr><td>梅开一度</td><td><strong>+1</strong> 弃牌次数</td></tr>
+                    <tr><td>梅开二度</td><td><strong>+2</strong> 弃牌次数</td></tr>
+                    <tr><td>梅开三度</td><td><strong>+3</strong> 弃牌次数</td></tr>
+                    <tr><td>寒梅傲雪</td><td>本次弃牌可弃 <strong>任意数量</strong>（仍只算1次）</td></tr>
+                    <tr><td>梅花三弄</td><td>弃牌后，可 <strong>重新选择</strong> 摸到的牌（看3选1）</td></tr>
+                    <tr><td>暗香浮动</td><td>下次弃牌时，<strong>弃掉的牌获得+5金币</strong></td></tr>
+                    <tr><td>一剪梅</td><td>弃1张牌，从牌库 <strong>精确换取</strong> 指定的1张牌</td></tr>
+                    <tr><td>踏雪寻梅</td><td>弃掉所有手牌，从牌库 <strong>重新抽14张</strong></td></tr>
+                </table>
             </div>
 
             <div class="section">
-                <h2>🎋 竹牌（摸牌/牌库系）</h2>
-                <div class="cards-grid">
-                    <div class="card flower-zhu"><div class="card-name">翠竹引路</div><div class="card-effect">看牌库顶3张，选1张加入手牌</div></div>
-                    <div class="card flower-zhu"><div class="card-name">竹林七贤</div><div class="card-effect">从牌库找出7张任意牌，与手牌交换7张</div></div>
-                    <div class="card flower-zhu"><div class="card-name">胸有成竹</div><div class="card-effect">下次弃牌100%摸到你需要的牌</div></div>
-                    <div class="card flower-zhu"><div class="card-name">势如破竹</div><div class="card-effect">连续摸3张牌，然后弃3张</div></div>
-                </div>
+                <h2>🎋 竹牌 — 牌库窥探（8张）</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">💡 竹牌只能看牌和交换，不能增加手牌数量</p>
+                <table>
+                    <tr><th>名称</th><th>效果</th></tr>
+                    <tr><td>翠竹引路</td><td>查看牌库顶 <strong>5张</strong></td></tr>
+                    <tr><td>竹报平安</td><td>查看牌库顶 <strong>10张</strong>，可重新排列顺序</td></tr>
+                    <tr><td>胸有成竹</td><td>下次弃牌时，<strong>指定</strong> 想要摸到的牌</td></tr>
+                    <tr><td>竹林七贤</td><td>查看牌库，与手牌 <strong>交换最多3张</strong></td></tr>
+                    <tr><td>青竹蛇</td><td>查看牌库，<strong>删除</strong> 最多2张不想要的牌</td></tr>
+                    <tr><td>势如破竹</td><td>选择1张手牌，与牌库中 <strong>所有同数字</strong> 的牌交换</td></tr>
+                    <tr><td>节节高升</td><td>将牌库顶5张按 <strong>点数从小到大</strong> 排列</td></tr>
+                    <tr><td>竹马之交</td><td>选2张手牌，与牌库顶2张 <strong>盲换</strong>（不看）</td></tr>
+                </table>
             </div>
 
             <div class="section">
-                <h2>🌺 兰牌（倍率/得分系）</h2>
-                <div class="cards-grid">
-                    <div class="card flower-lan"><div class="card-name">金兰之交</div><div class="card-effect">倍率 +5</div></div>
-                    <div class="card flower-lan"><div class="card-name">兰桂齐芳</div><div class="card-effect">倍率 ×2（本回合永久）</div></div>
-                    <div class="card flower-lan"><div class="card-name">兰亭集序</div><div class="card-effect">本回合所有倍率翻倍</div></div>
-                    <div class="card flower-lan"><div class="card-name">玉兰花开</div><div class="card-effect">如果胡清一色，倍率 ×5</div></div>
-                </div>
+                <h2>🌺 兰牌 — 倍率得分（8张）</h2>
+                <table>
+                    <tr><th>名称</th><th>效果</th></tr>
+                    <tr><td>金兰之交</td><td>本局胡牌倍率 <strong>+3</strong></td></tr>
+                    <tr><td>兰心蕙质</td><td>本局胡牌倍率 <strong>+5</strong></td></tr>
+                    <tr><td>兰桂齐芳</td><td>本局胡牌倍率 <strong>×1.5</strong></td></tr>
+                    <tr><td>空谷幽兰</td><td>本局胡牌倍率 <strong>×2</strong></td></tr>
+                    <tr><td>蕙质兰心</td><td>如果 <strong>不使用弃牌</strong> 就胡牌，倍率 ×3</td></tr>
+                    <tr><td>兰亭集序</td><td>每个 <strong>顺子</strong> 额外 +2 倍率</td></tr>
+                    <tr><td>幽兰出谷</td><td>每个 <strong>刻子</strong> 额外 +2 倍率</td></tr>
+                    <tr><td>玉兰花开</td><td>如果胡 <strong>清一色</strong>，额外 ×2</td></tr>
+                </table>
             </div>
 
             <div class="section">
-                <h2>🏵️ 菊牌（转化系）</h2>
-                <div class="cards-grid">
-                    <div class="card flower-ju"><div class="card-name">菊花台</div><div class="card-effect">选中最多3张牌，变成同一个数字</div></div>
-                    <div class="card flower-ju"><div class="card-name">持菊问道</div><div class="card-effect">选中1张牌，变成任意指定的牌</div></div>
-                    <div class="card flower-ju"><div class="card-name">金菊绽放</div><div class="card-effect">选中1张牌变成金牌材质</div></div>
-                    <div class="card flower-ju"><div class="card-name">满城尽带黄金甲</div><div class="card-effect">所有手牌变成金牌材质</div></div>
-                </div>
+                <h2>🏵️ 菊牌 — 牌面转化（8张）</h2>
+                <table>
+                    <tr><th>名称</th><th>效果</th></tr>
+                    <tr><td>菊花台</td><td>选1张牌，变成 <strong>同花色任意数字</strong></td></tr>
+                    <tr><td>秋菊傲霜</td><td>选1张牌，变成 <strong>任意花色同数字</strong></td></tr>
+                    <tr><td>采菊东篱</td><td>选1张牌，变成 <strong>任意牌</strong>（完全自由）</td></tr>
+                    <tr><td>黄菊满地</td><td>选最多3张牌，全部变成 <strong>同一数字</strong></td></tr>
+                    <tr><td>菊残犹傲</td><td>选1张字牌，变成 <strong>任意数字牌</strong></td></tr>
+                    <tr><td>持菊问道</td><td>选最多2张牌，<strong>数字+1或-1</strong></td></tr>
+                    <tr><td>金菊绽放</td><td>选1张牌，添加 <strong>🥇金牌材质</strong></td></tr>
+                    <tr><td>满城尽带黄金甲</td><td>所有手牌添加 <strong>🥉铜牌材质</strong></td></tr>
+                </table>
             </div>
         </div>
 
