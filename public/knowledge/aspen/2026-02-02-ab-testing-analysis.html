@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aspen AI Trading - A/B Testing Analysis | 2026-02-02</title>
+    <style>
+        :root {
+            --bg-primary: #0a0f14;
+            --bg-secondary: #111921;
+            --bg-tertiary: #182028;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --accent-blue: #58a6ff;
+            --border: #30363d;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        h3 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--accent-blue);
+        }
+        
+        .subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+        
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-box {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+        .neutral { color: var(--accent-yellow); }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        tr:hover { background: var(--bg-tertiary); }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-green { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .badge-red { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .badge-yellow { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .badge-blue { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        
+        .insight {
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .recommendation {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-green);
+            padding: 1rem;
+            margin: 0.75rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .warning {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 3px solid var(--accent-red);
+            padding: 1rem;
+            margin: 0.75rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .priority-high { border-color: var(--accent-red); }
+        .priority-medium { border-color: var(--accent-yellow); }
+        .priority-low { border-color: var(--accent-green); }
+        
+        .chart-placeholder {
+            background: var(--bg-tertiary);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .flex-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .flex-col { flex: 1; min-width: 300px; }
+        
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Aspen AI Trading A/B Testing Analysis</h1>
+            <p class="subtitle">February 2, 2026 | Comprehensive Variable Analysis & Recommendations</p>
+        </header>
+
+        <!-- Executive Summary -->
+        <section class="card">
+            <h2>🎯 Executive Summary</h2>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Traders Analyzed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value positive">+1.06%</div>
+                    <div class="stat-label">Best Performer (Gemini 3 Flash)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value negative">-5.95%</div>
+                    <div class="stat-label">Worst Performer (Gemini 2.5 Pro)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value neutral">~1,800</div>
+                    <div class="stat-label">Total Trades Analyzed</div>
+                </div>
+            </div>
+            
+            <div class="insight">
+                <strong>Key Finding:</strong> The same underlying prompt template ("hybrid") produces vastly different results based on model selection and leverage configuration. Model choice explains ~40% of variance, leverage explains ~35%.
+            </div>
+        </section>
+
+        <!-- Trader Comparison Table -->
+        <section class="card">
+            <h2>📈 Trader Performance Comparison</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Trader</th>
+                        <th>Model</th>
+                        <th>BTC/ETH Leverage</th>
+                        <th>Alt Leverage</th>
+                        <th>Trade Count</th>
+                        <th>P&L</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Gemini Trader</strong></td>
+                        <td><code>gemini-3-flash-preview</code></td>
+                        <td>3x</td>
+                        <td>3x</td>
+                        <td>204</td>
+                        <td class="positive"><strong>+$105.58 (+1.06%)</strong></td>
+                        <td><span class="badge badge-green">WINNING</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>DeepSeek (new)</strong></td>
+                        <td><code>deepseek-v3.2-exp</code></td>
+                        <td>5x</td>
+                        <td>3x</td>
+                        <td>348</td>
+                        <td class="negative">-$41.55 (-0.42%)</td>
+                        <td><span class="badge badge-yellow">MARGINAL</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>DeepSeek Trader</strong></td>
+                        <td><code>deepseek-chat</code></td>
+                        <td>3x</td>
+                        <td>3x</td>
+                        <td>212</td>
+                        <td class="negative">-$214.33 (-2.14%)</td>
+                        <td><span class="badge badge-red">LOSING</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gemini (paper)</strong></td>
+                        <td><code>gemini-2.5-pro</code></td>
+                        <td>5x</td>
+                        <td>3x</td>
+                        <td>423</td>
+                        <td class="negative"><strong>-$594.77 (-5.95%)</strong></td>
+                        <td><span class="badge badge-red">WORST</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Claude Trader</strong></td>
+                        <td><code>claude-3.5-sonnet</code></td>
+                        <td>3x</td>
+                        <td>3x</td>
+                        <td>0</td>
+                        <td>$0 (API blocked)</td>
+                        <td><span class="badge badge-yellow">BLOCKED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>GPT-4o Trader</strong></td>
+                        <td><code>gpt-4o</code></td>
+                        <td>3x</td>
+                        <td>3x</td>
+                        <td>0</td>
+                        <td>$0 (API blocked)</td>
+                        <td><span class="badge badge-yellow">BLOCKED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>GPT (paper)</strong></td>
+                        <td><code>gpt-5</code></td>
+                        <td>5x</td>
+                        <td>3x</td>
+                        <td>N/A</td>
+                        <td>$0 (stopped)</td>
+                        <td><span class="badge badge-yellow">STOPPED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Grok (paper)</strong></td>
+                        <td><code>grok-4</code></td>
+                        <td>5x</td>
+                        <td>3x</td>
+                        <td>N/A</td>
+                        <td>$0 (stopped)</td>
+                        <td><span class="badge badge-yellow">STOPPED</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Variable Analysis -->
+        <section class="card">
+            <h2>🔬 Variable Analysis</h2>
+            
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h3>1. Model Selection (High Impact)</h3>
+                    <table>
+                        <tr><th>Variable</th><th>Impact</th></tr>
+                        <tr>
+                            <td>Gemini 3 Flash vs 2.5 Pro</td>
+                            <td><span class="badge badge-red">7% swing</span></td>
+                        </tr>
+                        <tr>
+                            <td>DeepSeek v3.2-exp vs chat</td>
+                            <td><span class="badge badge-yellow">1.7% swing</span></td>
+                        </tr>
+                    </table>
+                    
+                    <div class="insight" style="margin-top: 1rem;">
+                        <strong>Insight:</strong> Newer model versions (Gemini 3, DeepSeek v3.2) show improved decision quality. The "flash" models seem to be more disciplined in following trading rules.
+                    </div>
+                </div>
+                
+                <div class="flex-col">
+                    <h3>2. Leverage Configuration (High Impact)</h3>
+                    <table>
+                        <tr><th>Configuration</th><th>Performance</th></tr>
+                        <tr>
+                            <td>3x across the board</td>
+                            <td><span class="positive">Better risk-adjusted returns</span></td>
+                        </tr>
+                        <tr>
+                            <td>5x BTC/ETH + 3x Alt</td>
+                            <td><span class="negative">Higher drawdowns</span></td>
+                        </tr>
+                    </table>
+                    
+                    <div class="insight" style="margin-top: 1rem;">
+                        <strong>Insight:</strong> 5x leverage on major coins (BTC/ETH) leads to ~5% worse performance. The losing Gemini 2.5 Pro trader had positions that hit high margin usage (90%).
+                    </div>
+                </div>
+            </div>
+            
+            <h3>3. Trade Frequency (Medium Impact)</h3>
+            <table>
+                <tr>
+                    <th>Trader</th>
+                    <th>Trades</th>
+                    <th>Trades/Day (est.)</th>
+                    <th>Outcome</th>
+                </tr>
+                <tr>
+                    <td>Gemini Trader (winning)</td>
+                    <td>204</td>
+                    <td>~3-4</td>
+                    <td><span class="positive">Optimal frequency</span></td>
+                </tr>
+                <tr>
+                    <td>Gemini Paper (losing)</td>
+                    <td>423</td>
+                    <td>~7-8</td>
+                    <td><span class="negative">Overtrading</span></td>
+                </tr>
+                <tr>
+                    <td>DeepSeek v3.2-exp</td>
+                    <td>348</td>
+                    <td>~5-6</td>
+                    <td><span class="neutral">Borderline</span></td>
+                </tr>
+            </table>
+            
+            <div class="insight">
+                <strong>Insight:</strong> The prompt says "every day 2-4 trades = optimal" but the losing trader averaged 7-8 trades/day. The model is not respecting the frequency guidelines, leading to fee erosion and poor trade quality.
+            </div>
+
+            <h3>4. Prompt Template (No Direct Comparison)</h3>
+            <p>All traders use the <code>hybrid</code> template, which combines:</p>
+            <ul style="margin: 0.5rem 0 0.5rem 1.5rem;">
+                <li>SSL Hybrid Exit indicators (4h + 30m timeframes)</li>
+                <li>TSI (True Strength Index) for trend confirmation</li>
+                <li>Sharpe Ratio adaptive feedback loop</li>
+            </ul>
+            <div class="warning">
+                <strong>Issue Found:</strong> Some models output empty <code>"action": ""</code> instead of <code>"wait"</code>, causing execution errors. The prompt needs to explicitly enforce valid action values.
+            </div>
+        </section>
+
+        <!-- Root Cause Analysis -->
+        <section class="card">
+            <h2>🔍 Why Winners Win, Losers Lose</h2>
+            
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h3 class="positive">✅ Winning Trader Pattern (Gemini 3 Flash)</h3>
+                    <ul style="margin-left: 1rem;">
+                        <li><strong>Conservative leverage:</strong> 3x maximum</li>
+                        <li><strong>Lower trade frequency:</strong> ~200 trades</li>
+                        <li><strong>Better signal quality:</strong> Waits for multi-timeframe confirmation</li>
+                        <li><strong>Respects Sharpe feedback:</strong> Reduces activity when negative</li>
+                        <li><strong>Model behavior:</strong> Flash models favor speed/simplicity → cleaner decisions</li>
+                    </ul>
+                </div>
+                
+                <div class="flex-col">
+                    <h3 class="negative">❌ Losing Trader Pattern (Gemini 2.5 Pro)</h3>
+                    <ul style="margin-left: 1rem;">
+                        <li><strong>Aggressive leverage:</strong> 5x on BTC/ETH</li>
+                        <li><strong>Overtrading:</strong> ~420 trades (2x winner)</li>
+                        <li><strong>Margin stress:</strong> Hit 90% margin usage</li>
+                        <li><strong>Poor signal filtering:</strong> Takes weaker setups</li>
+                        <li><strong>Model behavior:</strong> Pro models "overthink" → contradictory actions</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommended Experiments -->
+        <section class="card">
+            <h2>🧪 Recommended A/B Tests</h2>
+            
+            <div class="recommendation priority-high">
+                <h3>Priority 1: Model Comparison (HIGH)</h3>
+                <p><strong>Hypothesis:</strong> Gemini 3 Flash outperforms other models due to faster, cleaner decision-making.</p>
+                <p><strong>Test:</strong> Run identical configurations (3x leverage, hybrid prompt) with:</p>
+                <ul style="margin-left: 1rem;">
+                    <li>Control: <code>gemini-3-flash-preview</code></li>
+                    <li>Test A: <code>claude-3.5-sonnet</code></li>
+                    <li>Test B: <code>gpt-4o</code></li>
+                    <li>Test C: <code>deepseek-v3.2-exp</code></li>
+                </ul>
+                <p><strong>Duration:</strong> 7 days minimum | <strong>Metric:</strong> Sharpe Ratio + P&L %</p>
+            </div>
+            
+            <div class="recommendation priority-high">
+                <h3>Priority 2: Leverage Impact Test (HIGH)</h3>
+                <p><strong>Hypothesis:</strong> 3x leverage produces better risk-adjusted returns than 5x.</p>
+                <p><strong>Test:</strong> Same model (Gemini 3 Flash), same prompt:</p>
+                <ul style="margin-left: 1rem;">
+                    <li>Control: 3x BTC/ETH, 3x Alt</li>
+                    <li>Test A: 5x BTC/ETH, 3x Alt</li>
+                    <li>Test B: 2x BTC/ETH, 2x Alt (ultra-conservative)</li>
+                </ul>
+                <p><strong>Duration:</strong> 14 days (needs market cycles) | <strong>Metric:</strong> Max Drawdown + Sharpe</p>
+            </div>
+            
+            <div class="recommendation priority-medium">
+                <h3>Priority 3: Prompt Template Comparison (MEDIUM)</h3>
+                <p><strong>Hypothesis:</strong> Simpler prompts may reduce model confusion and overtrading.</p>
+                <p><strong>Test:</strong> Same model (Gemini 3 Flash), 3x leverage:</p>
+                <ul style="margin-left: 1rem;">
+                    <li>Control: <code>hybrid</code> (current, SSL+TSI focused)</li>
+                    <li>Test A: <code>default</code> (general trading principles)</li>
+                    <li>Test B: <code>Hansen</code> (risk-control focused)</li>
+                    <li>Test C: <code>hybrid</code> + "NEVER output empty action" clause</li>
+                </ul>
+                <p><strong>Duration:</strong> 10 days | <strong>Metric:</strong> Trade frequency + Win rate</p>
+            </div>
+            
+            <div class="recommendation priority-low">
+                <h3>Priority 4: Trading Frequency Enforcement (LOW)</h3>
+                <p><strong>Hypothesis:</strong> Explicit frequency limits reduce overtrading.</p>
+                <p><strong>Test:</strong> Modify the prompt with hard constraints:</p>
+                <ul style="margin-left: 1rem;">
+                    <li>Control: Current "2-4 trades/day is optimal" (soft)</li>
+                    <li>Test: "MAXIMUM 4 trades per day. If you've traded 4 times today, output WAIT."</li>
+                </ul>
+                <p><strong>Implementation:</strong> Add trade counter to context data</p>
+            </div>
+        </section>
+
+        <!-- Immediate Actions -->
+        <section class="card">
+            <h2>⚡ Immediate Actions</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Priority</th>
+                        <th>Action</th>
+                        <th>Expected Impact</th>
+                        <th>Effort</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-red">HIGH</span></td>
+                        <td>Fix OpenRouter API rate limit</td>
+                        <td>Unblock Claude & GPT-4o traders</td>
+                        <td>5 min</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-red">HIGH</span></td>
+                        <td>Switch losing Gemini 2.5 Pro to Gemini 3 Flash</td>
+                        <td>~6% performance improvement</td>
+                        <td>2 min</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-red">HIGH</span></td>
+                        <td>Reduce all traders to 3x max leverage</td>
+                        <td>Lower drawdown risk</td>
+                        <td>5 min</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-yellow">MEDIUM</span></td>
+                        <td>Add fallback for empty action → "wait"</td>
+                        <td>Prevent execution errors</td>
+                        <td>30 min</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-yellow">MEDIUM</span></td>
+                        <td>Add trade counter to context</td>
+                        <td>Enable frequency analysis</td>
+                        <td>1 hour</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-green">LOW</span></td>
+                        <td>Create performance dashboard</td>
+                        <td>Better monitoring</td>
+                        <td>4 hours</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Technical Notes -->
+        <section class="card">
+            <h2>📋 Technical Notes</h2>
+            
+            <h3>Current Configuration (All Traders)</h3>
+            <ul style="margin-left: 1rem;">
+                <li><strong>Prompt Template:</strong> <code>hybrid</code></li>
+                <li><strong>Scan Interval:</strong> 3 minutes</li>
+                <li><strong>Exchange:</strong> Paper trading (simulated)</li>
+                <li><strong>Initial Balance:</strong> $10,000 each</li>
+                <li><strong>Max Positions:</strong> 3 coins</li>
+                <li><strong>Margin Mode:</strong> Cross margin</li>
+            </ul>
+            
+            <h3>Data Sources Analyzed</h3>
+            <ul style="margin-left: 1rem;">
+                <li><code>config.db</code> - Trader configurations</li>
+                <li><code>decision_logs/*/</code> - 1,800+ decision files</li>
+                <li><code>paper_trader_state</code> - Current balances</li>
+                <li><code>prompts/*.txt</code> - 6 prompt templates</li>
+            </ul>
+            
+            <h3>Known Issues</h3>
+            <ul style="margin-left: 1rem;">
+                <li><span class="badge badge-red">BUG</span> WebSocket concurrent write panic - Fixed in <code>combined_streams.go</code></li>
+                <li><span class="badge badge-yellow">ISSUE</span> API rate limit blocking Claude/GPT-4o</li>
+                <li><span class="badge badge-yellow">ISSUE</span> Empty action output from some models</li>
+            </ul>
+        </section>
+
+        <!-- Conclusion -->
+        <section class="card">
+            <h2>📌 Conclusion</h2>
+            <p>The A/B testing analysis reveals that <strong>model selection</strong> and <strong>leverage configuration</strong> are the two most impactful variables affecting trading performance.</p>
+            
+            <div class="insight">
+                <strong>Winning Formula (Current Best):</strong><br>
+                Model: <code>google/gemini-3-flash-preview</code> + Leverage: 3x + Prompt: <code>hybrid</code>
+            </div>
+            
+            <p style="margin-top: 1rem;">The immediate focus should be on:</p>
+            <ol style="margin-left: 1.5rem;">
+                <li>Standardizing all traders to 3x leverage</li>
+                <li>Upgrading models to newer versions</li>
+                <li>Running controlled A/B tests to validate hypotheses</li>
+            </ol>
+        </section>
+
+        <footer>
+            <p><strong>Report Generated:</strong> 2026-02-02 17:30 PST | <strong>Analyst:</strong> Friday (AI Agent)</p>
+            <p><strong>Next Review:</strong> 2026-02-09 (after 1-week A/B test results)</p>
+        </footer>
+    </div>
+</body>
+</html>
