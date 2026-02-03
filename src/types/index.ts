@@ -18,7 +18,7 @@ export interface Comment {
   created_at: string;
 }
 
-export type ArtifactType = 'doc' | 'pdf' | 'link' | 'image' | 'file';
+export type ArtifactType = 'doc' | 'pdf' | 'link' | 'image' | 'file' | 'html';
 
 export interface Artifact {
   id: number;
