@@ -19,6 +19,13 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
   const [selectedArticle, setSelectedArticle] = useState<KnowledgeArticle | null>(null);
   const [articleContent, setArticleContent] = useState<string>('');
   const [loadingContent, setLoadingContent] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const openInNewTab = () => {
+    if (selectedArticle) {
+      window.open(`/knowledge/${selectedArticle.folder}/${selectedArticle.filename}`, '_blank');
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -79,7 +86,11 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
     <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4">
       <div className="absolute inset-0 bg-black/30 hidden md:block" onClick={onClose} />
 
-      <div className="relative w-full h-full md:h-auto md:max-w-4xl bg-white md:rounded-2xl border-0 md:border border-[#dadce0] shadow-2xl overflow-hidden md:max-h-[90vh] flex flex-col">
+      <div className={`relative bg-white md:rounded-2xl border-0 md:border border-[#dadce0] shadow-2xl overflow-hidden flex flex-col transition-all duration-200
+        ${isFullscreen 
+          ? 'w-full h-full md:max-w-none md:max-h-none md:rounded-none md:m-0' 
+          : 'w-full h-full md:h-auto md:max-w-6xl md:max-h-[90vh]'
+        }`}>
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-[#dadce0] shrink-0">
           <div className="flex items-center gap-3">
@@ -88,14 +99,45 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
             </svg>
             <h2 className="text-lg font-semibold text-[#3c4043] tracking-wide">Knowledge Base</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a] hover:text-[#3c4043]"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Open in new tab button */}
+            {selectedArticle && (
+              <button
+                onClick={openInNewTab}
+                className="hidden md:flex w-8 h-8 items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a] hover:text-[#3c4043]"
+                title="Open in new tab"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+            )}
+            {/* Fullscreen toggle */}
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="hidden md:flex w-8 h-8 items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a] hover:text-[#3c4043]"
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f1f3f4] transition-colors text-[#70757a] hover:text-[#3c4043]"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
