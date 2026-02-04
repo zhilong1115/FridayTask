@@ -12,6 +12,9 @@ interface MobileNavProps {
   onFilterAssignee: (v: string) => void;
   filterStatus: string;
   onFilterStatus: (v: string) => void;
+  isAuthenticated?: boolean;
+  onLogin?: () => void;
+  onLogout?: () => void;
 }
 
 export default function MobileNav({
@@ -25,6 +28,9 @@ export default function MobileNav({
   onFilterAssignee,
   filterStatus,
   onFilterStatus,
+  isAuthenticated,
+  onLogin,
+  onLogout,
 }: MobileNavProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -70,6 +76,29 @@ export default function MobileNav({
               <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6A4.997 4.997 0 017 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/>
             </svg>
           </button>
+          {isAuthenticated ? (
+            <button
+              onClick={onLogout}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#34a853] hover:bg-[#f1f3f4] transition-colors"
+              title="Logged in - tap to logout"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={onLogin}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#70757a] hover:bg-[#f1f3f4] transition-colors"
+              title="Admin login"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors

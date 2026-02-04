@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-04 - Agent Planning: 任务分解与规划策略</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.7; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 30px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Monaco, monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-blue { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-green { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #fafafa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: 'SF Mono', Monaco, monospace; font-size: 13px; white-space: pre; overflow-x: auto; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+    .comparison > div { padding: 15px; border-radius: 8px; }
+    .pattern-a { background: #fff3e0; border: 2px solid #ff9800; }
+    .pattern-b { background: #e8f5e9; border: 2px solid #4caf50; }
+    .interview { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin: 25px 0; }
+    .interview h3 { color: white; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; }
+    .tag-hot { background: #ff5722; color: white; }
+    .tag-interview { background: #9c27b0; color: white; }
+    .tag-practical { background: #4caf50; color: white; }
+    .series-nav { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .series-nav a { color: #1a73e8; text-decoration: none; margin-right: 15px; }
+    .series-nav .current { font-weight: bold; color: #f9ab00; }
+  </style>
+</head>
+<body>
+  <div class="series-nav">
+    <strong>🤖 Agent 系列：</strong>
+    <a href="2026-02-01-react-pattern-tool-use.html">Day 1: ReAct</a>
+    <a href="2026-02-02-multi-agent-collaboration.html">Day 2: Multi-Agent</a>
+    <a href="2026-02-03-agent-memory-design.html">Day 3: Memory</a>
+    <span class="current">Day 4: Planning ← 今天</span>
+  </div>
+
+  <h1>🧠 Agent Planning: 任务分解与规划策略</h1>
+  <p>
+    <span class="tag tag-interview">面试热点</span>
+    <span class="tag tag-practical">实用开发</span>
+    <span class="tag tag-hot">Agent 核心</span>
+    <br><br>
+    Agent 系列完结篇 | 📅 2026-02-04
+  </p>
+
+  <h2>📖 概述 / Overview</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>Planning（规划）</strong>是 Agent 的"大脑"——决定如何把复杂任务拆解成可执行的步骤。</p>
+      <p>好的规划能力是 Claude Code、Codex CLI 等 coding agent 成功的关键。差的规划会导致：</p>
+      <ul>
+        <li>无限循环，重复尝试同样的失败方法</li>
+        <li>遗漏关键步骤，最终无法完成任务</li>
+        <li>Token 浪费，成本爆炸</li>
+      </ul>
+      <p>今天讲 4 种主流规划策略 + 面试怎么答。</p>
+    </div>
+    <div class="en">
+      <p><strong>Planning</strong> is the "brain" of an Agent — deciding how to decompose complex tasks into executable steps.</p>
+      <p>Good planning is key to the success of coding agents like Claude Code and Codex CLI. Poor planning leads to:</p>
+      <ul>
+        <li>Infinite loops, repeatedly trying failed approaches</li>
+        <li>Missing critical steps, failing to complete tasks</li>
+        <li>Token waste, cost explosion</li>
+      </ul>
+      <p>Today: 4 mainstream planning strategies + interview tips.</p>
+    </div>
+  </div>
+
+  <h2>🏗️ 规划策略全景图 / Planning Strategies Overview</h2>
+  
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Agent Planning Strategies                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐  │
+│  │ 1. Plan-and-     │    │ 2. ReWOO         │    │ 3. Tree of       │  │
+│  │    Execute       │    │                   │    │    Thoughts      │  │
+│  │                   │    │                   │    │                   │  │
+│  │ Plan → Execute   │    │ Plan all steps   │    │ Explore multiple │  │
+│  │ → Observe        │    │ BEFORE any       │    │ reasoning paths  │  │
+│  │ → Re-plan        │    │ execution        │    │ in parallel      │  │
+│  └──────────────────┘    └──────────────────┘    └──────────────────┘  │
+│         ↓                        ↓                        ↓             │
+│   [Flexible]              [Efficient]              [Thorough]          │
+│   Most common             Fewer LLM calls          Complex reasoning   │
+│                                                                          │
+│  ┌──────────────────┐    ┌──────────────────┐                          │
+│  │ 4. Hierarchical  │    │ 5. Reflection    │                          │
+│  │    Planning      │    │    + Re-plan     │                          │
+│  │                   │    │                   │                          │
+│  │ High-level plan  │    │ Execute → Check  │                          │
+│  │ → Sub-plans      │    │ → Fix mistakes   │                          │
+│  │ → Micro-tasks    │    │ → Re-plan        │                          │
+│  └──────────────────┘    └──────────────────┘                          │
+│         ↓                        ↓                                      │
+│   [Scalable]              [Robust]                                     │
+│   Long-horizon tasks      Self-correction                              │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>1️⃣ Plan-and-Execute 模式</h2>
+  <div class="highlight">
+    <strong>核心思想：</strong>先制定计划，边执行边调整
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>最常用的模式</strong>，LangGraph 官方推荐。分两个 Agent：</p>
+      <ol>
+        <li><strong>Planner</strong>: 制定高层计划（步骤列表）</li>
+        <li><strong>Executor</strong>: 执行单个步骤（可以是 ReAct Agent）</li>
+      </ol>
+      <p>执行每一步后，Planner 可以根据结果<strong>重新规划</strong>剩余步骤。</p>
+    </div>
+    <div class="en">
+      <p><strong>Most common pattern</strong>, officially recommended by LangGraph. Two agents:</p>
+      <ol>
+        <li><strong>Planner</strong>: Creates high-level plan (list of steps)</li>
+        <li><strong>Executor</strong>: Executes single step (can be ReAct agent)</li>
+      </ol>
+      <p>After each step, Planner can <strong>re-plan</strong> remaining steps based on results.</p>
+    </div>
+  </div>
+
+  <div class="diagram">
+Plan-and-Execute Flow:
+
+User Task: "Add user authentication to the Flask app"
+                    │
+                    ▼
+        ┌───────────────────┐
+        │     PLANNER       │
+        │                   │
+        │  "Let me break    │
+        │   this down..."   │
+        └─────────┬─────────┘
+                  │
+                  ▼
+    ┌─────────────────────────────┐
+    │ Plan:                       │
+    │ 1. Check current structure  │
+    │ 2. Install Flask-Login      │
+    │ 3. Create User model        │
+    │ 4. Add login routes         │
+    │ 5. Add session middleware   │
+    │ 6. Test authentication      │
+    └─────────────┬───────────────┘
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+        ▼                   │
+  ┌──────────┐              │
+  │ EXECUTOR │◄─────────────┤
+  │  Step 1  │              │
+  └────┬─────┘              │
+       │                    │
+       ▼                    │
+  [Result: Found            │
+   SQLAlchemy ORM]          │
+       │                    │
+       ▼                    │
+  ┌──────────┐              │
+  │ PLANNER  │              │
+  │ Re-plan? │──── No ──────┤
+  └────┬─────┘              │
+       │ Yes (if needed)    │
+       ▼                    │
+  [Updated Plan:            │
+   Step 3 → Use existing    │
+   SQLAlchemy models]       │
+       │                    │
+       └────────────────────┘
+             (loop)
+  </div>
+
+  <h3>💻 TypeScript 实现</h3>
+  <pre><code>interface Plan {
+  steps: string[];
+  currentStep: number;
+}
+
+interface ExecutionResult {
+  success: boolean;
+  output: string;
+  observation: string;
+}
+
+class PlanAndExecuteAgent {
+  private planner: LLM;
+  private executor: ReActAgent;
+  
+  async run(task: string): Promise<string> {
+    // Step 1: Create initial plan
+    let plan = await this.createPlan(task);
+    console.log("📋 Initial Plan:", plan.steps);
+    
+    const results: ExecutionResult[] = [];
+    
+    // Step 2: Execute each step with potential re-planning
+    while (plan.currentStep < plan.steps.length) {
+      const step = plan.steps[plan.currentStep];
+      console.log(`\n🔄 Executing Step ${plan.currentStep + 1}: ${step}`);
+      
+      // Execute current step (using ReAct agent)
+      const result = await this.executor.run(step);
+      results.push(result);
+      
+      // Check if we need to re-plan
+      if (!result.success || this.shouldReplan(result, plan)) {
+        console.log("🔄 Re-planning based on results...");
+        plan = await this.replan(task, plan, results);
+      } else {
+        plan.currentStep++;
+      }
+    }
+    
+    return this.synthesizeResults(results);
+  }
+  
+  private async createPlan(task: string): Promise<Plan> {
+    const response = await this.planner.complete({
+      system: `You are a planning agent. Break down the task into clear, 
+               actionable steps. Return JSON: { "steps": ["step1", "step2", ...] }`,
+      user: task
+    });
+    
+    const { steps } = JSON.parse(response);
+    return { steps, currentStep: 0 };
+  }
+  
+  private async replan(
+    originalTask: string, 
+    currentPlan: Plan, 
+    results: ExecutionResult[]
+  ): Promise<Plan> {
+    const context = `
+Original task: ${originalTask}
+Original plan: ${JSON.stringify(currentPlan.steps)}
+Completed steps: ${currentPlan.currentStep}
+Results so far: ${JSON.stringify(results)}
+
+Based on these results, create an updated plan for remaining work.
+`;
+    
+    const response = await this.planner.complete({
+      system: "Update the plan based on execution results. Return JSON: { steps: [...] }",
+      user: context
+    });
+    
+    const { steps } = JSON.parse(response);
+    return { steps, currentStep: 0 };
+  }
+  
+  private shouldReplan(result: ExecutionResult, plan: Plan): boolean {
+    // Re-plan triggers:
+    // 1. Step failed
+    // 2. Discovered new information that changes approach
+    // 3. Found a shortcut
+    return !result.success || 
+           result.observation.includes("ERROR") ||
+           result.observation.includes("alternative approach");
+  }
+}</code></pre>
+
+  <h2>2️⃣ ReWOO (Reasoning WithOut Observation)</h2>
+  <div class="highlight-blue">
+    <strong>核心思想：</strong>先规划所有步骤和工具调用，然后批量执行（减少 LLM 调用次数）
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>关键优势：</strong>Token 效率极高。传统 ReAct 每一步都要调用 LLM，ReWOO 只调用 2-3 次。</p>
+      <p><strong>适用场景：</strong></p>
+      <ul>
+        <li>步骤之间相对独立</li>
+        <li>不需要根据中间结果大幅调整计划</li>
+        <li>对成本敏感的应用</li>
+      </ul>
+      <p><strong>缺点：</strong>不够灵活，如果早期步骤失败，后续计划可能无效。</p>
+    </div>
+    <div class="en">
+      <p><strong>Key advantage:</strong> Extremely token-efficient. Traditional ReAct calls LLM every step; ReWOO only 2-3 times.</p>
+      <p><strong>Use cases:</strong></p>
+      <ul>
+        <li>Steps are relatively independent</li>
+        <li>No need to drastically adjust plan based on intermediate results</li>
+        <li>Cost-sensitive applications</li>
+      </ul>
+      <p><strong>Downside:</strong> Less flexible — if early steps fail, later plans may be invalid.</p>
+    </div>
+  </div>
+
+  <div class="diagram">
+ReWOO vs ReAct Comparison:
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ReAct (Traditional)                                                      │
+│                                                                          │
+│ LLM → Tool → LLM → Tool → LLM → Tool → LLM → Answer                     │
+│  │           │           │           │                                  │
+│  ▼           ▼           ▼           ▼                                  │
+│ [4 LLM calls, interleaved with tool execution]                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ReWOO (Efficient)                                                        │
+│                                                                          │
+│ LLM (Plan all) → Tool → Tool → Tool → LLM (Synthesize) → Answer         │
+│       │                                      │                          │
+│       ▼                                      ▼                          │
+│ [Only 2 LLM calls! Plan first, execute all, then synthesize]            │
+└─────────────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h3>💻 ReWOO 实现</h3>
+  <pre><code>interface ReWOOPlan {
+  steps: {
+    id: string;
+    tool: string;
+    args: Record<string, any>;
+    dependsOn: string[];  // Variable references like #E1, #E2
+  }[];
+}
+
+class ReWOOAgent {
+  async run(task: string): Promise<string> {
+    // Step 1: Plan ALL steps upfront (single LLM call)
+    const plan = await this.planAllSteps(task);
+    
+    // Step 2: Execute all steps, substituting variables
+    const evidence: Record<string, string> = {};
+    
+    for (const step of plan.steps) {
+      // Replace variable references with actual evidence
+      const resolvedArgs = this.resolveVariables(step.args, evidence);
+      
+      // Execute tool
+      const result = await this.executeTool(step.tool, resolvedArgs);
+      evidence[step.id] = result;
+      
+      console.log(`✅ ${step.id}: ${result.substring(0, 100)}...`);
+    }
+    
+    // Step 3: Synthesize final answer (single LLM call)
+    return this.synthesize(task, evidence);
+  }
+  
+  private async planAllSteps(task: string): Promise<ReWOOPlan> {
+    const response = await this.llm.complete({
+      system: `Plan all steps needed to complete the task.
+Use #E1, #E2, etc. as variable placeholders for step outputs.
+
+Example format:
+{
+  "steps": [
+    { "id": "E1", "tool": "search", "args": { "query": "..." }, "dependsOn": [] },
+    { "id": "E2", "tool": "fetch", "args": { "url": "#E1.url" }, "dependsOn": ["E1"] },
+    { "id": "E3", "tool": "summarize", "args": { "text": "#E2" }, "dependsOn": ["E2"] }
+  ]
+}`,
+      user: task
+    });
+    
+    return JSON.parse(response);
+  }
+  
+  private resolveVariables(
+    args: Record<string, any>, 
+    evidence: Record<string, string>
+  ): Record<string, any> {
+    const resolved = { ...args };
+    
+    for (const [key, value] of Object.entries(resolved)) {
+      if (typeof value === 'string' && value.startsWith('#E')) {
+        // Replace #E1, #E2.field, etc. with actual values
+        const match = value.match(/#(E\d+)(\.(\w+))?/);
+        if (match) {
+          const [, varId, , field] = match;
+          let replacement = evidence[varId];
+          if (field && replacement) {
+            replacement = JSON.parse(replacement)[field];
+          }
+          resolved[key] = replacement;
+        }
+      }
+    }
+    
+    return resolved;
+  }
+}</code></pre>
+
+  <h2>3️⃣ Tree of Thoughts (ToT)</h2>
+  <div class="highlight-green">
+    <strong>核心思想：</strong>探索多条推理路径，选择最优解（适合复杂问题）
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>灵感来源：</strong>人类解决复杂问题时，会考虑多种可能性，而不是一条路走到黑。</p>
+      <p><strong>三个关键组件：</strong></p>
+      <ol>
+        <li><strong>Thought Generator</strong>: 生成多个可能的下一步</li>
+        <li><strong>State Evaluator</strong>: 评估每个状态的前景</li>
+        <li><strong>Search Algorithm</strong>: BFS/DFS 遍历思维树</li>
+      </ol>
+      <p><strong>适用场景：</strong>数学证明、代码 debug、策略游戏、创意写作</p>
+    </div>
+    <div class="en">
+      <p><strong>Inspiration:</strong> Humans explore multiple possibilities when solving complex problems, not just one path.</p>
+      <p><strong>Three key components:</strong></p>
+      <ol>
+        <li><strong>Thought Generator</strong>: Generate multiple possible next steps</li>
+        <li><strong>State Evaluator</strong>: Evaluate the promise of each state</li>
+        <li><strong>Search Algorithm</strong>: BFS/DFS to traverse thought tree</li>
+      </ol>
+      <p><strong>Use cases:</strong> Math proofs, code debugging, strategy games, creative writing</p>
+    </div>
+  </div>
+
+  <div class="diagram">
+Tree of Thoughts Structure:
+
+                        [Initial Problem]
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+              ▼               ▼               ▼
+         [Approach A]    [Approach B]    [Approach C]
+         Score: 0.7      Score: 0.9      Score: 0.4
+              │               │               ✗ (pruned)
+              │               │
+     ┌────────┴────────┐     │
+     │                 │     │
+     ▼                 ▼     ▼
+  [A.1]             [A.2] [B.1] ← Best path
+  Score: 0.5       Score: 0.6  Score: 0.95
+     ✗                │        │
+                      │        │
+                      ▼        ▼
+                   [A.2.1]  [B.1.1] ← Solution!
+                   Score: 0.7  Score: 0.98
+  </div>
+
+  <h3>💻 Tree of Thoughts 实现</h3>
+  <pre><code>interface ThoughtNode {
+  state: string;
+  thought: string;
+  score: number;
+  children: ThoughtNode[];
+  parent?: ThoughtNode;
+}
+
+class TreeOfThoughts {
+  private numThoughts = 3;  // Branch factor
+  private maxDepth = 4;
+  
+  async solve(problem: string): Promise<string> {
+    const root: ThoughtNode = {
+      state: problem,
+      thought: "Initial problem",
+      score: 0,
+      children: []
+    };
+    
+    // BFS exploration
+    const solution = await this.bfsSearch(root);
+    return this.extractSolution(solution);
+  }
+  
+  private async bfsSearch(root: ThoughtNode): Promise<ThoughtNode> {
+    let currentLevel = [root];
+    
+    for (let depth = 0; depth < this.maxDepth; depth++) {
+      const nextLevel: ThoughtNode[] = [];
+      
+      for (const node of currentLevel) {
+        // Generate multiple thoughts (branches)
+        const thoughts = await this.generateThoughts(node);
+        
+        for (const thought of thoughts) {
+          // Evaluate each thought
+          const score = await this.evaluateThought(node.state, thought);
+          
+          const child: ThoughtNode = {
+            state: this.applyThought(node.state, thought),
+            thought,
+            score,
+            children: [],
+            parent: node
+          };
+          
+          node.children.push(child);
+          
+          // Only keep promising branches
+          if (score > 0.5) {
+            nextLevel.push(child);
+          }
+        }
+      }
+      
+      // Sort by score, keep top-k
+      nextLevel.sort((a, b) => b.score - a.score);
+      currentLevel = nextLevel.slice(0, 5);  // Beam width
+      
+      // Check if solved
+      const solved = currentLevel.find(n => this.isSolved(n));
+      if (solved) return solved;
+    }
+    
+    return currentLevel[0];  // Best effort
+  }
+  
+  private async generateThoughts(node: ThoughtNode): Promise<string[]> {
+    const response = await this.llm.complete({
+      system: `Generate ${this.numThoughts} different approaches to continue solving this problem.
+Return JSON array of strings, each a distinct next step.`,
+      user: `Current state: ${node.state}\nProgress: ${node.thought}`
+    });
+    
+    return JSON.parse(response);
+  }
+  
+  private async evaluateThought(state: string, thought: string): Promise<number> {
+    const response = await this.llm.complete({
+      system: `Evaluate how promising this approach is for solving the problem.
+Return a score from 0 to 1, where 1 = definitely leads to solution.
+Return JSON: { "score": 0.X, "reason": "..." }`,
+      user: `State: ${state}\nProposed next step: ${thought}`
+    });
+    
+    return JSON.parse(response).score;
+  }
+}</code></pre>
+
+  <h2>4️⃣ 层级规划 (Hierarchical Planning)</h2>
+  <div class="highlight">
+    <strong>核心思想：</strong>多层次分解——战略层 → 战术层 → 执行层
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>Claude Code 和 Devin 这类 coding agent 的核心架构：</p>
+      <ul>
+        <li><strong>Strategic Layer</strong>: "需要重构整个认证模块"</li>
+        <li><strong>Tactical Layer</strong>: "先改 User model，再改 routes，再改 middleware"</li>
+        <li><strong>Execution Layer</strong>: "在 models/user.py 第 23 行添加..."</li>
+      </ul>
+      <p>每一层可以有<strong>不同的模型</strong>（上层用强模型规划，下层用快模型执行）</p>
+    </div>
+    <div class="en">
+      <p>Core architecture of coding agents like Claude Code and Devin:</p>
+      <ul>
+        <li><strong>Strategic Layer</strong>: "Need to refactor entire auth module"</li>
+        <li><strong>Tactical Layer</strong>: "First change User model, then routes, then middleware"</li>
+        <li><strong>Execution Layer</strong>: "Add at line 23 of models/user.py..."</li>
+      </ul>
+      <p>Each layer can use <strong>different models</strong> (stronger for planning, faster for execution)</p>
+    </div>
+  </div>
+
+  <div class="diagram">
+Hierarchical Planning (Claude Code style):
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ STRATEGIC LAYER (Opus 4.5 / GPT-4)                                      │
+│ "Add OAuth support to the application"                                  │
+│                                                                          │
+│ Decomposition:                                                           │
+│  • Phase 1: Set up OAuth provider configs                               │
+│  • Phase 2: Implement OAuth flow                                        │
+│  • Phase 3: Handle token storage & refresh                              │
+│  • Phase 4: Add UI components                                           │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TACTICAL LAYER (Sonnet / GPT-4-mini)                                    │
+│ Phase 2: Implement OAuth flow                                           │
+│                                                                          │
+│ Sub-tasks:                                                               │
+│  • 2.1 Create /auth/google/login endpoint                               │
+│  • 2.2 Create /auth/google/callback endpoint                            │
+│  • 2.3 Add CSRF protection                                              │
+│  • 2.4 Store OAuth state in session                                     │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ EXECUTION LAYER (Haiku / Direct tool calls)                             │
+│ Task 2.1: Create /auth/google/login endpoint                            │
+│                                                                          │
+│ Actions:                                                                 │
+│  • Read routes/auth.py                                                  │
+│  • Edit: Add import for google_auth_oauthlib                            │
+│  • Edit: Add /auth/google/login route                                   │
+│  • Run: pytest tests/test_auth.py                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h3>💻 层级规划实现</h3>
+  <pre><code>interface HierarchicalPlan {
+  strategic: StrategicGoal[];
+  tactical: Map<string, TacticalTask[]>;
+  execution: Map<string, ExecutionAction[]>;
+}
+
+interface StrategicGoal {
+  id: string;
+  description: string;
+  successCriteria: string[];
+}
+
+interface TacticalTask {
+  id: string;
+  parentGoalId: string;
+  description: string;
+  estimatedComplexity: 'low' | 'medium' | 'high';
+}
+
+class HierarchicalAgent {
+  private strategicModel: LLM;  // Opus 4.5 - expensive but smart
+  private tacticalModel: LLM;   // Sonnet - balanced
+  private executionModel: LLM;  // Haiku - fast and cheap
+  
+  async run(task: string): Promise<string> {
+    // Layer 1: Strategic planning
+    const strategy = await this.strategicPlan(task);
+    console.log("🎯 Strategic goals:", strategy.map(g => g.description));
+    
+    for (const goal of strategy) {
+      // Layer 2: Tactical decomposition
+      const tactics = await this.tacticalPlan(goal);
+      console.log(`📋 Tactics for "${goal.description}":`, tactics.length);
+      
+      for (const tactic of tactics) {
+        // Layer 3: Execution
+        await this.execute(tactic);
+      }
+      
+      // Verify strategic goal completion
+      if (!await this.verifyGoal(goal)) {
+        // Re-plan at tactical level
+        console.log("🔄 Goal not met, re-planning...");
+        return this.run(task);  // Simplified: full restart
+      }
+    }
+    
+    return "Task completed successfully";
+  }
+  
+  private async strategicPlan(task: string): Promise<StrategicGoal[]> {
+    const response = await this.strategicModel.complete({
+      system: `You are a senior architect. Break down the task into 
+               high-level strategic goals. Each goal should be independently 
+               verifiable. Return JSON array of goals.`,
+      user: task
+    });
+    
+    return JSON.parse(response);
+  }
+  
+  private async tacticalPlan(goal: StrategicGoal): Promise<TacticalTask[]> {
+    const response = await this.tacticalModel.complete({
+      system: `Break down this strategic goal into tactical tasks.
+               Each task should be completable in 5-15 minutes of work.`,
+      user: `Goal: ${goal.description}\nSuccess criteria: ${goal.successCriteria.join(", ")}`
+    });
+    
+    return JSON.parse(response);
+  }
+  
+  private async execute(task: TacticalTask): Promise<void> {
+    // Use ReAct agent with fast model for execution
+    const executor = new ReActAgent(this.executionModel);
+    await executor.run(task.description);
+  }
+}</code></pre>
+
+  <h2>5️⃣ 反思与重规划 (Reflection + Re-planning)</h2>
+  <div class="highlight-blue">
+    <strong>核心思想：</strong>定期检查进度，发现问题时主动调整计划
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>和 Plan-and-Execute 的区别：不只是"步骤失败时重规划"，而是<strong>主动反思</strong>：</p>
+      <ul>
+        <li>执行了 N 步后暂停，评估整体进度</li>
+        <li>检查是否偏离目标</li>
+        <li>考虑是否有更好的方法</li>
+        <li>决定继续、调整还是彻底重来</li>
+      </ul>
+      <p>Reflexion (NeurIPS 2023) 是这个方向的代表论文。</p>
+    </div>
+    <div class="en">
+      <p>Different from Plan-and-Execute: not just "re-plan when step fails", but <strong>proactive reflection</strong>:</p>
+      <ul>
+        <li>Pause after N steps, evaluate overall progress</li>
+        <li>Check if drifting from goal</li>
+        <li>Consider if there's a better approach</li>
+        <li>Decide to continue, adjust, or restart</li>
+      </ul>
+      <p>Reflexion (NeurIPS 2023) is a seminal paper in this direction.</p>
+    </div>
+  </div>
+
+  <pre><code>class ReflectiveAgent {
+  private reflectionInterval = 3;  // Reflect every 3 steps
+  
+  async run(task: string): Promise<string> {
+    let plan = await this.createPlan(task);
+    const history: StepResult[] = [];
+    let stepCount = 0;
+    
+    while (!this.isComplete(plan, history)) {
+      // Execute next step
+      const result = await this.executeStep(plan.steps[plan.currentStep]);
+      history.push(result);
+      stepCount++;
+      
+      // Periodic reflection
+      if (stepCount % this.reflectionInterval === 0) {
+        const reflection = await this.reflect(task, plan, history);
+        
+        if (reflection.shouldReplan) {
+          console.log(`🤔 Reflection: ${reflection.insight}`);
+          console.log(`🔄 Action: ${reflection.action}`);
+          
+          if (reflection.action === 'restart') {
+            // Completely new approach
+            plan = await this.createPlan(task, reflection.insight);
+            history.length = 0;
+          } else if (reflection.action === 'adjust') {
+            // Modify remaining steps
+            plan = await this.adjustPlan(plan, reflection.insight);
+          }
+        }
+      }
+      
+      plan.currentStep++;
+    }
+    
+    return this.synthesize(history);
+  }
+  
+  private async reflect(
+    task: string, 
+    plan: Plan, 
+    history: StepResult[]
+  ): Promise<Reflection> {
+    const response = await this.llm.complete({
+      system: `You are a reflective agent. Analyze the progress so far.
+
+Consider:
+1. Are we making progress toward the goal?
+2. Have we discovered anything that changes our approach?
+3. Are we going in circles or repeating mistakes?
+4. Is there a more efficient path?
+
+Return JSON:
+{
+  "progressAssessment": "on-track | slow | stuck | wrong-direction",
+  "insight": "key observation",
+  "shouldReplan": true/false,
+  "action": "continue | adjust | restart"
+}`,
+      user: `Task: ${task}
+Plan: ${JSON.stringify(plan.steps)}
+History: ${JSON.stringify(history.map(h => h.summary))}`
+    });
+    
+    return JSON.parse(response);
+  }
+}</code></pre>
+
+  <h2>📊 策略对比：何时用什么</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>策略</th>
+        <th>LLM 调用次数</th>
+        <th>灵活性</th>
+        <th>最佳场景</th>
+        <th>典型应用</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Plan-and-Execute</strong></td>
+        <td>中等 (每步 1 次)</td>
+        <td>高</td>
+        <td>通用任务</td>
+        <td>LangGraph, 大多数 Agent</td>
+      </tr>
+      <tr>
+        <td><strong>ReWOO</strong></td>
+        <td>最少 (2-3 次)</td>
+        <td>低</td>
+        <td>独立步骤、成本敏感</td>
+        <td>研究问答、数据收集</td>
+      </tr>
+      <tr>
+        <td><strong>Tree of Thoughts</strong></td>
+        <td>最多 (每节点多次)</td>
+        <td>最高</td>
+        <td>复杂推理、优化问题</td>
+        <td>数学、策略、创意</td>
+      </tr>
+      <tr>
+        <td><strong>Hierarchical</strong></td>
+        <td>分层 (越低层越多)</td>
+        <td>中</td>
+        <td>长周期任务</td>
+        <td>Coding agents, 项目管理</td>
+      </tr>
+      <tr>
+        <td><strong>Reflexion</strong></td>
+        <td>中等 + 反思</td>
+        <td>高</td>
+        <td>容易陷入困境的任务</td>
+        <td>Debug、研究、创作</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>🎯 Claude Code 的规划策略分析</h2>
+  <div class="highlight">
+    <strong>Claude Code 实际使用的是混合策略：Hierarchical + Reflection</strong>
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>观察 Claude Code 的行为可以推断其架构：</p>
+      <ol>
+        <li><strong>任务理解阶段</strong>: 读取相关文件，理解上下文</li>
+        <li><strong>规划阶段</strong>: 输出 "I'll need to..." 的高层计划</li>
+        <li><strong>执行阶段</strong>: 一步步执行，有详细的思考过程</li>
+        <li><strong>验证阶段</strong>: 运行测试、检查结果</li>
+        <li><strong>反思阶段</strong>: 如果测试失败，分析原因并调整</li>
+      </ol>
+      <p>关键特点：大量使用 <code>&lt;thinking&gt;</code> 块做内部推理，不暴露给用户。</p>
+    </div>
+    <div class="en">
+      <p>We can infer Claude Code's architecture from its behavior:</p>
+      <ol>
+        <li><strong>Understanding phase</strong>: Read relevant files, understand context</li>
+        <li><strong>Planning phase</strong>: Output high-level plan ("I'll need to...")</li>
+        <li><strong>Execution phase</strong>: Step-by-step with detailed reasoning</li>
+        <li><strong>Verification phase</strong>: Run tests, check results</li>
+        <li><strong>Reflection phase</strong>: If tests fail, analyze and adjust</li>
+      </ol>
+      <p>Key feature: Heavy use of <code>&lt;thinking&gt;</code> blocks for internal reasoning, hidden from user.</p>
+    </div>
+  </div>
+
+  <div class="interview">
+    <h3>💼 面试题：设计一个 Coding Agent 的规划系统</h3>
+    <p><strong>题目：</strong>设计一个能自动完成代码任务的 Agent 的规划模块。要求：</p>
+    <ul>
+      <li>处理复杂、多步骤的编码任务</li>
+      <li>能从错误中恢复</li>
+      <li>成本可控（避免无限循环）</li>
+    </ul>
+    <hr style="border-color: rgba(255,255,255,0.3);">
+    <p><strong>参考答案要点：</strong></p>
+    <ol>
+      <li><strong>层级规划</strong>：先把任务拆成 phases，每个 phase 拆成 tasks，每个 task 拆成 actions</li>
+      <li><strong>模型分配</strong>：高层用强模型（GPT-4/Opus），执行层用快模型（Haiku/GPT-3.5）</li>
+      <li><strong>验证节点</strong>：每个 task 完成后运行测试，失败则触发重规划</li>
+      <li><strong>反思机制</strong>：每 N 步做一次反思，检查是否偏离目标</li>
+      <li><strong>成本控制</strong>：
+        <ul>
+          <li>设置 max_steps 上限</li>
+          <li>记录已尝试的方法，避免循环</li>
+          <li>失败 3 次同一步骤时，升级到更强模型或请求人工介入</li>
+        </ul>
+      </li>
+      <li><strong>状态管理</strong>：持久化 plan 和 history，支持断点续传</li>
+    </ol>
+  </div>
+
+  <div class="interview">
+    <h3>💼 面试追问：如何处理规划失败？</h3>
+    <p><strong>答案思路：</strong></p>
+    <ol>
+      <li><strong>分级处理</strong>：
+        <ul>
+          <li>Action 失败 → 重试（最多 3 次）</li>
+          <li>Task 失败 → 重新规划 task 的 actions</li>
+          <li>Phase 失败 → 重新评估整体方案</li>
+        </ul>
+      </li>
+      <li><strong>错误分类</strong>：
+        <ul>
+          <li>临时错误（网络、超时）→ 简单重试</li>
+          <li>逻辑错误（代码 bug）→ 需要分析原因</li>
+          <li>方向错误（思路不对）→ 需要大幅调整</li>
+        </ul>
+      </li>
+      <li><strong>学习机制</strong>：把失败的方法记录下来，告诉后续步骤"不要用这个方法"</li>
+    </ol>
+  </div>
+
+  <h2>📚 可学习的模式 / Patterns to Learn</h2>
+  
+  <div class="highlight-green">
+    <h4>✅ Pattern 1: 分层模型分配</h4>
+    <p>不同层级用不同模型，平衡质量和成本。规划用强模型，执行用快模型。</p>
+    <pre><code>// 模型分配策略
+const modelForLayer = {
+  strategic: 'opus-4.5',      // 贵但聪明
+  tactical: 'sonnet-4',       // 平衡
+  execution: 'haiku-4',       // 快且便宜
+  reflection: 'sonnet-4'      // 需要一定推理能力
+};</code></pre>
+  </div>
+
+  <div class="highlight-green">
+    <h4>✅ Pattern 2: 带上限的重试机制</h4>
+    <p>任何循环都要有 max_attempts，避免无限烧钱。</p>
+    <pre><code>const MAX_RETRIES = 3;
+const MAX_TOTAL_STEPS = 50;
+
+async function executeWithRetry(step, attempts = 0) {
+  if (attempts >= MAX_RETRIES) {
+    throw new Error(`Step failed after ${MAX_RETRIES} attempts`);
+  }
+  try {
+    return await execute(step);
+  } catch (e) {
+    return executeWithRetry(step, attempts + 1);
+  }
+}</code></pre>
+  </div>
+
+  <div class="highlight-green">
+    <h4>✅ Pattern 3: 验证节点</h4>
+    <p>每个关键步骤后都要验证，不要等到最后才发现问题。</p>
+    <pre><code>async function executePhase(phase) {
+  for (const task of phase.tasks) {
+    await execute(task);
+    
+    // 验证节点
+    const verification = await verify(task);
+    if (!verification.passed) {
+      // 立即处理，不要继续
+      await handleFailure(task, verification);
+    }
+  }
+}</code></pre>
+  </div>
+
+  <h2>🔗 系列回顾 / Series Recap</h2>
+  
+  <div class="architecture">
+    <h4>Agent 系列完整知识图谱</h4>
+    <pre>
+Day 1: ReAct Pattern & Tool Use
+  └── Agent 如何思考和行动的基础循环
+  
+Day 2: Multi-Agent Collaboration  
+  └── 多个 Agent 如何协作（CrewAI vs AutoGen）
+  
+Day 3: Agent Memory
+  └── Agent 如何记住和利用上下文
+  
+Day 4: Agent Planning (今天)
+  └── Agent 如何分解和规划复杂任务
+
+Integration:
+  ┌─────────────────────────────────────────────────┐
+  │              Complete Agent System               │
+  │                                                  │
+  │  ┌──────────────────────────────────────────┐  │
+  │  │ Planning Layer                            │  │
+  │  │ (Plan-and-Execute / Hierarchical / ToT)  │  │
+  │  └─────────────────────┬────────────────────┘  │
+  │                        │                        │
+  │  ┌─────────────────────▼────────────────────┐  │
+  │  │ Execution Layer (ReAct Loop)             │  │
+  │  │                                          │  │
+  │  │  Thought → Action → Observation → ...   │  │
+  │  └──────────┬────────────────┬──────────────┘  │
+  │             │                │                  │
+  │  ┌──────────▼────────┐ ┌────▼──────────────┐  │
+  │  │ Memory System     │ │ Tool System       │  │
+  │  │ (Buffer/Vector/   │ │ (Function Call)   │  │
+  │  │  Entity Memory)   │ │                   │  │
+  │  └───────────────────┘ └───────────────────┘  │
+  │                                                │
+  │  ┌────────────────────────────────────────────┐│
+  │  │ Multi-Agent Coordination (if needed)      ││
+  │  └────────────────────────────────────────────┘│
+  └─────────────────────────────────────────────────┘
+    </pre>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 后续讨论 / Follow-up Discussion</h3>
+    <p>Agent 系列到此完结！接下来可以深入：</p>
+    <ul>
+      <li><strong>RAG 系统设计</strong> - Pipeline、Chunking、Retrieval 策略</li>
+      <li><strong>设计 ChatGPT 面试题</strong> - 端到端对话系统 system design</li>
+      <li><strong>Claude Code 源码分析</strong> - 如果 Anthropic 开源的话 😄</li>
+    </ul>
+    <p>有问题随时问！</p>
+  </div>
+
+  <hr>
+  <p style="color: #666; font-size: 14px;">
+    📅 2026-02-04 | 🤖 Agent 系列 Day 4 (完结篇) | Phase 1.2 Agent 架构与开发
+  </p>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-04 - 当公司被收购：M&A 入门</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.7; background: #fafafa; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .bilingual { grid-template-columns: 1fr; } }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; font-size: 1.8em; }
+    h2 { color: #5f6368; border-bottom: 1px solid #dadce0; padding-bottom: 8px; }
+    .news-hook { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+    .news-hook h3 { margin-top: 0; }
+    .stock-move { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
+    .price-jump { font-size: 2em; font-weight: bold; color: #00ff88; }
+    .impact { background: #f8f9fa; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .terms { background: #e8f0fe; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .terms dt { font-weight: bold; color: #1a73e8; margin-top: 12px; }
+    .terms dd { margin-left: 0; margin-bottom: 8px; }
+    .premium-calc { background: #fff3e0; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .premium-calc code { background: #ffcc80; padding: 2px 6px; border-radius: 4px; }
+    .follow-up { margin-top: 30px; padding: 20px; border: 2px dashed #dadce0; border-radius: 12px; }
+    .market-snapshot { background: #263238; color: #eceff1; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
+    .market-snapshot .green { color: #00c805; }
+    .market-snapshot .red { color: #ff5252; }
+    .why-matters { background: #e8f5e9; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #4caf50; }
+    .risk-box { background: #ffebee; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f44336; }
+    .diagram { background: #fff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center; }
+    .arrow { font-size: 1.5em; color: #667eea; }
+  </style>
+</head>
+<body>
+  <h1>📊 当公司被收购：并购 (M&A) 入门<br><small style="color:#666;font-size:0.5em;">When a Company Gets Bought: M&A 101</small></h1>
+  
+  <div class="news-hook">
+    <h3>📰 今日新闻切入 / Today's News</h3>
+    <p><strong>Texas Instruments (TXN) 宣布以 $75 亿收购 Silicon Labs (SLAB)</strong></p>
+    <p>半导体巨头德州仪器出手，收购物联网芯片公司 Silicon Labs。</p>
+    <div class="stock-move">
+      <span>SLAB 股价反应：</span>
+      <span class="price-jump">+49%</span>
+      <span>($136.62 → $203.58)</span>
+    </div>
+  </div>
+
+  <div class="market-snapshot">
+    <strong>📈 今日市场快照 (Feb 4, 2026)</strong><br>
+    S&P 500: 6,919 <span class="green">+0.02%</span> | Nasdaq: 23,118 <span class="red">-0.59%</span> | Dow: 49,599 <span class="green">+0.73%</span><br>
+    US 10Y: 4.284% | Gold: $4,908 | EUR/USD: 1.1804
+  </div>
+
+  <h2>🎯 这笔交易为什么重要？</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>这是一笔典型的<strong>科技行业战略收购</strong>。Texas Instruments 是全球最大的模拟芯片制造商，而 Silicon Labs 专注于物联网 (IoT) 无线芯片。</p>
+      <p>通过这笔收购，TI 可以：</p>
+      <ul>
+        <li>🏭 扩展产品线到 IoT 领域</li>
+        <li>🔧 获得 Silicon Labs 的技术和工程人才</li>
+        <li>📈 减少竞争，巩固市场地位</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>This is a classic <strong>strategic tech acquisition</strong>. Texas Instruments is the world's largest analog chipmaker, while Silicon Labs specializes in IoT wireless chips.</p>
+      <p>Through this acquisition, TI can:</p>
+      <ul>
+        <li>🏭 Expand product portfolio into IoT</li>
+        <li>🔧 Acquire SLAB's technology and engineering talent</li>
+        <li>📈 Reduce competition, consolidate market position</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>📚 什么是 M&A？/ What is M&A?</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>M&A = Mergers & Acquisitions（并购）</strong></p>
+      <p>公司通过购买其他公司来扩张的方式。分两种：</p>
+      <ul>
+        <li><strong>Merger（合并）</strong>：两家公司合二为一，通常形成新公司</li>
+        <li><strong>Acquisition（收购）</strong>：一家公司买下另一家，被收购方可能保留品牌或被整合</li>
+      </ul>
+      <p>今天的 TI-SLAB 交易是典型的 <strong>Acquisition</strong>。</p>
+    </div>
+    <div class="en">
+      <p><strong>M&A = Mergers & Acquisitions</strong></p>
+      <p>Companies expanding by buying other companies. Two types:</p>
+      <ul>
+        <li><strong>Merger</strong>: Two companies combine into one, often forming a new entity</li>
+        <li><strong>Acquisition</strong>: One company buys another; the acquired may keep its brand or be integrated</li>
+      </ul>
+      <p>Today's TI-SLAB deal is a classic <strong>Acquisition</strong>.</p>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <strong>收购流程简图</strong><br><br>
+    收购方 (TI) <span class="arrow">💰 →</span> 目标公司股东 (SLAB holders)<br>
+    <small>支付现金或股票</small><br><br>
+    <span class="arrow">↓</span><br><br>
+    目标公司 (SLAB) → 成为收购方子公司或被整合
+  </div>
+
+  <h2>💰 为什么被收购的股票会暴涨？</h2>
+  
+  <div class="premium-calc">
+    <h3>🧮 收购溢价 (Acquisition Premium)</h3>
+    <p>收购方通常要支付比当前股价<strong>更高的价格</strong>才能说服股东卖出。这个差价叫做<strong>溢价 (Premium)</strong>。</p>
+    
+    <p><strong>SLAB 的例子：</strong></p>
+    <ul>
+      <li>昨日收盘价：<code>$136.62</code></li>
+      <li>收购价：约 <code>$228</code>（$7.5B ÷ 约 33M 股）</li>
+      <li>溢价：约 <code>67%</code></li>
+    </ul>
+    
+    <p>为什么要付溢价？</p>
+    <ol>
+      <li>没有溢价，股东没有理由卖</li>
+      <li>需要大多数股东同意（通常 50%+）</li>
+      <li>收购方认为目标公司值这个价</li>
+    </ol>
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>为什么今天涨 49% 而不是 67%？</strong></p>
+      <p>因为交易还没完成！还需要：</p>
+      <ul>
+        <li>⚖️ 监管审批（反垄断审查）</li>
+        <li>📋 股东投票</li>
+        <li>📜 各种法律程序</li>
+      </ul>
+      <p>股价反映的是<strong>交易成功的概率 × 收购价</strong>。市场认为有约 70-80% 概率成交，所以价格在收购价和现价之间。</p>
+    </div>
+    <div class="en">
+      <p><strong>Why only +49% instead of +67%?</strong></p>
+      <p>Because the deal isn't done yet! Still needs:</p>
+      <ul>
+        <li>⚖️ Regulatory approval (antitrust review)</li>
+        <li>📋 Shareholder vote</li>
+        <li>📜 Various legal procedures</li>
+      </ul>
+      <p>The stock price reflects <strong>probability of deal × offer price</strong>. Market thinks ~70-80% chance of completion, so price sits between current and offer price.</p>
+    </div>
+  </div>
+
+  <h2>📊 收购对投资者的影响</h2>
+
+  <div class="why-matters">
+    <h3>✅ 好消息（如果你持有 SLAB）</h3>
+    <ul>
+      <li>股价一夜暴涨，可以锁定利润</li>
+      <li>如果持有到交易完成，可以拿到收购价</li>
+      <li>交易完成通常需要 6-12 个月</li>
+    </ul>
+  </div>
+
+  <div class="risk-box">
+    <h3>⚠️ 风险（交易可能失败）</h3>
+    <ul>
+      <li><strong>监管否决</strong>：反垄断机构可能阻止</li>
+      <li><strong>尽职调查问题</strong>：发现目标公司有问题</li>
+      <li><strong>融资失败</strong>：收购方借不到钱</li>
+      <li><strong>股东反对</strong>：股东认为价格太低</li>
+    </ul>
+    <p>如果交易失败，股价通常会<strong>暴跌回原来水平</strong>。</p>
+  </div>
+
+  <h2>🎓 延伸：M&A 套利 (Merger Arbitrage)</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>专业投资者会做一种叫<strong>并购套利</strong>的策略：</p>
+      <ol>
+        <li>在收购宣布后买入目标公司股票（如 SLAB @ $203）</li>
+        <li>等待交易完成，收到收购价（如 $228）</li>
+        <li>赚取差价（约 12% 收益）</li>
+      </ol>
+      <p>听起来稳赚？但要承担交易失败的风险。这类基金叫 <strong>Event-Driven Hedge Funds</strong>。</p>
+    </div>
+    <div class="en">
+      <p>Professional investors employ a strategy called <strong>merger arbitrage</strong>:</p>
+      <ol>
+        <li>Buy target stock after announcement (e.g., SLAB @ $203)</li>
+        <li>Wait for deal completion, receive offer price ($228)</li>
+        <li>Pocket the spread (~12% return)</li>
+      </ol>
+      <p>Sounds easy? But you bear the risk of deal failure. These funds are called <strong>Event-Driven Hedge Funds</strong>.</p>
+    </div>
+  </div>
+
+  <div class="terms">
+    <h3>📚 今日关键术语 / Key Terms Today</h3>
+    <dl>
+      <dt>M&A (Mergers & Acquisitions) / 并购</dt>
+      <dd>公司通过合并或收购其他公司来扩张的行为</dd>
+      
+      <dt>Acquisition Premium / 收购溢价</dt>
+      <dd>收购价格超过当前市价的部分，通常 20-50%</dd>
+      
+      <dt>Due Diligence / 尽职调查</dt>
+      <dd>收购前对目标公司进行全面调查（财务、法律、业务）</dd>
+      
+      <dt>Antitrust Review / 反垄断审查</dt>
+      <dd>政府审查交易是否会减少市场竞争</dd>
+      
+      <dt>Merger Arbitrage / 并购套利</dt>
+      <dd>交易宣布后买入目标股票，赚取收购价与现价差价的策略</dd>
+      
+      <dt>IoT (Internet of Things) / 物联网</dt>
+      <dd>将传感器、设备连接到互联网的技术，是 SLAB 的核心业务</dd>
+    </dl>
+  </div>
+
+  <div class="impact">
+    <h3>🔮 这笔交易的深层影响</h3>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>对半导体行业：</strong></p>
+        <ul>
+          <li>行业整合趋势继续（大吃小）</li>
+          <li>IoT 芯片市场被看好</li>
+          <li>可能引发更多收购（Qualcomm、Broadcom 等巨头也在找猎物）</li>
+        </ul>
+        <p><strong>对你的投资：</strong></p>
+        <ul>
+          <li>持有小型半导体股？可能有被收购的潜力</li>
+          <li>关注行业整合趋势</li>
+        </ul>
+      </div>
+      <div class="en">
+        <p><strong>For semiconductor industry:</strong></p>
+        <ul>
+          <li>Consolidation trend continues (big eats small)</li>
+          <li>IoT chip market is hot</li>
+          <li>May trigger more acquisitions (Qualcomm, Broadcom also hunting)</li>
+        </ul>
+        <p><strong>For your investments:</strong></p>
+        <ul>
+          <li>Own small-cap semis? They could be acquisition targets</li>
+          <li>Watch for industry consolidation trends</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 后续可以讨论 / Follow-up Topics</h3>
+    <ul>
+      <li>想了解半导体产业链？（TSMC, ASML, NVDA 的关系）</li>
+      <li>想了解反垄断审查怎么运作？</li>
+      <li>想学习如何评估一家公司是否可能被收购？</li>
+    </ul>
+    <p><em>有问题随时问我！</em></p>
+  </div>
+
+  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #dadce0; color: #666; font-size: 0.9em;">
+    <p>📅 2026-02-04 | 🤖 Generated by Friday | 📚 金融知识推送 #5</p>
+    <p>课程关联：Phase 3.1 (半导体产业链)、Phase 5 (进阶话题 - 并购)</p>
+  </footer>
+</body>
+</html>

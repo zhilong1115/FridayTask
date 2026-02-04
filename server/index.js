@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import db from './db.js';
 import { syncFridayInbox } from './friday-inbox.js';
 
@@ -10,8 +11,60 @@ const PORT = 4747;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const distPath = path.join(__dirname, '..', 'dist');
 
+// Admin password - set via env var or default
+const ADMIN_PASSWORD = process.env.FRIDAY_ADMIN_PASSWORD || 'zhilong2026';
+
+// Simple token store (in-memory, tokens expire after 7 days)
+const validTokens = new Map();
+
+// Auth middleware for write operations
+const requireAuth = (req, res, next) => {
+  const token = req.headers['x-auth-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const tokenData = validTokens.get(token);
+  if (!tokenData || tokenData.expires < Date.now()) {
+    validTokens.delete(token);
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+  next();
+};
+
 app.use(cors());
 app.use(express.json());
+
+// ─── Auth API ────────────────────────────────────────────
+
+app.post('/api/auth/login', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    const token = crypto.randomBytes(32).toString('hex');
+    validTokens.set(token, { expires: Date.now() + 7 * 24 * 60 * 60 * 1000 }); // 7 days
+    res.json({ success: true, token });
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+});
+
+app.post('/api/auth/verify', (req, res) => {
+  const token = req.headers['x-auth-token'];
+  if (!token) {
+    return res.json({ valid: false });
+  }
+  const tokenData = validTokens.get(token);
+  if (!tokenData || tokenData.expires < Date.now()) {
+    validTokens.delete(token);
+    return res.json({ valid: false });
+  }
+  res.json({ valid: true });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  const token = req.headers['x-auth-token'];
+  if (token) validTokens.delete(token);
+  res.json({ success: true });
+});
 
 // Serve built frontend
 app.use(express.static(distPath));
@@ -70,8 +123,8 @@ app.get('/api/tasks', (req, res) => {
   }
 });
 
-// Create task
-app.post('/api/tasks', (req, res) => {
+// Create task (requires auth)
+app.post('/api/tasks', requireAuth, (req, res) => {
   const { title, description, assignee, due_date, priority, status, start_time, end_time, all_day, project } = req.body;
 
   if (!title) {
@@ -113,8 +166,8 @@ app.post('/api/tasks', (req, res) => {
   }
 });
 
-// Update task
-app.put('/api/tasks/:id', (req, res) => {
+// Update task (requires auth)
+app.put('/api/tasks/:id', requireAuth, (req, res) => {
   const { id } = req.params;
   const { title, description, assignee, due_date, priority, status, start_time, end_time, all_day, project } = req.body;
 
@@ -165,8 +218,8 @@ app.put('/api/tasks/:id', (req, res) => {
   }
 });
 
-// Delete task
-app.delete('/api/tasks/:id', (req, res) => {
+// Delete task (requires auth)
+app.delete('/api/tasks/:id', requireAuth, (req, res) => {
   const { id } = req.params;
 
   try {
@@ -185,7 +238,7 @@ app.delete('/api/tasks/:id', (req, res) => {
 
 // ─── Approve / Reject ────────────────────────────────────
 
-app.put('/api/tasks/:id/approve', (req, res) => {
+app.put('/api/tasks/:id/approve', requireAuth, (req, res) => {
   const { id } = req.params;
   try {
     const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
@@ -200,7 +253,7 @@ app.put('/api/tasks/:id/approve', (req, res) => {
   }
 });
 
-app.put('/api/tasks/:id/reject', (req, res) => {
+app.put('/api/tasks/:id/reject', requireAuth, (req, res) => {
   const { id } = req.params;
   try {
     const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
@@ -228,8 +281,8 @@ app.get('/api/tasks/:id/comments', (req, res) => {
   }
 });
 
-// Create comment
-app.post('/api/tasks/:id/comments', (req, res) => {
+// Create comment (requires auth)
+app.post('/api/tasks/:id/comments', requireAuth, (req, res) => {
   const { id } = req.params;
   const { author, content } = req.body;
 
@@ -267,8 +320,8 @@ app.get('/api/comments/unread', (_req, res) => {
   }
 });
 
-// Mark comment as read/notified
-app.put('/api/comments/:id/read', (req, res) => {
+// Mark comment as read/notified (requires auth)
+app.put('/api/comments/:id/read', requireAuth, (req, res) => {
   const { id } = req.params;
   try {
     const existing = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
@@ -310,8 +363,8 @@ app.get('/api/tasks/:id/artifacts', (req, res) => {
   }
 });
 
-// Create artifact
-app.post('/api/tasks/:id/artifacts', (req, res) => {
+// Create artifact (requires auth)
+app.post('/api/tasks/:id/artifacts', requireAuth, (req, res) => {
   const { id } = req.params;
   const { name, url, type } = req.body;
 
@@ -331,8 +384,8 @@ app.post('/api/tasks/:id/artifacts', (req, res) => {
   }
 });
 
-// Delete artifact
-app.delete('/api/artifacts/:id', (req, res) => {
+// Delete artifact (requires auth)
+app.delete('/api/artifacts/:id', requireAuth, (req, res) => {
   const { id } = req.params;
 
   try {
@@ -359,8 +412,8 @@ app.get('/api/tasks/:id/subtasks', (req, res) => {
   }
 });
 
-// Create subtask
-app.post('/api/tasks/:id/subtasks', (req, res) => {
+// Create subtask (requires auth)
+app.post('/api/tasks/:id/subtasks', requireAuth, (req, res) => {
   const { id } = req.params;
   const { title } = req.body;
 
@@ -382,8 +435,8 @@ app.post('/api/tasks/:id/subtasks', (req, res) => {
   }
 });
 
-// Update subtask
-app.put('/api/subtasks/:id', (req, res) => {
+// Update subtask (requires auth)
+app.put('/api/subtasks/:id', requireAuth, (req, res) => {
   const { id } = req.params;
   const { title, completed, sort_order } = req.body;
 
@@ -411,8 +464,8 @@ app.put('/api/subtasks/:id', (req, res) => {
   }
 });
 
-// Delete subtask
-app.delete('/api/subtasks/:id', (req, res) => {
+// Delete subtask (requires auth)
+app.delete('/api/subtasks/:id', requireAuth, (req, res) => {
   const { id } = req.params;
 
   try {
