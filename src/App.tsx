@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTasks } from './hooks/useTasks';
+import { useAuth } from './hooks/useAuth';
 import Sidebar from './components/Sidebar';
 import CalendarView from './components/CalendarView';
 import ListView from './components/ListView';
@@ -8,9 +9,11 @@ import SummaryModal from './components/SummaryModal';
 import ArtifactsModal from './components/ArtifactsModal';
 import KnowledgeModal from './components/KnowledgeModal';
 import MobileNav from './components/MobileNav';
+import LoginModal from './components/LoginModal';
 import type { Task, TaskFormData, SidebarView } from './types';
 
 export default function App() {
+  const { isAuthenticated, logout } = useAuth();
   const {
     tasks, cronJobs, loading,
     createTask, updateTask, deleteTask,
@@ -33,6 +36,18 @@ export default function App() {
   const [defaultDate, setDefaultDate] = useState('');
   const [defaultTime, setDefaultTime] = useState('');
 
+  // Login modal state
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  // Helper to handle auth errors
+  const handleAuthError = (err: unknown) => {
+    if (err instanceof Error && err.message === 'AUTH_REQUIRED') {
+      setLoginOpen(true);
+      return true;
+    }
+    return false;
+  };
+
   const openCreate = (date?: string, time?: string) => {
     setEditingTask(null);
     setDefaultDate(date || new Date().toISOString().split('T')[0]);
@@ -48,36 +63,51 @@ export default function App() {
   };
 
   const handleSave = async (data: TaskFormData) => {
-    if (editingTask) {
-      await updateTask(editingTask.id, data);
-    } else {
-      await createTask(data);
+    try {
+      if (editingTask) {
+        await updateTask(editingTask.id, data);
+      } else {
+        await createTask(data);
+      }
+      setModalOpen(false);
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
     }
-    setModalOpen(false);
   };
 
   const handleDelete = async () => {
     if (editingTask) {
-      await deleteTask(editingTask.id);
-      setModalOpen(false);
+      try {
+        await deleteTask(editingTask.id);
+        setModalOpen(false);
+      } catch (err) {
+        if (!handleAuthError(err)) throw err;
+      }
     }
   };
 
   const handleApprove = async () => {
     if (editingTask) {
-      const updated = await approveTask(editingTask.id);
-      if (updated) {
-        // Refresh editingTask with latest from tasks list
-        setEditingTask((prev) => prev ? { ...prev, status: 'approved' } : null);
+      try {
+        const updated = await approveTask(editingTask.id);
+        if (updated) {
+          setEditingTask((prev) => prev ? { ...prev, status: 'approved' } : null);
+        }
+      } catch (err) {
+        if (!handleAuthError(err)) throw err;
       }
     }
   };
 
   const handleReject = async () => {
     if (editingTask) {
-      const updated = await rejectTask(editingTask.id);
-      if (updated) {
-        setEditingTask((prev) => prev ? { ...prev, status: 'rejected' } : null);
+      try {
+        const updated = await rejectTask(editingTask.id);
+        if (updated) {
+          setEditingTask((prev) => prev ? { ...prev, status: 'rejected' } : null);
+        }
+      } catch (err) {
+        if (!handleAuthError(err)) throw err;
       }
     }
   };
@@ -112,6 +142,9 @@ export default function App() {
         onOpenSummary={() => setSummaryOpen(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
+        isAuthenticated={isAuthenticated}
+        onLogin={() => setLoginOpen(true)}
+        onLogout={logout}
       />
 
       {/* Mobile Nav */}
@@ -126,6 +159,9 @@ export default function App() {
         onFilterAssignee={setFilterAssignee}
         filterStatus={filterStatus}
         onFilterStatus={setFilterStatus}
+        isAuthenticated={isAuthenticated}
+        onLogin={() => setLoginOpen(true)}
+        onLogout={logout}
       />
 
       {/* Main Content */}
@@ -188,6 +224,13 @@ export default function App() {
         onFetchArtifacts={fetchArtifacts}
         onCreateArtifact={createArtifact}
         onDeleteArtifact={deleteArtifact}
+        onAuthRequired={() => setLoginOpen(true)}
+      />
+
+      {/* Login Modal */}
+      <LoginModal
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
       />
     </div>
   );

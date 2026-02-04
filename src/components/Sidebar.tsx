@@ -11,6 +11,9 @@ interface SidebarProps {
   onOpenSummary: () => void;
   onOpenArtifacts: () => void;
   onOpenKnowledge: () => void;
+  isAuthenticated?: boolean;
+  onLogin?: () => void;
+  onLogout?: () => void;
 }
 
 export default function Sidebar({
@@ -24,6 +27,9 @@ export default function Sidebar({
   onOpenSummary,
   onOpenArtifacts,
   onOpenKnowledge,
+  isAuthenticated,
+  onLogin,
+  onLogout,
 }: SidebarProps) {
   return (
     <aside className="w-60 shrink-0 border-r border-[#dadce0] bg-white p-5 flex flex-col gap-6 max-md:hidden">
@@ -174,6 +180,35 @@ export default function Sidebar({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Auth */}
+      <div className="mt-auto pt-4 border-t border-[#dadce0]">
+        {isAuthenticated ? (
+          <button
+            onClick={onLogout}
+            className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm
+              text-[#70757a] hover:text-[#3c4043] hover:bg-[#f1f3f4] transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        ) : (
+          <button
+            onClick={onLogin}
+            className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm
+              text-[#70757a] hover:text-[#3c4043] hover:bg-[#f1f3f4] transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            Admin Login
+          </button>
+        )}
       </div>
     </aside>
   );

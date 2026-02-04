@@ -19,6 +19,7 @@ interface TaskModalProps {
   onFetchArtifacts?: (taskId: number) => Promise<Artifact[]>;
   onCreateArtifact?: (taskId: number, name: string, url: string, type: ArtifactType) => Promise<Artifact | null>;
   onDeleteArtifact?: (artifactId: number) => Promise<boolean>;
+  onAuthRequired?: () => void;
 }
 
 export default function TaskModal({
@@ -28,7 +29,16 @@ export default function TaskModal({
   onCreateSubtask, onUpdateSubtask, onDeleteSubtask,
   onFetchComments, onCreateComment,
   onFetchArtifacts, onCreateArtifact, onDeleteArtifact,
+  onAuthRequired,
 }: TaskModalProps) {
+  // Helper to handle auth errors
+  const handleAuthError = (err: unknown): boolean => {
+    if (err instanceof Error && err.message === 'AUTH_REQUIRED') {
+      onAuthRequired?.();
+      return true;
+    }
+    return false;
+  };
   const [form, setForm] = useState<TaskFormData>({
     title: '',
     description: '',
@@ -128,47 +138,70 @@ export default function TaskModal({
 
   const handleAddSubtask = async () => {
     if (!newSubtask.trim() || !task || !onCreateSubtask) return;
-    await onCreateSubtask(task.id, newSubtask.trim());
-    setNewSubtask('');
+    try {
+      await onCreateSubtask(task.id, newSubtask.trim());
+      setNewSubtask('');
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
+    }
   };
 
   const handleToggleSubtask = async (subtask: Subtask) => {
     if (!onUpdateSubtask) return;
-    await onUpdateSubtask(subtask.id, { completed: subtask.completed ? 0 : 1 });
+    try {
+      await onUpdateSubtask(subtask.id, { completed: subtask.completed ? 0 : 1 });
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
+    }
   };
 
   const handleDeleteSubtask = async (subtaskId: number) => {
     if (!onDeleteSubtask) return;
-    await onDeleteSubtask(subtaskId);
+    try {
+      await onDeleteSubtask(subtaskId);
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
+    }
   };
 
   const handleAddComment = async () => {
     if (!newComment.trim() || !task || !onCreateComment) return;
-    const comment = await onCreateComment(task.id, 'zhilong', newComment.trim());
-    if (comment) {
-      setComments((prev) => [...prev, comment]);
-      setNewComment('');
-      // Scroll to bottom after adding
-      setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    try {
+      const comment = await onCreateComment(task.id, 'zhilong', newComment.trim());
+      if (comment) {
+        setComments((prev) => [...prev, comment]);
+        setNewComment('');
+        setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      }
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
     }
   };
 
   const handleAddArtifact = async () => {
     if (!newArtifactName.trim() || !newArtifactUrl.trim() || !task || !onCreateArtifact) return;
-    const artifact = await onCreateArtifact(task.id, newArtifactName.trim(), newArtifactUrl.trim(), newArtifactType);
-    if (artifact) {
-      setArtifacts((prev) => [artifact, ...prev]);
-      setNewArtifactName('');
-      setNewArtifactUrl('');
-      setNewArtifactType('link');
+    try {
+      const artifact = await onCreateArtifact(task.id, newArtifactName.trim(), newArtifactUrl.trim(), newArtifactType);
+      if (artifact) {
+        setArtifacts((prev) => [artifact, ...prev]);
+        setNewArtifactName('');
+        setNewArtifactUrl('');
+        setNewArtifactType('link');
+      }
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
     }
   };
 
   const handleDeleteArtifact = async (artifactId: number) => {
     if (!onDeleteArtifact) return;
-    const success = await onDeleteArtifact(artifactId);
-    if (success) {
-      setArtifacts((prev) => prev.filter((a) => a.id !== artifactId));
+    try {
+      const success = await onDeleteArtifact(artifactId);
+      if (success) {
+        setArtifacts((prev) => prev.filter((a) => a.id !== artifactId));
+      }
+    } catch (err) {
+      if (!handleAuthError(err)) throw err;
     }
   };
 
