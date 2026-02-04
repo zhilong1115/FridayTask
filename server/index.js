@@ -12,7 +12,7 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const distPath = path.join(__dirname, '..', 'dist');
 
 // Admin password - set via env var or default
-const ADMIN_PASSWORD = process.env.FRIDAY_ADMIN_PASSWORD || 'zhilong2026';
+const ADMIN_PASSWORD = process.env.FRIDAY_ADMIN_PASSWORD || 'ilovefriday';
 
 // Simple token store (in-memory, tokens expire after 7 days)
 const validTokens = new Map();
