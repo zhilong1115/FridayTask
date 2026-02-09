@@ -69,6 +69,10 @@ app.post('/api/auth/logout', (req, res) => {
 // Serve built frontend
 app.use(express.static(distPath));
 
+// Serve public directory (for knowledge reports, etc.)
+const publicPath = path.join(__dirname, '..', 'public');
+app.use(express.static(publicPath));
+
 // ─── Tasks API ───────────────────────────────────────────
 
 // List tasks with optional filters (includes subtasks)
