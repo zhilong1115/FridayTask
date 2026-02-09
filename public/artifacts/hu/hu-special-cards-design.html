@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>胡 - 特殊牌与经济系统设计 v2</title>
+    <title>胡 - 特殊牌与经济系统设计 v5</title>
     <style>
         :root {
             --bg-primary: #0d1117;
@@ -474,8 +474,8 @@
         <header>
             <h1>🀄 胡 - 特殊牌与经济系统</h1>
             <p>神牌 · 花牌 · 季节牌 · 经济系统 完整设计文档</p>
-            <span class="version-badge">v4.0 - 基础规则 + 整合文档</span>
-            <span class="version-badge" style="background: #21262d; margin-left: 8px;">Last Updated: 2026-02-01</span>
+            <span class="version-badge">v5.0 - 基础规则 + 整合文档</span>
+            <span class="version-badge" style="background: #21262d; margin-left: 8px;">Last Updated: 2026-02-08</span>
         </header>
 
         <div class="tabs">
@@ -818,9 +818,9 @@
                 <table>
                     <tr><th>花色</th><th>主题</th><th>数量</th></tr>
                     <tr><td>🌸 梅</td><td>弃牌增强</td><td>8张</td></tr>
-                    <tr><td>🎋 竹</td><td>牌库窥探/交换</td><td>8张</td></tr>
+                    <tr><td>🎋 竹</td><td>金币获取</td><td>8张</td></tr>
                     <tr><td>🌺 兰</td><td>倍率/得分</td><td>8张</td></tr>
-                    <tr><td>🏵️ 菊</td><td>牌面转化</td><td>8张</td></tr>
+                    <tr><td>🏵️ 菊</td><td>随机惊喜</td><td>8张</td></tr>
                 </table>
             </div>
 
@@ -840,18 +840,18 @@
             </div>
 
             <div class="section">
-                <h2>🎋 竹牌 — 牌库窥探（8张）</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">💡 竹牌只能看牌和交换，不能增加手牌数量</p>
+                <h2>🎋 竹牌 — 金币获取（8张）</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">💡 竹牌专注金币获取，是经济体系的核心</p>
                 <table>
                     <tr><th>名称</th><th>效果</th></tr>
-                    <tr><td>翠竹引路</td><td>查看牌库顶 <strong>5张</strong></td></tr>
-                    <tr><td>竹报平安</td><td>查看牌库顶 <strong>10张</strong>，可重新排列顺序</td></tr>
-                    <tr><td>胸有成竹</td><td>下次弃牌时，<strong>指定</strong> 想要摸到的牌</td></tr>
-                    <tr><td>竹林七贤</td><td>查看牌库，与手牌 <strong>交换最多3张</strong></td></tr>
-                    <tr><td>青竹蛇</td><td>查看牌库，<strong>删除</strong> 最多2张不想要的牌</td></tr>
-                    <tr><td>势如破竹</td><td>选择1张手牌，与牌库中 <strong>所有同数字</strong> 的牌交换</td></tr>
-                    <tr><td>节节高升</td><td>将牌库顶5张按 <strong>点数从小到大</strong> 排列</td></tr>
-                    <tr><td>竹马之交</td><td>选2张手牌，与牌库顶2张 <strong>盲换</strong>（不看）</td></tr>
+                    <tr><td>竹报平安</td><td>立即获得 <strong>+5 金币</strong></td></tr>
+                    <tr><td>翠竹生财</td><td>立即获得 <strong>+10 金币</strong></td></tr>
+                    <tr><td>竹林聚宝</td><td>立即获得 <strong>+15 金币</strong></td></tr>
+                    <tr><td>节节高升</td><td>获得金币 = <strong>当前回合数 × 5</strong></td></tr>
+                    <tr><td>竹编生金</td><td>手牌中每张材质牌 <strong>+3 金币</strong></td></tr>
+                    <tr><td>青竹直上</td><td>获得金币 = <strong>手牌中最大点数 × 3</strong></td></tr>
+                    <tr><td>竹马之交</td><td>本局每次吃/碰/杠额外 <strong>+5 金币</strong></td></tr>
+                    <tr><td>势如破竹</td><td>立即获得 <strong>+30 金币</strong>，但 <strong>-1 弃牌次数</strong></td></tr>
                 </table>
             </div>
 
@@ -871,17 +871,17 @@
             </div>
 
             <div class="section">
-                <h2>🏵️ 菊牌 — 牌面转化（8张）</h2>
+                <h2>🏵️ 菊牌 — 随机惊喜（8张）</h2>
                 <table>
                     <tr><th>名称</th><th>效果</th></tr>
-                    <tr><td>菊花台</td><td>选1张牌，变成 <strong>同花色任意数字</strong></td></tr>
-                    <tr><td>秋菊傲霜</td><td>选1张牌，变成 <strong>任意花色同数字</strong></td></tr>
-                    <tr><td>采菊东篱</td><td>选1张牌，变成 <strong>任意牌</strong>（完全自由）</td></tr>
-                    <tr><td>黄菊满地</td><td>选最多3张牌，全部变成 <strong>同一数字</strong></td></tr>
-                    <tr><td>菊残犹傲</td><td>选1张字牌，变成 <strong>任意数字牌</strong></td></tr>
-                    <tr><td>持菊问道</td><td>选最多2张牌，<strong>数字+1或-1</strong></td></tr>
-                    <tr><td>金菊绽放</td><td>选1张牌，添加 <strong>🥇金牌材质</strong></td></tr>
-                    <tr><td>满城尽带黄金甲</td><td>所有手牌添加 <strong>🥉铜牌材质</strong></td></tr>
+                    <tr><td>菊花台</td><td>获得随机数量金币（<strong>5~30</strong>）</td></tr>
+                    <tr><td>秋菊傲霜</td><td>获得 <strong>1张随机花牌</strong></td></tr>
+                    <tr><td>采菊东篱</td><td>获得 <strong>1张随机季节牌</strong></td></tr>
+                    <tr><td>黄菊满地</td><td>将 <strong>1张随机手牌</strong> 添加随机材质</td></tr>
+                    <tr><td>菊残犹傲</td><td>本局获得随机倍率（<strong>×1.5/×2/×3</strong>，概率50/35/15%）</td></tr>
+                    <tr><td>持菊问道</td><td>随机触发：获得2张花牌 或 获得20金币 或 <strong>+2弃牌次数</strong></td></tr>
+                    <tr><td>金菊绽放</td><td>将最多 <strong>3张随机手牌</strong> 各添加随机材质</td></tr>
+                    <tr><td>满城尽带黄金甲</td><td>超级轮盘：<strong>50%</strong>所有手牌加金牌材质，<strong>30%</strong>获得50金币，<strong>20%</strong>什么都不发生</td></tr>
                 </table>
             </div>
         </div>
@@ -927,25 +927,25 @@
             </div>
 
             <div class="section">
-                <h2>🍂 秋牌 — 资源获取（10张）</h2>
-                <p style="color: var(--accent-cyan); margin-bottom: 1rem;">🎴 使用时：从牌库抽 <strong>10张麻将牌</strong> 展示，根据牌面获得资源，之后放回牌库</p>
+                <h2>🍂 秋牌 — 变牌改造（10张）</h2>
+                <p style="color: var(--accent-cyan); margin-bottom: 1rem;">🎴 修改牌库中牌的花色和点数，塑造理想牌库</p>
                 <table>
                     <tr><th>秋牌</th><th>效果</th></tr>
-                    <tr><td>🍂 秋收</td><td>每张牌 <strong>+2 金币</strong>（10张=20金币）</td></tr>
-                    <tr><td>🍂 丰收</td><td>每张 <strong>1或9</strong> 的牌 <strong>+5 金币</strong></td></tr>
-                    <tr><td>🍂 字牌财</td><td>每张 <strong>字牌</strong> <strong>+8 金币</strong></td></tr>
-                    <tr><td>🍂 同花顺</td><td>如有 <strong>3张连续同花色</strong>，+15 金币</td></tr>
-                    <tr><td>🍂 对对碰</td><td>每有 <strong>1个对子</strong>，+10 金币</td></tr>
-                    <tr><td>🍂 花开富贵</td><td>每种花色出现，获得 <strong>该花色1张花牌</strong></td></tr>
-                    <tr><td>🍂 材质鉴定</td><td>每张 <strong>材质牌</strong>，+5 金币</td></tr>
-                    <tr><td>🍂 点数统计</td><td>所有牌 <strong>点数之和</strong> = 获得金币</td></tr>
-                    <tr><td>🍂 幸运抽奖</td><td>随机选1张，获得 <strong>其点数×5</strong> 金币</td></tr>
-                    <tr><td>🍂 满堂红</td><td>如 <strong>全是同花色</strong>，+50 金币</td></tr>
+                    <tr><td>🍂 秋风化雨</td><td>选择牌库中最多 <strong>3张牌</strong>，点数+1</td></tr>
+                    <tr><td>🍂 秋收万象</td><td>选择牌库中最多 <strong>3张牌</strong>，点数-1</td></tr>
+                    <tr><td>🍂 落叶归根</td><td>选择牌库中 <strong>1张牌</strong>，变成同花色任意点数</td></tr>
+                    <tr><td>🍂 秋高气爽</td><td>选择牌库中 <strong>1张牌</strong>，变成任意花色同点数</td></tr>
+                    <tr><td>🍂 金秋送爽</td><td>选择牌库中 <strong>1张牌</strong>，变成完全任意牌（花色+点数）</td></tr>
+                    <tr><td>🍂 霜降</td><td>牌库中所有指定点数的牌，<strong>花色变为你选的花色</strong></td></tr>
+                    <tr><td>🍂 寒露</td><td>牌库中所有指定花色的牌，<strong>点数+1</strong></td></tr>
+                    <tr><td>🍂 秋分</td><td>选择2张牌库中的牌，<strong>交换它们的花色</strong></td></tr>
+                    <tr><td>🍂 白露</td><td>选择2张牌库中的牌，<strong>交换它们的点数</strong></td></tr>
+                    <tr><td>🍂 霜叶红于二月花</td><td>选择1种花色，牌库中该花色所有牌 <strong>点数随机重排</strong></td></tr>
                 </table>
             </div>
 
             <div class="section">
-                <h2>❄️ 冬牌 — 牌库操控（10张）</h2>
+                <h2>❄️ 冬牌 — 牌量操控（10张）</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 1rem;">使用后立即改变牌库结构</p>
                 <table>
                     <tr><th>冬牌</th><th>效果</th></tr>

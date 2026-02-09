@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-05 - RAG System Design: Complete Pipeline Architecture</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 30px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; overflow-x: auto; font-size: 13px; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .tip { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4caf50; }
+    .warning { background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ff9800; }
+    .interview { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #2196f3; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .series-badge { background: #1a73e8; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+    .tag { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <p><span class="series-badge">RAG 系列 Day 1</span> <span class="tag">Phase 1.3</span> <span class="tag">面试高频</span></p>
+  
+  <h1>🔍 RAG System Design: Complete Pipeline Architecture</h1>
+  <p>Retrieval-Augmented Generation 系统设计全解</p>
+
+  <h2>📖 什么是 RAG？ / What is RAG?</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>Retrieval-Augmented Generation</strong> 是解决 LLM 知识局限性的核心架构模式。</p>
+      <p>LLM 的问题：</p>
+      <ul>
+        <li>知识截止日期 (training cutoff)</li>
+        <li>无法访问私有/实时数据</li>
+        <li>幻觉 (hallucination)</li>
+        <li>无法引用来源</li>
+      </ul>
+      <p>RAG 的解决方案：<strong>先检索，再生成</strong>。把相关文档作为上下文喂给 LLM，让它基于真实数据回答。</p>
+    </div>
+    <div class="en">
+      <p><strong>Retrieval-Augmented Generation</strong> is the core architectural pattern for addressing LLM knowledge limitations.</p>
+      <p>LLM problems:</p>
+      <ul>
+        <li>Training cutoff date</li>
+        <li>No access to private/real-time data</li>
+        <li>Hallucinations</li>
+        <li>Cannot cite sources</li>
+      </ul>
+      <p>RAG solution: <strong>Retrieve first, then generate</strong>. Feed relevant documents as context to let LLM answer based on real data.</p>
+    </div>
+  </div>
+
+  <h2>🏗️ 整体架构 / Overall Architecture</h2>
+  
+  <div class="architecture">
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        RAG System Architecture                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    OFFLINE PIPELINE (Indexing)                   │   │
+│  │                                                                   │   │
+│  │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │   │
+│  │  │  Data    │───▶│  Chunk   │───▶│ Embedding│───▶│  Vector  │   │   │
+│  │  │  Source  │    │  Split   │    │  Model   │    │   Store  │   │   │
+│  │  └──────────┘    └──────────┘    └──────────┘    └──────────┘   │   │
+│  │      │                                                │          │   │
+│  │      │            ┌──────────┐                        │          │   │
+│  │      └───────────▶│ Metadata │────────────────────────┘          │   │
+│  │                   │  Store   │                                   │   │
+│  │                   └──────────┘                                   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    ONLINE PIPELINE (Query)                       │   │
+│  │                                                                   │   │
+│  │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │   │
+│  │  │  User    │───▶│  Query   │───▶│  Hybrid  │───▶│ Reranker │   │   │
+│  │  │  Query   │    │ Embedding│    │ Retrieval│    │          │   │   │
+│  │  └──────────┘    └──────────┘    └──────────┘    └──────────┘   │   │
+│  │                                                        │         │   │
+│  │                                                        ▼         │   │
+│  │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │   │
+│  │  │ Response │◀───│   LLM    │◀───│  Prompt  │◀───│  Context │   │   │
+│  │  │          │    │ Generate │    │ Template │    │ Assembly │   │   │
+│  │  └──────────┘    └──────────┘    └──────────┘    └──────────┘   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h2>📥 Offline Pipeline: 数据摄入与索引</h2>
+  
+  <h3>Step 1: 数据加载 (Data Loading)</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p>支持多种数据源：</p>
+      <ul>
+        <li><strong>结构化</strong>: PDF, DOCX, HTML, Markdown</li>
+        <li><strong>非结构化</strong>: 网页爬取, API 数据</li>
+        <li><strong>数据库</strong>: SQL, NoSQL, 日志系统</li>
+      </ul>
+      <p>关键决策：<strong>增量 vs 全量更新</strong>。生产环境必须支持增量索引。</p>
+    </div>
+    <div class="en">
+      <p>Support multiple data sources:</p>
+      <ul>
+        <li><strong>Structured</strong>: PDF, DOCX, HTML, Markdown</li>
+        <li><strong>Unstructured</strong>: Web scraping, API data</li>
+        <li><strong>Databases</strong>: SQL, NoSQL, log systems</li>
+      </ul>
+      <p>Key decision: <strong>Incremental vs Full rebuild</strong>. Production must support incremental indexing.</p>
+    </div>
+  </div>
+
+  <h3>Step 2: 文档分块 (Chunking) ⭐</h3>
+  
+  <div class="highlight">
+    <strong>🎯 Chunking 是 RAG 最关键的设计决策之一！</strong>
+    <p>Chunk 太大：噪音多，retrieval 不精确，浪费 token</p>
+    <p>Chunk 太小：丢失上下文，语义不完整</p>
+  </div>
+
+  <table>
+    <tr>
+      <th>策略</th>
+      <th>优点</th>
+      <th>缺点</th>
+      <th>适用场景</th>
+    </tr>
+    <tr>
+      <td><strong>Fixed Size</strong><br>固定长度</td>
+      <td>简单、可预测</td>
+      <td>切断语义</td>
+      <td>结构化文档</td>
+    </tr>
+    <tr>
+      <td><strong>Recursive</strong><br>递归分割</td>
+      <td>保留结构</td>
+      <td>依赖分隔符</td>
+      <td>Markdown, 代码</td>
+    </tr>
+    <tr>
+      <td><strong>Semantic</strong><br>语义分块</td>
+      <td>保持语义完整</td>
+      <td>计算开销大</td>
+      <td>长篇文章</td>
+    </tr>
+    <tr>
+      <td><strong>Parent-Child</strong><br>父子分块</td>
+      <td>检索细粒度<br>上下文完整</td>
+      <td>复杂度高</td>
+      <td>精度要求高</td>
+    </tr>
+  </table>
+
+  <pre><code>// Recursive Chunking 伪代码
+function recursiveChunk(text: string, chunkSize: number): string[] {
+  const separators = ["\n\n", "\n", ". ", " "];  // 按优先级
+  
+  for (const sep of separators) {
+    const splits = text.split(sep);
+    const chunks = mergeSplits(splits, chunkSize, sep);
+    if (chunks.every(c => c.length <= chunkSize)) {
+      return chunks;
+    }
+  }
+  
+  // Fallback: 强制按字符切分
+  return splitByChars(text, chunkSize);
+}
+
+// Parent-Child Chunking
+interface Chunk {
+  id: string;
+  content: string;      // 小 chunk 用于检索
+  parentId?: string;    // 指向大 chunk
+  parent?: string;      // 大 chunk 内容用于生成
+}
+
+// 检索时: 用小 chunk 的 embedding 匹配
+// 生成时: 返回对应的 parent chunk 给 LLM</code></pre>
+
+  <div class="tip">
+    <strong>💡 Best Practice: Chunk Overlap</strong>
+    <p>设置 10-20% 的重叠 (overlap)，避免在边界处丢失关键信息。</p>
+    <p>例如：chunk_size=500, overlap=100</p>
+  </div>
+
+  <h3>Step 3: 向量化 (Embedding)</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>Embedding 模型选择</strong>是成本与质量的权衡：</p>
+      <table>
+        <tr><th>模型</th><th>维度</th><th>特点</th></tr>
+        <tr><td>OpenAI text-embedding-3-small</td><td>1536</td><td>性价比高</td></tr>
+        <tr><td>OpenAI text-embedding-3-large</td><td>3072</td><td>最高质量</td></tr>
+        <tr><td>Cohere embed-v3</td><td>1024</td><td>多语言强</td></tr>
+        <tr><td>BGE-M3</td><td>1024</td><td>开源首选</td></tr>
+        <tr><td>Voyage AI</td><td>1024</td><td>代码专用</td></tr>
+      </table>
+    </div>
+    <div class="en">
+      <p><strong>Embedding model selection</strong> is a cost vs quality trade-off:</p>
+      <p>Key factors:</p>
+      <ul>
+        <li>Dimension size affects storage & latency</li>
+        <li>Domain-specific models for code/legal/medical</li>
+        <li>Multilingual support if needed</li>
+        <li>Local vs API (cost, latency, privacy)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Step 4: 向量存储 (Vector Store)</h3>
+  
+  <table>
+    <tr>
+      <th>数据库</th>
+      <th>类型</th>
+      <th>最适合场景</th>
+      <th>特点</th>
+    </tr>
+    <tr>
+      <td><strong>Pinecone</strong></td>
+      <td>Managed</td>
+      <td>快速上手、Serverless</td>
+      <td>免运维，贵</td>
+    </tr>
+    <tr>
+      <td><strong>Weaviate</strong></td>
+      <td>Self-hosted/Cloud</td>
+      <td>Hybrid Search</td>
+      <td>内置 BM25 + Vector</td>
+    </tr>
+    <tr>
+      <td><strong>Chroma</strong></td>
+      <td>Embedded</td>
+      <td>开发/小型项目</td>
+      <td>简单，嵌入应用</td>
+    </tr>
+    <tr>
+      <td><strong>pgvector</strong></td>
+      <td>PostgreSQL 扩展</td>
+      <td>已有 PG 基础设施</td>
+      <td>事务支持</td>
+    </tr>
+    <tr>
+      <td><strong>Qdrant</strong></td>
+      <td>Self-hosted/Cloud</td>
+      <td>高性能过滤</td>
+      <td>Rust 实现，快</td>
+    </tr>
+    <tr>
+      <td><strong>Milvus</strong></td>
+      <td>Self-hosted</td>
+      <td>大规模 (10B+)</td>
+      <td>分布式，复杂</td>
+    </tr>
+  </table>
+
+  <h2>🔎 Online Pipeline: 查询与生成</h2>
+
+  <h3>Step 1: Query 处理</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>Query Transformation</strong> 是提升检索质量的关键：</p>
+      <ol>
+        <li><strong>Query Rewriting</strong>: 让 LLM 改写用户问题，使其更适合检索</li>
+        <li><strong>Query Expansion</strong>: 生成多个相关查询，增加召回率</li>
+        <li><strong>HyDE</strong>: 先生成假设答案，用答案做检索</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p><strong>Query Transformation</strong> is key to improving retrieval quality:</p>
+      <ol>
+        <li><strong>Query Rewriting</strong>: LLM rewrites user question for better retrieval</li>
+        <li><strong>Query Expansion</strong>: Generate multiple related queries for recall</li>
+        <li><strong>HyDE</strong>: Generate hypothetical answer first, retrieve with it</li>
+      </ol>
+    </div>
+  </div>
+
+  <pre><code>// HyDE (Hypothetical Document Embeddings)
+async function hydeRetrieval(query: string) {
+  // Step 1: LLM 生成假设性答案
+  const hypotheticalAnswer = await llm.generate(`
+    Write a paragraph that would answer: "${query}"
+    Be specific and detailed.
+  `);
+  
+  // Step 2: 用假设答案做检索（语义更接近真实文档）
+  const embedding = await embed(hypotheticalAnswer);
+  const docs = await vectorStore.search(embedding, topK: 10);
+  
+  return docs;
+}</code></pre>
+
+  <h3>Step 2: Hybrid Retrieval ⭐</h3>
+  
+  <div class="highlight">
+    <strong>🎯 最佳实践：Hybrid Search = Vector + Keyword</strong>
+    <p>纯向量检索的问题：对专有名词、ID、精确匹配不友好</p>
+    <p>纯关键词的问题：无法理解语义同义词</p>
+    <p>解决方案：两者结合，分数融合</p>
+  </div>
+
+  <pre><code>// Hybrid Search with RRF (Reciprocal Rank Fusion)
+async function hybridSearch(query: string, topK: number = 10) {
+  // 并行执行两种检索
+  const [vectorResults, bm25Results] = await Promise.all([
+    vectorStore.search(await embed(query), topK * 2),
+    bm25Index.search(query, topK * 2)
+  ]);
+  
+  // RRF 分数融合
+  const k = 60;  // RRF 常数
+  const scores = new Map&lt;string, number&gt;();
+  
+  vectorResults.forEach((doc, rank) => {
+    const score = 1 / (k + rank + 1);
+    scores.set(doc.id, (scores.get(doc.id) || 0) + score);
+  });
+  
+  bm25Results.forEach((doc, rank) => {
+    const score = 1 / (k + rank + 1);
+    scores.set(doc.id, (scores.get(doc.id) || 0) + score);
+  });
+  
+  // 按融合分数排序
+  return Array.from(scores.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topK)
+    .map(([id]) => getDocument(id));
+}</code></pre>
+
+  <h3>Step 3: Reranking</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>两阶段检索</strong>是生产系统的标准做法：</p>
+      <ol>
+        <li><strong>Stage 1 - 召回</strong>: 快速检索 top-100 候选（毫秒级）</li>
+        <li><strong>Stage 2 - 精排</strong>: Cross-encoder 重排 top-10（百毫秒级）</li>
+      </ol>
+      <p>Cross-encoder 比 bi-encoder 更准，但更慢。所以只用于精排。</p>
+    </div>
+    <div class="en">
+      <p><strong>Two-stage retrieval</strong> is standard in production:</p>
+      <ol>
+        <li><strong>Stage 1 - Recall</strong>: Fast retrieve top-100 candidates (ms)</li>
+        <li><strong>Stage 2 - Rerank</strong>: Cross-encoder rerank top-10 (100ms)</li>
+      </ol>
+      <p>Cross-encoder is more accurate but slower. Use only for reranking.</p>
+    </div>
+  </div>
+
+  <pre><code>// Reranking with Cohere or Cross-encoder
+async function rerankResults(query: string, documents: Document[]) {
+  // Option 1: Cohere Rerank API
+  const reranked = await cohere.rerank({
+    query,
+    documents: documents.map(d => d.content),
+    model: "rerank-english-v3.0",
+    topN: 5
+  });
+  
+  // Option 2: Local cross-encoder (e.g., sentence-transformers)
+  // const reranked = await crossEncoder.rank(query, documents);
+  
+  return reranked.results.map(r => documents[r.index]);
+}</code></pre>
+
+  <h3>Step 4: Context Assembly & Prompt</h3>
+  
+  <pre><code>// Context Assembly 最佳实践
+function assembleContext(docs: Document[], tokenBudget: number): string {
+  let context = "";
+  let usedTokens = 0;
+  
+  for (const doc of docs) {
+    const docTokens = countTokens(doc.content);
+    if (usedTokens + docTokens > tokenBudget) break;
+    
+    // 包含来源信息，便于引用
+    context += `[Source: ${doc.metadata.source}]\n${doc.content}\n\n`;
+    usedTokens += docTokens;
+  }
+  
+  return context;
+}
+
+// RAG Prompt Template
+const ragPrompt = `You are a helpful assistant. Answer the question based ONLY on the provided context.
+If the context doesn't contain the answer, say "I don't have enough information to answer this."
+
+Context:
+{context}
+
+Question: {question}
+
+Instructions:
+1. Answer based only on the context provided
+2. If citing specific information, mention the source
+3. If uncertain, express your uncertainty
+4. Be concise but complete
+
+Answer:`;</code></pre>
+
+  <div class="warning">
+    <strong>⚠️ 常见陷阱：Lost in the Middle</strong>
+    <p>LLM 对长 context 中间位置的信息关注度低。解决方案：</p>
+    <ul>
+      <li>把最相关的 chunks 放在开头和结尾</li>
+      <li>控制 context 长度，宁少勿多</li>
+      <li>使用 citation 强制 LLM 关注所有来源</li>
+    </ul>
+  </div>
+
+  <h2>📊 评估指标 / Evaluation Metrics</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>RAG 需要评估两个维度：</p>
+      <p><strong>检索质量</strong>：</p>
+      <ul>
+        <li>Recall@K - K 个结果中包含正确文档的比例</li>
+        <li>MRR - 正确文档的平均倒数排名</li>
+        <li>NDCG - 排序质量</li>
+      </ul>
+      <p><strong>生成质量</strong>：</p>
+      <ul>
+        <li>Faithfulness - 答案是否基于检索内容</li>
+        <li>Answer Relevance - 答案是否回答了问题</li>
+        <li>Context Relevance - 检索的内容是否相关</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>RAG needs evaluation on two dimensions:</p>
+      <p><strong>Retrieval Quality</strong>:</p>
+      <ul>
+        <li>Recall@K - Fraction of relevant docs in top-K</li>
+        <li>MRR - Mean Reciprocal Rank</li>
+        <li>NDCG - Normalized Discounted Cumulative Gain</li>
+      </ul>
+      <p><strong>Generation Quality</strong>:</p>
+      <ul>
+        <li>Faithfulness - Is answer grounded in context?</li>
+        <li>Answer Relevance - Does it answer the question?</li>
+        <li>Context Relevance - Is retrieved content relevant?</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>🎯 面试常见问题 / Interview Questions</h2>
+  
+  <div class="interview">
+    <h4>Q1: 设计一个企业知识库 RAG 系统，需要考虑哪些方面？</h4>
+    <p><strong>参考答案框架</strong>：</p>
+    <ol>
+      <li><strong>数据摄入</strong>：支持多格式（PDF、DOCX、网页），增量更新，权限控制</li>
+      <li><strong>Chunking</strong>：根据文档类型选择策略，Parent-Child 提高精度</li>
+      <li><strong>检索</strong>：Hybrid Search (BM25 + Vector)，Metadata 过滤（部门、时间）</li>
+      <li><strong>Reranking</strong>：Cross-encoder 精排 top 10</li>
+      <li><strong>Generation</strong>：Citation 要求，拒答机制，流式输出</li>
+      <li><strong>评估</strong>：建立 golden set，定期评估 retrieval + generation</li>
+    </ol>
+  </div>
+
+  <div class="interview">
+    <h4>Q2: 如何处理 RAG 中的 Hallucination？</h4>
+    <p><strong>参考答案</strong>：</p>
+    <ol>
+      <li><strong>检索阶段</strong>：提高检索质量，确保返回相关内容</li>
+      <li><strong>Prompt 设计</strong>：强调 "only answer based on context"，要求引用来源</li>
+      <li><strong>后处理</strong>：NLI 模型验证答案是否与 context 一致</li>
+      <li><strong>拒答机制</strong>：confidence 低时明确说 "不确定"</li>
+      <li><strong>Citation</strong>：要求 inline citation，用户可验证</li>
+    </ol>
+  </div>
+
+  <div class="interview">
+    <h4>Q3: Chunk Size 如何选择？</h4>
+    <p><strong>参考答案</strong>：</p>
+    <ul>
+      <li>通用：500-1000 tokens，overlap 10-20%</li>
+      <li>精确问答：小 chunk (200-300)，Parent-Child 架构</li>
+      <li>长文档总结：大 chunk (1500-2000)</li>
+      <li>最佳实践：A/B 测试，用评估指标选最优</li>
+    </ul>
+  </div>
+
+  <div class="interview">
+    <h4>Q4: 为什么要用 Hybrid Search 而不是纯 Vector Search？</h4>
+    <p><strong>参考答案</strong>：</p>
+    <ul>
+      <li>Vector Search 对专有名词、ID、精确匹配不友好（"iPhone 15" vs "iPhone 14"）</li>
+      <li>关键词搜索对同义词、语义理解不友好</li>
+      <li>Hybrid = 两者优势互补</li>
+      <li>RRF 是常用的分数融合方法</li>
+    </ul>
+  </div>
+
+  <h2>📚 RAG 系列预告 / Series Preview</h2>
+  
+  <table>
+    <tr>
+      <th>Day</th>
+      <th>主题</th>
+      <th>重点</th>
+    </tr>
+    <tr>
+      <td><strong>Day 1 (今天)</strong></td>
+      <td>RAG Pipeline 完整架构</td>
+      <td>Offline/Online Pipeline, 整体设计</td>
+    </tr>
+    <tr>
+      <td>Day 2</td>
+      <td>Advanced Chunking</td>
+      <td>Semantic, Parent-Child, Agentic Chunking</td>
+    </tr>
+    <tr>
+      <td>Day 3</td>
+      <td>Advanced Retrieval</td>
+      <td>Query Transformation, Self-Query, Multi-hop</td>
+    </tr>
+    <tr>
+      <td>Day 4</td>
+      <td>Production RAG</td>
+      <td>Evaluation, Caching, Cost Optimization</td>
+    </tr>
+  </table>
+
+  <div class="follow-up">
+    <h3>💬 后续讨论 / Follow-up Discussion</h3>
+    <p>任何问题都可以问我，我会补充在这里！</p>
+    <ul>
+      <li>想深入某个具体组件？</li>
+      <li>想看实际项目案例？</li>
+      <li>对 Aspen 项目有 RAG 需求？</li>
+    </ul>
+  </div>
+
+  <hr>
+  <p style="color: #5f6368; font-size: 14px;">
+    📅 2026-02-05 | 🤖 Generated by Friday | 📁 Phase 1.3 RAG 系统设计
+  </p>
+</body>
+</html>

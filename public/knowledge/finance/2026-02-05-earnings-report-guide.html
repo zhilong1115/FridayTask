@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-05 - 财报解读入门：为什么 Qualcomm 赢了却输了？</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+    @media (max-width: 600px) { .bilingual { grid-template-columns: 1fr; } }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #5f6368; margin-top: 30px; }
+    .impact { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .terms { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .key-point { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f9ab00; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    .stock-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .stock-card .ticker { font-size: 24px; font-weight: bold; }
+    .stock-card .price { font-size: 32px; margin: 10px 0; }
+    .stock-card .change { color: #ff4444; font-size: 18px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+    .metric-box { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+    .metric-box .label { font-size: 12px; color: #666; }
+    .metric-box .value { font-size: 20px; font-weight: bold; color: #333; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+    .formula { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: monospace; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    th { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <h1>📊 财报解读入门：为什么 Qualcomm 赢了却输了？</h1>
+  <p><em>How to Read Earnings Reports: Why Qualcomm Beat Expectations but Tanked</em></p>
+  <p style="color: #666;">2026年2月5日 · Friday's Daily Finance Push</p>
+
+  <!-- Stock Card -->
+  <div class="stock-card">
+    <div class="ticker">QCOM · Qualcomm</div>
+    <div class="price">$137.78</div>
+    <div class="change">▼ -$11.11 (-7.46%) 今日</div>
+    <div style="margin-top: 10px; font-size: 14px; opacity: 0.8;">
+      昨天财报发布后暴跌 | Post-earnings plunge
+    </div>
+  </div>
+
+  <div class="key-point">
+    <strong>🎯 今日核心问题 / Today's Key Question:</strong><br>
+    Qualcomm 财报<strong>超预期</strong>（beat），为什么股价还是暴跌？<br>
+    <em>Qualcomm beat earnings expectations — why did the stock tank anyway?</em>
+  </div>
+
+  <h2>一、什么是财报？/ What Are Earnings Reports?</h2>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>上市公司每个季度（3个月）必须向公众披露财务数据，这就是<strong>财报</strong>（Earnings Report）。</p>
+      <p>财报季通常在每季度结束后 2-6 周：</p>
+      <ul>
+        <li>Q1: 4月中-5月</li>
+        <li>Q2: 7月中-8月</li>
+        <li>Q3: 10月中-11月</li>
+        <li>Q4: 1月中-2月（现在！）</li>
+      </ul>
+      <p>投资者最关注的两个数字：<strong>收入</strong>和<strong>每股收益</strong>。</p>
+    </div>
+    <div class="en">
+      <p>Public companies must disclose financial data every quarter (3 months) — this is the <strong>Earnings Report</strong>.</p>
+      <p>Earnings season typically occurs 2-6 weeks after quarter end:</p>
+      <ul>
+        <li>Q1: Mid-April to May</li>
+        <li>Q2: Mid-July to August</li>
+        <li>Q3: Mid-October to November</li>
+        <li>Q4: Mid-January to February (now!)</li>
+      </ul>
+      <p>Investors focus on two key numbers: <strong>Revenue</strong> and <strong>EPS</strong>.</p>
+    </div>
+  </div>
+
+  <h2>二、财报的关键指标 / Key Metrics</h2>
+
+  <div class="metrics-grid">
+    <div class="metric-box">
+      <div class="label">Revenue 收入</div>
+      <div class="value">$12.25B</div>
+      <div style="color: green; font-size: 12px;">✓ Beat 超预期</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">Net Income 净利润</div>
+      <div class="value">$3.78B</div>
+      <div style="color: green; font-size: 12px;">✓ Beat 超预期</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">EPS 每股收益</div>
+      <div class="value">$4.96</div>
+      <div style="color: green; font-size: 12px;">✓ Beat 超预期</div>
+    </div>
+  </div>
+
+  <div class="terms">
+    <h3>📚 关键术语 / Key Terms</h3>
+    <table>
+      <tr>
+        <th>术语</th>
+        <th>英文</th>
+        <th>含义</th>
+      </tr>
+      <tr>
+        <td><strong>收入</strong></td>
+        <td>Revenue / Top Line</td>
+        <td>公司卖东西赚的钱（税前、成本前）</td>
+      </tr>
+      <tr>
+        <td><strong>净利润</strong></td>
+        <td>Net Income / Bottom Line</td>
+        <td>扣除所有成本和税后剩下的钱</td>
+      </tr>
+      <tr>
+        <td><strong>每股收益</strong></td>
+        <td>EPS (Earnings Per Share)</td>
+        <td>净利润 ÷ 总股数，最重要的指标！</td>
+      </tr>
+      <tr>
+        <td><strong>市盈率</strong></td>
+        <td>P/E Ratio</td>
+        <td>股价 ÷ EPS，衡量"贵不贵"</td>
+      </tr>
+      <tr>
+        <td><strong>指引</strong></td>
+        <td>Guidance / Outlook</td>
+        <td>公司对下季度的预测</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="formula">
+    EPS = Net Income ÷ Shares Outstanding<br>
+    每股收益 = 净利润 ÷ 流通股数
+  </div>
+
+  <div class="formula">
+    P/E Ratio = Stock Price ÷ EPS<br>
+    市盈率 = 股价 ÷ 每股收益<br>
+    <span style="font-size: 14px; color: #666;">QCOM 现在 P/E = 27.78（约 28 倍）</span>
+  </div>
+
+  <h2>三、Beat vs Miss：为什么"赢"了还跌？</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>关键洞察</strong>：股市是"买预期，卖事实"。</p>
+      <p>财报发布前，分析师会给出预测（Consensus）。股价已经"price in"了这些预期。</p>
+      <p>所以：</p>
+      <ul>
+        <li>❌ 只是 Beat 不够 — 股价已经反映了预期</li>
+        <li>✅ <strong>未来指引（Guidance）更重要！</strong></li>
+      </ul>
+      <p>Qualcomm 的问题：</p>
+      <ol>
+        <li>Q1 财报 Beat ✓</li>
+        <li>但 Q2 指引低于预期 ✗</li>
+        <li>警告内存芯片短缺将持续 6-8 个季度 ✗✗</li>
+      </ol>
+      <p>投资者买的是<strong>未来</strong>，不是过去。</p>
+    </div>
+    <div class="en">
+      <p><strong>Key Insight</strong>: Markets "buy the rumor, sell the news."</p>
+      <p>Before earnings, analysts publish estimates (Consensus). Stock prices already "price in" these expectations.</p>
+      <p>Therefore:</p>
+      <ul>
+        <li>❌ Just beating isn't enough — it's already priced in</li>
+        <li>✅ <strong>Future guidance matters more!</strong></li>
+      </ul>
+      <p>Qualcomm's problem:</p>
+      <ol>
+        <li>Q1 earnings beat ✓</li>
+        <li>But Q2 guidance below expectations ✗</li>
+        <li>Warned memory shortage may last 6-8 quarters ✗✗</li>
+      </ol>
+      <p>Investors buy the <strong>future</strong>, not the past.</p>
+    </div>
+  </div>
+
+  <div class="key-point">
+    <strong>💡 金句 / Golden Rule:</strong><br>
+    <em>"Earnings tell you where the company has been.<br>
+    Guidance tells you where it's going."</em><br><br>
+    财报告诉你公司去过哪里；指引告诉你公司要去哪里。
+  </div>
+
+  <h2>四、Qualcomm 案例深度分析</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h4>为什么内存短缺这么可怕？</h4>
+      <p>Qualcomm 是手机芯片之王（为三星、小米等供货）。</p>
+      <p>但手机不只需要处理器，还需要内存芯片。如果内存短缺：</p>
+      <ul>
+        <li>手机厂商造不出足够的手机</li>
+        <li>→ 不需要买那么多 Qualcomm 芯片</li>
+        <li>→ Qualcomm 收入下降</li>
+      </ul>
+      <p><strong>6-8 个季度 = 1.5-2 年的逆风！</strong></p>
+      
+      <h4>分析师反应</h4>
+      <p>RBC Capital 今天把目标价从 $180 降到 $150（-17%）</p>
+      <p>Morningstar 把公允价值从 $185 降到 $155（-16%）</p>
+    </div>
+    <div class="en">
+      <h4>Why is memory shortage so scary?</h4>
+      <p>Qualcomm is the king of mobile chips (supplies Samsung, Xiaomi, etc.).</p>
+      <p>But phones need memory chips too. If memory is short:</p>
+      <ul>
+        <li>Phone makers can't build enough phones</li>
+        <li>→ They don't need as many Qualcomm chips</li>
+        <li>→ Qualcomm revenue drops</li>
+      </ul>
+      <p><strong>6-8 quarters = 1.5-2 years of headwinds!</strong></p>
+      
+      <h4>Analyst Reactions</h4>
+      <p>RBC Capital cut target from $180 to $150 (-17%)</p>
+      <p>Morningstar cut fair value from $185 to $155 (-16%)</p>
+    </div>
+  </div>
+
+  <h2>五、如何用财报做投资决策？</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h4>财报发布前</h4>
+      <ol>
+        <li>查看分析师预期（Yahoo Finance 有）</li>
+        <li>了解公司的业务和近期新闻</li>
+        <li>决定是否要在财报前持有（波动大！）</li>
+      </ol>
+      
+      <h4>财报发布后</h4>
+      <ol>
+        <li>看 Beat 还是 Miss（但这只是第一步）</li>
+        <li><strong>重点看 Guidance!</strong></li>
+        <li>听 Earnings Call（管理层电话会议）</li>
+        <li>关注分析师评级变化</li>
+      </ol>
+      
+      <h4>⚠️ 新手注意</h4>
+      <p>财报日股价波动巨大（今天 QCOM -7.46%）。<br>
+      如果你不确定，<strong>避开财报日交易</strong>是明智的。</p>
+    </div>
+    <div class="en">
+      <h4>Before Earnings</h4>
+      <ol>
+        <li>Check analyst expectations (on Yahoo Finance)</li>
+        <li>Understand the business and recent news</li>
+        <li>Decide if you want to hold through earnings (high volatility!)</li>
+      </ol>
+      
+      <h4>After Earnings</h4>
+      <ol>
+        <li>Check Beat vs Miss (but that's just step one)</li>
+        <li><strong>Focus on Guidance!</strong></li>
+        <li>Listen to Earnings Call (management conference call)</li>
+        <li>Watch analyst rating changes</li>
+      </ol>
+      
+      <h4>⚠️ Beginner's Note</h4>
+      <p>Earnings day = huge volatility (QCOM -7.46% today).<br>
+      If unsure, <strong>avoiding earnings day trades</strong> is wise.</p>
+    </div>
+  </div>
+
+  <div class="impact">
+    <h3>📊 今日市场概况 / Today's Market</h3>
+    <ul>
+      <li>S&P 500: 6,781.74 (<span style="color: red;">-1.47%</span>)</li>
+      <li>Nasdaq: 22,482.25 (<span style="color: red;">-1.84%</span>)</li>
+      <li>Dow Jones: 48,905.70 (<span style="color: red;">-1.20%</span>)</li>
+      <li>US 10Y Treasury: 4.238% (<span style="color: green;">-0.04</span>)</li>
+      <li>Gold: $4,849.80 (<span style="color: red;">-1.43%</span>)</li>
+      <li>Brent Crude: $67.22 (<span style="color: red;">-3.22%</span>)</li>
+    </ul>
+    <p><em>整体市场下跌，科技股领跌，油价大跌。</em></p>
+  </div>
+
+  <div class="terms">
+    <h3>🎯 今日 Takeaways</h3>
+    <ol>
+      <li><strong>EPS（每股收益）</strong>是最重要的财报指标</li>
+      <li><strong>Beat vs Miss</strong> 只是故事的一半，<strong>Guidance 更重要</strong></li>
+      <li><strong>P/E Ratio</strong> 帮你判断股票是"贵"还是"便宜"</li>
+      <li>财报日波动大，新手可以选择<strong>观望而非交易</strong></li>
+      <li>半导体行业有<strong>供应链依赖</strong>（Qualcomm 受内存短缺影响）</li>
+    </ol>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 思考题 / Discussion Questions</h3>
+    <ol>
+      <li>如果 Qualcomm 的 P/E 是 28，而行业平均是 25，你觉得它贵吗？</li>
+      <li>为什么"买预期，卖事实"会成为市场规律？</li>
+      <li>你会在财报发布前买入一只股票吗？为什么？</li>
+    </ol>
+    <p style="color: #666; margin-top: 15px;">有问题随时问我！/ Feel free to ask me anything!</p>
+  </div>
+
+  <hr style="margin: 30px 0;">
+  <p style="font-size: 12px; color: #999;">
+    📅 课程进度：Phase 1.2 (基本面分析 - 财报解读) ✓<br>
+    📎 承接昨日的并购话题，继续深入半导体行业<br>
+    📚 下一课预告：债券与利率的反向关系 / QE与QT
+  </p>
+</body>
+</html>

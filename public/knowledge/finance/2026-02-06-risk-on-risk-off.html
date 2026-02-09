@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-06 - Risk-On vs Risk-Off 风险偏好模式</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .bilingual { grid-template-columns: 1fr; } }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #5f6368; }
+    .news-hook { background: linear-gradient(135deg, #fff3e0, #ffe0b2); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #ff9800; }
+    .impact { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .terms { background: #e8f0fe; padding: 15px; border-radius: 8px; }
+    .term-item { margin: 10px 0; padding: 10px; background: white; border-radius: 6px; }
+    .term-name { font-weight: bold; color: #1a73e8; }
+    .comparison-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .comparison-table th, .comparison-table td { border: 1px solid #dadce0; padding: 12px; text-align: left; }
+    .comparison-table th { background: #f8f9fa; }
+    .risk-on { background: #e8f5e9; color: #2e7d32; }
+    .risk-off { background: #ffebee; color: #c62828; }
+    .formula { background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: monospace; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    .key-insight { background: #fff8e1; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107; }
+  </style>
+</head>
+<body>
+  <h1>🎢 Risk-On vs Risk-Off：市场情绪的两种模式</h1>
+  
+  <div class="news-hook">
+    <h3>📰 今日新闻切入</h3>
+    <div class="bilingual">
+      <div class="zh">
+        <strong>本周市场大幅回调：</strong>
+        <ul>
+          <li>美股连跌3天，科技股领跌</li>
+          <li>比特币从 $126,000 历史高点暴跌至 $60,000（跌幅超50%！）</li>
+          <li>Amazon 财报后跌 8%（AI 支出 $2000亿令投资者担忧）</li>
+          <li>黄金、白银也在下跌</li>
+          <li>10年期国债收益率从 4.24% 降至 4.20%（债券被抢购）</li>
+        </ul>
+        <p><strong>这就是典型的 "Risk-Off"（避险模式）！</strong></p>
+      </div>
+      <div class="en">
+        <strong>This Week's Market Pullback:</strong>
+        <ul>
+          <li>US stocks fell for 3 straight days, tech leading the decline</li>
+          <li>Bitcoin crashed from $126k ATH to $60k (50%+ drop!)</li>
+          <li>Amazon -8% post-earnings ($200B AI capex spooked investors)</li>
+          <li>Gold and silver also falling</li>
+          <li>10Y Treasury yield dropped from 4.24% to 4.20% (bonds bought up)</li>
+        </ul>
+        <p><strong>This is classic "Risk-Off" mode!</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <h2>什么是 Risk-On / Risk-Off？</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>Risk-On（风险偏好）</strong>：投资者信心高涨，愿意承担更多风险，追逐高收益资产。</p>
+      <p><strong>Risk-Off（风险厌恶）</strong>：投资者担心市场，抛售风险资产，转向"安全港"。</p>
+      <p>想象成一个开关：当市场情绪好时，开关打到 "Risk-On"，钱涌入股票、加密货币、高收益债券；当市场恐慌时，开关打到 "Risk-Off"，钱涌入国债、现金。</p>
+    </div>
+    <div class="en">
+      <p><strong>Risk-On</strong>: Investors are confident, willing to take on more risk for higher returns.</p>
+      <p><strong>Risk-Off</strong>: Investors are worried, selling risky assets and fleeing to "safe havens."</p>
+      <p>Think of it as a switch: when sentiment is good, switch flips to "Risk-On" and money flows into stocks, crypto, high-yield bonds; when panic hits, switch flips to "Risk-Off" and money flows into Treasuries, cash.</p>
+    </div>
+  </div>
+
+  <h2>📊 两种模式下的资产表现</h2>
+  <table class="comparison-table">
+    <tr>
+      <th>资产 / Asset</th>
+      <th class="risk-on">Risk-On 🟢</th>
+      <th class="risk-off">Risk-Off 🔴</th>
+    </tr>
+    <tr>
+      <td><strong>成长股 / Growth Stocks</strong><br>(科技、AI、高估值)</td>
+      <td class="risk-on">📈 大涨<br>资金追逐高增长</td>
+      <td class="risk-off">📉 暴跌<br>估值担忧放大</td>
+    </tr>
+    <tr>
+      <td><strong>加密货币 / Crypto</strong><br>(BTC, ETH)</td>
+      <td class="risk-on">🚀 暴涨<br>投机情绪高涨</td>
+      <td class="risk-off">💥 崩盘<br>最先被抛售</td>
+    </tr>
+    <tr>
+      <td><strong>美国国债 / US Treasuries</strong></td>
+      <td class="risk-on">📉 下跌<br>资金流出避险资产</td>
+      <td class="risk-off">📈 上涨<br>避险资金涌入</td>
+    </tr>
+    <tr>
+      <td><strong>美元 / US Dollar</strong></td>
+      <td class="risk-on">📉 走弱<br>资金流向高风险资产</td>
+      <td class="risk-off">📈 走强<br>全球避险首选</td>
+    </tr>
+    <tr>
+      <td><strong>黄金 / Gold</strong></td>
+      <td class="risk-on">持平或下跌<br>机会成本高</td>
+      <td class="risk-off">通常上涨*<br>但极端恐慌时也被抛售</td>
+    </tr>
+    <tr>
+      <td><strong>高收益债券 / Junk Bonds</strong></td>
+      <td class="risk-on">📈 利差收窄<br>信用风险被忽视</td>
+      <td class="risk-off">📉 利差扩大<br>违约担忧上升</td>
+    </tr>
+  </table>
+
+  <div class="key-insight">
+    <h3>💡 关键洞察</h3>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>为什么比特币跌这么惨？</strong></p>
+        <p>比特币是"风险资产之王" — 它既没有现金流，也没有政府背书。当 Risk-Off 模式启动时，投资者首先抛售的就是这类"纯投机"资产。</p>
+        <p>这也解释了为什么 BTC 在2024年大选后暴涨（Risk-On）到现在暴跌（Risk-Off）— 它放大了整体市场情绪。</p>
+      </div>
+      <div class="en">
+        <p><strong>Why did Bitcoin crash so hard?</strong></p>
+        <p>Bitcoin is the "king of risk assets" — no cash flows, no government backing. When Risk-Off mode kicks in, investors dump "pure speculation" assets first.</p>
+        <p>This explains why BTC rallied post-election (Risk-On) and crashed now (Risk-Off) — it amplifies overall market sentiment.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>🔄 什么触发了模式切换？</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>这次 Risk-Off 的触发因素：</strong></p>
+      <ol>
+        <li><strong>AI 支出担忧</strong>：Alphabet 宣布 $750亿 AI 资本支出，Amazon 宣布 $2000亿 — 投资者担心现金流被吸干</li>
+        <li><strong>估值过高</strong>：很多人本来就觉得涨太多了，在等一个理由卖出</li>
+        <li><strong>没有单一"黑天鹅"</strong>：不像去年4月的关税战争，这次是多个小担忧叠加</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p><strong>What triggered this Risk-Off:</strong></p>
+      <ol>
+        <li><strong>AI spending concerns</strong>: Alphabet announced $75B AI capex, Amazon $200B — investors worry about cash flow drain</li>
+        <li><strong>Overvaluation anxiety</strong>: Many felt prices ran up too far, waiting for an excuse to sell</li>
+        <li><strong>No single "black swan"</strong>: Unlike April's tariff war, this is multiple small worries piling up</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="impact">
+    <h3>📊 如何判断当前市场情绪？</h3>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>看这些指标：</strong></p>
+        <ul>
+          <li><strong>VIX 指数</strong>（恐慌指数）：> 25 通常表示 Risk-Off</li>
+          <li><strong>国债收益率</strong>：下降 = 债券被买入 = Risk-Off</li>
+          <li><strong>美元指数 (DXY)</strong>：上涨 = 资金回流美元 = Risk-Off</li>
+          <li><strong>科技股 vs 公用事业股</strong>：公用事业跑赢 = Risk-Off</li>
+          <li><strong>高收益利差</strong>：扩大 = Risk-Off</li>
+        </ul>
+      </div>
+      <div class="en">
+        <p><strong>Watch these indicators:</strong></p>
+        <ul>
+          <li><strong>VIX Index</strong> (Fear Index): > 25 usually means Risk-Off</li>
+          <li><strong>Treasury yields</strong>: Falling = bonds being bought = Risk-Off</li>
+          <li><strong>Dollar Index (DXY)</strong>: Rising = money flowing to USD = Risk-Off</li>
+          <li><strong>Tech vs Utilities</strong>: Utilities outperforming = Risk-Off</li>
+          <li><strong>High-yield spreads</strong>: Widening = Risk-Off</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>💼 投资者应该怎么做？</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <ol>
+        <li><strong>不要追涨杀跌</strong>：Risk-Off 时恐慌抛售往往卖在低点</li>
+        <li><strong>检查资产配置</strong>：如果全是科技股+加密货币，波动会很大</li>
+        <li><strong>现金是"弹药"</strong>：Risk-Off 时保留现金，等 Risk-On 回来再布局</li>
+        <li><strong>长期投资者</strong>：这可能是买入机会（今天市场已开始反弹）</li>
+      </ol>
+    </div>
+    <div class="en">
+      <ol>
+        <li><strong>Don't chase or panic</strong>: Panic selling during Risk-Off often means selling at the bottom</li>
+        <li><strong>Check your allocation</strong>: All tech + crypto = high volatility exposure</li>
+        <li><strong>Cash is "ammo"</strong>: Keep cash during Risk-Off, deploy when Risk-On returns</li>
+        <li><strong>Long-term investors</strong>: This could be a buying opportunity (market already rebounding today)</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="terms">
+    <h3>📚 关键术语 / Key Terms</h3>
+    <div class="term-item">
+      <span class="term-name">Risk-On / 风险偏好</span>
+      <p>Market mode where investors seek higher returns through riskier assets / 投资者愿意承担更多风险追求高回报的市场模式</p>
+    </div>
+    <div class="term-item">
+      <span class="term-name">Risk-Off / 风险厌恶</span>
+      <p>Market mode where investors flee to safety, selling risky assets / 投资者抛售风险资产、转向安全资产的市场模式</p>
+    </div>
+    <div class="term-item">
+      <span class="term-name">Safe Haven / 避险资产</span>
+      <p>Assets that hold or gain value during market stress (Treasuries, USD, sometimes gold) / 在市场动荡时保值或增值的资产</p>
+    </div>
+    <div class="term-item">
+      <span class="term-name">VIX (恐慌指数)</span>
+      <p>Measures expected S&P 500 volatility; high VIX = high fear / 衡量标普500预期波动率；VIX高=恐惧情绪高</p>
+    </div>
+    <div class="term-item">
+      <span class="term-name">Flight to Quality / 避险潮</span>
+      <p>Mass movement of capital from risky to safe assets during uncertainty / 不确定时期资金从风险资产大规模流向安全资产</p>
+    </div>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 思考题 / Discussion Questions</h3>
+    <ol>
+      <li>如果你持有 Amazon 股票，看到它因为 AI 支出下跌 8%，你会卖还是加仓？</li>
+      <li>比特币跌了 50%，这是"抄底"机会还是应该继续观望？</li>
+      <li>你觉得这次 Risk-Off 会持续多久？</li>
+    </ol>
+    <p><em>有问题随时问我！</em></p>
+  </div>
+
+  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #dadce0; color: #5f6368; font-size: 0.9em;">
+    <p>📅 2026-02-06 | 💼 Friday's Daily Finance Push | 📚 Phase 4.2: 波动率与情绪控制</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI/ML 学习计划 - Zhilong 跳槽准备</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card-bg: #111;
+      --border: #333;
+      --text: #e5e5e5;
+      --text-muted: #888;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.4rem; margin: 2rem 0 1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: var(--yellow); }
+    .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .highlight { background: #1a1a2e; border-left: 4px solid var(--accent); padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { padding-left: 1.5rem; margin: 0.75rem 0; }
+    li { margin: 0.5rem 0; }
+    .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; margin-right: 0.5rem; }
+    .tag.free { background: var(--green); color: #000; }
+    .tag.paid { background: var(--yellow); color: #000; }
+    .tag.essential { background: var(--red); color: #fff; }
+    .tag.optional { background: var(--purple); color: #fff; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { border: 1px solid var(--border); padding: 0.75rem; text-align: left; }
+    th { background: #1a1a1a; }
+    .week { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; }
+    .week-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .week-num { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+    .week-theme { color: var(--text-muted); }
+    .time-estimate { background: var(--card-bg); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; }
+    .resource-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+    .resource-title { font-weight: bold; margin-bottom: 0.5rem; }
+    .resource-meta { font-size: 0.85rem; color: var(--text-muted); }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li { padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist input { margin-right: 0.75rem; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.9rem; }
+    .progress-bar { background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin: 1rem 0; }
+    .progress-fill { background: var(--green); height: 100%; width: 0%; transition: width 0.3s; }
+  </style>
+</head>
+<body>
+  <h1>🎯 AI/ML 学习计划</h1>
+  <p class="subtitle">目标：跳槽 AI Infra (Databricks / Anthropic / Scale AI) | 时间：4 周 | 每天 1-2 小时</p>
+
+  <div class="highlight">
+    <strong>💡 你的优势：</strong>GKE/K8s 基础设施经验 + Google 品牌<br>
+    <strong>🎯 目标岗位：</strong>AI Infra Engineer / ML Platform Engineer / MLOps Engineer<br>
+    <strong>⏰ 时间线：</strong>3 月绿卡下来 → 开始投简历
+  </div>
+
+  <h2>📚 核心课程资源</h2>
+
+  <div class="section">
+    <h3>必修课程 <span class="tag essential">必看</span></h3>
+    
+    <div class="resource-card">
+      <div class="resource-title">1. Andrew Ng - Machine Learning Specialization</div>
+      <div class="resource-meta">
+        <span class="tag free">免费</span>
+        平台: Coursera | 时长: 3 门课 ~60 小时 | 难度: 入门
+      </div>
+      <p>ML 基础必备，面试 baseline。如果完全没 ML 背景，从这里开始。</p>
+      <a href="https://www.coursera.org/specializations/machine-learning-introduction">→ coursera.org/specializations/machine-learning-introduction</a>
+    </div>
+
+    <div class="resource-card">
+      <div class="resource-title">2. Full Stack LLM Bootcamp</div>
+      <div class="resource-meta">
+        <span class="tag free">免费</span>
+        平台: fullstackdeeplearning.com | 时长: ~10 小时 | 难度: 中级
+      </div>
+      <p>LLM 应用开发全流程：Prompt Engineering、RAG、LLMOps、部署。<strong>非常实用！</strong></p>
+      <a href="https://fullstackdeeplearning.com/llm-bootcamp/">→ fullstackdeeplearning.com/llm-bootcamp</a>
+    </div>
+
+    <div class="resource-card">
+      <div class="resource-title">3. Stanford CS324 - Large Language Models</div>
+      <div class="resource-meta">
+        <span class="tag free">免费</span>
+        平台: stanford-cs324.github.io | 时长: ~20 小时 | 难度: 高级
+      </div>
+      <p>LLM 理论深度：模型架构、训练、评估、伦理。Percy Liang 主讲。</p>
+      <a href="https://stanford-cs324.github.io/winter2022/">→ stanford-cs324.github.io/winter2022</a>
+    </div>
+
+    <h3>选修课程 <span class="tag optional">加分项</span></h3>
+
+    <div class="resource-card">
+      <div class="resource-title">4. DeepLearning.AI Short Courses</div>
+      <div class="resource-meta">
+        <span class="tag free">免费</span>
+        平台: deeplearning.ai | 时长: 每门 1-2 小时 | 难度: 中级
+      </div>
+      <p>专题短课：LangChain、Vector DBs、Fine-tuning LLMs、Building AI Agents</p>
+      <a href="https://www.deeplearning.ai/courses/">→ deeplearning.ai/courses</a>
+    </div>
+
+    <div class="resource-card">
+      <div class="resource-title">5. Hugging Face Course</div>
+      <div class="resource-meta">
+        <span class="tag free">免费</span>
+        平台: huggingface.co | 时长: ~15 小时 | 难度: 中级
+      </div>
+      <p>Transformers 库实战，NLP 任务全流程。工业界标准。</p>
+      <a href="https://huggingface.co/learn">→ huggingface.co/learn</a>
+    </div>
+  </div>
+
+  <h2>📅 4 周学习计划</h2>
+
+  <div class="week">
+    <div class="week-header">
+      <div>
+        <span class="week-num">Week 1</span>
+        <span class="week-theme">— LLM 基础 & Transformer</span>
+      </div>
+      <span class="time-estimate">~10 小时</span>
+    </div>
+    <ul>
+      <li><strong>Day 1-2:</strong> Full Stack LLM Bootcamp - LLM Foundations (2h)</li>
+      <li><strong>Day 3-4:</strong> 3Blue1Brown - Attention 机制可视化 (1h) + Transformer 论文精读 (2h)</li>
+      <li><strong>Day 5-6:</strong> CS324 Lecture 1-3: LLM 概述、模型架构 (3h)</li>
+      <li><strong>Day 7:</strong> 实践：用 HuggingFace 跑一个 text generation (2h)</li>
+    </ul>
+    <p style="margin-top: 1rem; color: var(--text-muted);">
+      <strong>面试考点：</strong>Attention 机制、Self-attention vs Cross-attention、Transformer encoder/decoder
+    </p>
+  </div>
+
+  <div class="week">
+    <div class="week-header">
+      <div>
+        <span class="week-num">Week 2</span>
+        <span class="week-theme">— RAG & Vector DB</span>
+      </div>
+      <span class="time-estimate">~10 小时</span>
+    </div>
+    <ul>
+      <li><strong>Day 1-2:</strong> DeepLearning.AI - Building with Vector Databases (2h)</li>
+      <li><strong>Day 3-4:</strong> Full Stack LLM Bootcamp - Augmented Language Models (2h)</li>
+      <li><strong>Day 5-6:</strong> 实践：用 LangChain + Pinecone 搭建 RAG 系统 (4h)</li>
+      <li><strong>Day 7:</strong> 深入：Chunking 策略、Hybrid Search、Reranking (2h)</li>
+    </ul>
+    <p style="margin-top: 1rem; color: var(--text-muted);">
+      <strong>面试考点：</strong>Embedding、向量相似度、RAG pipeline、Chunking 策略
+    </p>
+  </div>
+
+  <div class="week">
+    <div class="week-header">
+      <div>
+        <span class="week-num">Week 3</span>
+        <span class="week-theme">— MLOps & Model Serving</span>
+      </div>
+      <span class="time-estimate">~10 小时</span>
+    </div>
+    <ul>
+      <li><strong>Day 1-2:</strong> Full Stack LLM Bootcamp - LLMOps (2h)</li>
+      <li><strong>Day 3-4:</strong> 学习 vLLM / TensorRT-LLM 推理优化 (3h)</li>
+      <li><strong>Day 5-6:</strong> K8s + GPU 调度：你的 GKE 经验结合 (3h)</li>
+      <li><strong>Day 7:</strong> 实践：在 GKE 上部署一个 LLM 服务 (2h)</li>
+    </ul>
+    <p style="margin-top: 1rem; color: var(--text-muted);">
+      <strong>面试考点：</strong>Model serving、Batching、KV Cache、GPU 内存优化、容器化部署
+    </p>
+  </div>
+
+  <div class="week">
+    <div class="week-header">
+      <div>
+        <span class="week-num">Week 4</span>
+        <span class="week-theme">— 分布式训练 & Fine-tuning</span>
+      </div>
+      <span class="time-estimate">~10 小时</span>
+    </div>
+    <ul>
+      <li><strong>Day 1-2:</strong> DeepLearning.AI - Fine-tuning LLMs (2h)</li>
+      <li><strong>Day 3-4:</strong> 分布式训练：Data Parallel vs Model Parallel vs Pipeline Parallel (3h)</li>
+      <li><strong>Day 5-6:</strong> 学习 DeepSpeed / FSDP / Megatron-LM 架构 (3h)</li>
+      <li><strong>Day 7:</strong> 实践：用 LoRA 微调一个小模型 (2h)</li>
+    </ul>
+    <p style="margin-top: 1rem; color: var(--text-muted);">
+      <strong>面试考点：</strong>LoRA/QLoRA、分布式训练策略、Gradient Checkpointing、Mixed Precision
+    </p>
+  </div>
+
+  <h2>📖 必读论文 & 博客</h2>
+
+  <div class="section">
+    <table>
+      <tr>
+        <th>论文/博客</th>
+        <th>主题</th>
+        <th>重要性</th>
+      </tr>
+      <tr>
+        <td><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a></td>
+        <td>Transformer 原始论文</td>
+        <td><span class="tag essential">必读</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a></td>
+        <td>Transformer 可视化讲解</td>
+        <td><span class="tag essential">必读</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://arxiv.org/abs/2106.09685">LoRA Paper</a></td>
+        <td>低秩适配微调</td>
+        <td><span class="tag essential">必读</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://lilianweng.github.io/posts/2023-06-23-agent/">LLM Powered Agents (Lilian Weng)</a></td>
+        <td>AI Agent 综述</td>
+        <td><span class="tag essential">必读</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://arxiv.org/abs/2005.14165">GPT-3 Paper</a></td>
+        <td>In-context Learning</td>
+        <td><span class="tag optional">选读</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://arxiv.org/abs/2307.09288">LLaMA 2 Paper</a></td>
+        <td>开源 LLM 训练细节</td>
+        <td><span class="tag optional">选读</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://blog.vllm.ai/2023/06/20/vllm.html">vLLM Blog</a></td>
+        <td>PagedAttention 推理优化</td>
+        <td><span class="tag essential">必读</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>💻 实战项目建议</h2>
+
+  <div class="section">
+    <div class="highlight">
+      <strong>核心思路：</strong>把 Aspen 变成有 AI 的项目，简历上就有 AI 经验了！
+    </div>
+
+    <h3>项目 1: Aspen + RAG 财经分析</h3>
+    <ul>
+      <li>用 RAG 搜索历史财报、新闻</li>
+      <li>LLM 生成交易策略分析</li>
+      <li>技术栈：LangChain + Pinecone + GPT-4</li>
+    </ul>
+
+    <h3>项目 2: 在 GKE 上部署 LLM</h3>
+    <ul>
+      <li>部署 Llama 2 或 Mistral 到 GKE</li>
+      <li>配置 GPU node pool、autoscaling</li>
+      <li>用 vLLM 做推理优化</li>
+      <li><strong>这个直接证明你能做 AI Infra！</strong></li>
+    </ul>
+
+    <h3>项目 3: Fine-tune 一个小模型</h3>
+    <ul>
+      <li>用 LoRA 微调 Llama 2 7B 做特定任务</li>
+      <li>写博客记录过程</li>
+      <li>开源到 HuggingFace Hub</li>
+    </ul>
+  </div>
+
+  <h2>🎤 面试高频题</h2>
+
+  <div class="section">
+    <h3>概念题</h3>
+    <ul class="checklist">
+      <li><input type="checkbox"> Transformer 的 self-attention 是怎么工作的？</li>
+      <li><input type="checkbox"> Attention 的时间复杂度是多少？怎么优化？</li>
+      <li><input type="checkbox"> 什么是 KV Cache？为什么能加速推理？</li>
+      <li><input type="checkbox"> RAG 和 Fine-tuning 各自的优缺点？什么时候用哪个？</li>
+      <li><input type="checkbox"> 什么是 Hallucination？怎么缓解？</li>
+      <li><input type="checkbox"> LoRA 的原理是什么？为什么有效？</li>
+    </ul>
+
+    <h3>系统设计题</h3>
+    <ul class="checklist">
+      <li><input type="checkbox"> 设计一个企业知识库 RAG 系统</li>
+      <li><input type="checkbox"> 设计一个 LLM serving 平台（处理高并发）</li>
+      <li><input type="checkbox"> 设计一个分布式训练系统</li>
+      <li><input type="checkbox"> 设计一个 AI Agent 编排系统</li>
+    </ul>
+
+    <h3>Infra 相关（你的优势）</h3>
+    <ul class="checklist">
+      <li><input type="checkbox"> 怎么在 K8s 上调度 GPU workload？</li>
+      <li><input type="checkbox"> LLM 推理的内存瓶颈在哪？怎么优化？</li>
+      <li><input type="checkbox"> 怎么做 model serving 的 autoscaling？</li>
+      <li><input type="checkbox"> 训练和推理对硬件的需求有什么区别？</li>
+    </ul>
+  </div>
+
+  <h2>📱 每日推送整合</h2>
+
+  <div class="section">
+    <p>我每天的 AI 知识推送会跟这个计划配合：</p>
+    <ul>
+      <li><strong>Week 1:</strong> Transformer 架构、Attention 机制</li>
+      <li><strong>Week 2:</strong> RAG 深入、Vector DB 选型</li>
+      <li><strong>Week 3:</strong> Model Serving、推理优化</li>
+      <li><strong>Week 4:</strong> 分布式训练、Fine-tuning 技巧</li>
+    </ul>
+    <p>推送的内容会补充课程没覆盖的细节和最新进展 🎯</p>
+  </div>
+
+  <footer>
+    <p>📝 Plan created by Friday 🟡 | 2026-02-05</p>
+    <p>🔄 随时调整计划：回复 "更新学习计划" 即可</p>
+  </footer>
+</body>
+</html>
