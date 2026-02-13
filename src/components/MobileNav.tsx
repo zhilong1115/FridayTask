@@ -84,7 +84,10 @@ export default function MobileNav({
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[#70757a] hover:bg-[#f1f3f4] transition-colors"
             title="Usage & Cost"
           >
-            <span className="text-sm">💰</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 13h4v8H3zM10 9h4v12h-4zM17 5h4v16h-4z" />
+            </svg>
           </button>
           {isAuthenticated ? (
             <button

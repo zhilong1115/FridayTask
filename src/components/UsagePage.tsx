@@ -20,8 +20,10 @@ interface UsageData {
   groups: UsageGroup[];
 }
 
-function formatCost(n: number) {
-  return `$${n.toFixed(2)}`;
+interface ChartData {
+  timeKeys: string[];
+  dimensions: string[];
+  buckets: Record<string, Record<string, number>>;
 }
 
 function formatTokens(n: number) {
@@ -32,6 +34,13 @@ function formatTokens(n: number) {
 
 type Period = 'today' | 'week' | 'month' | 'all';
 type GroupBy = 'model' | 'agent' | 'provider';
+
+// Color palette for stacked bars
+const COLORS = [
+  '#1a73e8', '#f9ab00', '#34a853', '#ea4335', '#9334e6',
+  '#ff6d01', '#46bdc6', '#7baaf7', '#f07b72', '#fdd663',
+  '#57bb8a', '#a142f4', '#24c1e0', '#e37400', '#185abc',
+];
 
 function getDateRange(period: Period): { from?: string; to?: string } {
   const now = new Date();
@@ -51,40 +60,41 @@ function getDateRange(period: Period): { from?: string; to?: string } {
 export default function UsagePage({ onBack }: { onBack: () => void }) {
   const [period, setPeriod] = useState<Period>('month');
   const [groupBy, setGroupBy] = useState<GroupBy>('model');
+  const [chartGroupBy, setChartGroupBy] = useState<GroupBy>('model');
   const [data, setData] = useState<UsageData | null>(null);
-  const [dailyData, setDailyData] = useState<UsageGroup[]>([]);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
   const [allData, setAllData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hoveredBar, setHoveredBar] = useState<{ time: string; dim: string; tokens: number; x: number; y: number } | null>(null);
 
-  // Fetch grouped data for the selected period
+  // Fetch grouped data for table
   useEffect(() => {
     const range = getDateRange(period);
     const params = new URLSearchParams();
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
     params.set('groupBy', groupBy);
-
     fetch(`${API}/api/usage?${params}`)
       .then(r => r.json())
       .then(setData)
       .catch(console.error);
   }, [period, groupBy]);
 
-  // Fetch daily breakdown
+  // Fetch chart data
   useEffect(() => {
     const range = getDateRange(period);
     const params = new URLSearchParams();
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
-    params.set('groupBy', period === 'today' ? 'hour' : 'day');
-
-    fetch(`${API}/api/usage?${params}`)
+    params.set('groupBy', chartGroupBy);
+    params.set('period', period);
+    fetch(`${API}/api/usage/chart?${params}`)
       .then(r => r.json())
-      .then(d => setDailyData(d.groups.sort((a: UsageGroup, b: UsageGroup) => a.key.localeCompare(b.key))))
+      .then(setChartData)
       .catch(console.error);
-  }, [period]);
+  }, [period, chartGroupBy]);
 
-  // Fetch all-time totals for summary cards
+  // Fetch all-time totals
   useEffect(() => {
     fetch(`${API}/api/usage?groupBy=day`)
       .then(r => r.json())
@@ -92,7 +102,6 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
       .catch(console.error);
   }, []);
 
-  // Summary card data
   const summaryCards = useMemo(() => {
     if (!allData) return [];
     const now = new Date();
@@ -102,22 +111,34 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
     const weekStr = weekStart.toISOString().slice(0, 10);
     const monthStr = todayStr.slice(0, 7);
 
-    let todayCost = 0, weekCost = 0, monthCost = 0;
     let todayTokens = 0, weekTokens = 0, monthTokens = 0;
     for (const g of allData.groups) {
-      if (g.key === todayStr) { todayCost += g.cost; todayTokens += g.tokens; }
-      if (g.key >= weekStr) { weekCost += g.cost; weekTokens += g.tokens; }
-      if (g.key >= monthStr + '-01') { monthCost += g.cost; monthTokens += g.tokens; }
+      if (g.key === todayStr) todayTokens += g.tokens;
+      if (g.key >= weekStr) weekTokens += g.tokens;
+      if (g.key >= monthStr + '-01') monthTokens += g.tokens;
     }
     return [
-      { label: 'Today', cost: todayCost, tokens: todayTokens },
-      { label: 'This Week', cost: weekCost, tokens: weekTokens },
-      { label: 'This Month', cost: monthCost, tokens: monthTokens },
-      { label: 'All Time', cost: allData.totalCost, tokens: allData.totalTokens },
+      { label: 'Today', tokens: todayTokens },
+      { label: 'This Week', tokens: weekTokens },
+      { label: 'This Month', tokens: monthTokens },
+      { label: 'All Time', tokens: allData.totalTokens },
     ];
   }, [allData]);
 
-  const maxDailyCost = Math.max(...dailyData.map(d => d.cost), 0.01);
+  // Compute chart rendering
+  const chartRender = useMemo(() => {
+    if (!chartData || chartData.timeKeys.length === 0) return null;
+    const { timeKeys, dimensions, buckets } = chartData;
+    // Max stacked total
+    let maxTotal = 0;
+    for (const t of timeKeys) {
+      let sum = 0;
+      for (const d of dimensions) sum += (buckets[t]?.[d] || 0);
+      if (sum > maxTotal) maxTotal = sum;
+    }
+    if (maxTotal === 0) maxTotal = 1;
+    return { timeKeys, dimensions, buckets, maxTotal };
+  }, [chartData]);
 
   if (loading) {
     return (
@@ -140,7 +161,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
           </svg>
         </button>
         <div>
-          <h1 className="text-xl font-semibold text-[#3c4043]">Usage & Cost</h1>
+          <h1 className="text-xl font-semibold text-[#3c4043]">Usage</h1>
           <p className="text-xs text-[#70757a]">OpenClaw API usage analytics</p>
         </div>
       </div>
@@ -150,8 +171,8 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
         {summaryCards.map(c => (
           <div key={c.label} className="bg-white rounded-xl border border-[#dadce0] p-4">
             <p className="text-[10px] font-semibold text-[#70757a] uppercase tracking-wider mb-1">{c.label}</p>
-            <p className="text-2xl font-bold text-[#f9ab00]">{formatCost(c.cost)}</p>
-            <p className="text-xs text-[#70757a] mt-0.5">{formatTokens(c.tokens)} tokens</p>
+            <p className="text-2xl font-bold text-[#f9ab00]">{formatTokens(c.tokens)}</p>
+            <p className="text-xs text-[#70757a] mt-0.5">tokens</p>
           </div>
         ))}
       </div>
@@ -173,29 +194,118 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
         ))}
       </div>
 
-      {/* Bar Chart */}
+      {/* Stacked Bar Chart */}
       <div className="bg-white rounded-xl border border-[#dadce0] p-4 mb-6">
-        <h2 className="text-sm font-semibold text-[#3c4043] mb-3">
-          {period === 'today' ? 'Hourly' : 'Daily'} Cost
-        </h2>
-        {dailyData.length === 0 ? (
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-[#3c4043]">
+            {period === 'today' ? 'Hourly' : 'Daily'} Token Usage
+          </h2>
+          <div className="flex gap-1">
+            {(['model', 'agent', 'provider'] as GroupBy[]).map(g => (
+              <button
+                key={g}
+                onClick={() => setChartGroupBy(g)}
+                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
+                  chartGroupBy === g
+                    ? 'bg-[#e8f0fe] text-[#1a73e8]'
+                    : 'text-[#70757a] hover:bg-[#f1f3f4]'
+                }`}
+              >
+                {g.charAt(0).toUpperCase() + g.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {!chartRender ? (
           <p className="text-xs text-[#70757a] py-4 text-center">No data for this period</p>
         ) : (
-          <div className="space-y-1.5 max-h-80 overflow-y-auto">
-            {dailyData.map(d => (
-              <div key={d.key} className="flex items-center gap-3 text-xs">
-                <span className="w-20 shrink-0 text-[#70757a] font-mono text-[11px]">
-                  {period === 'today' ? d.key.slice(11) + ':00' : d.key.slice(5)}
-                </span>
-                <div className="flex-1 h-5 bg-[#f1f3f4] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#f9ab00] rounded-full transition-all"
-                    style={{ width: `${Math.max((d.cost / maxDailyCost) * 100, 1)}%` }}
-                  />
-                </div>
-                <span className="w-16 text-right font-medium text-[#3c4043]">{formatCost(d.cost)}</span>
+          <div className="relative">
+            {/* Y axis labels */}
+            <div className="flex">
+              <div className="w-12 shrink-0 flex flex-col justify-between text-[10px] text-[#70757a] text-right pr-2" style={{ height: 200 }}>
+                <span>{formatTokens(chartRender.maxTotal)}</span>
+                <span>{formatTokens(chartRender.maxTotal / 2)}</span>
+                <span>0</span>
               </div>
-            ))}
+              {/* Chart area */}
+              <div className="flex-1 relative" style={{ height: 200 }} onMouseLeave={() => setHoveredBar(null)}>
+                {/* Grid lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div className="border-b border-[#f1f3f4]" />
+                  <div className="border-b border-[#f1f3f4]" />
+                  <div className="border-b border-[#f1f3f4]" />
+                </div>
+                {/* Bars */}
+                <div className="absolute inset-0 flex items-end gap-[2px]">
+                  {chartRender.timeKeys.map((t) => {
+                    let total = 0;
+                    for (const d of chartRender.dimensions) total += (chartRender.buckets[t]?.[d] || 0);
+                    const barWidth = `${100 / chartRender.timeKeys.length}%`;
+                    // Stack segments bottom to top
+                    let yOffset = 0;
+                    return (
+                      <div key={t} className="relative flex flex-col-reverse" style={{ width: barWidth, height: '100%' }}>
+                        {chartRender.dimensions.map((d, i) => {
+                          const val = chartRender.buckets[t]?.[d] || 0;
+                          if (val === 0) return null;
+                          const pct = (val / chartRender.maxTotal) * 100;
+                          const bottom = (yOffset / chartRender.maxTotal) * 100;
+                          yOffset += val;
+                          return (
+                            <div
+                              key={d}
+                              className="absolute w-full cursor-pointer transition-opacity hover:opacity-80"
+                              style={{
+                                bottom: `${bottom}%`,
+                                height: `${Math.max(pct, 0.5)}%`,
+                                backgroundColor: COLORS[i % COLORS.length],
+                                borderRadius: yOffset === total ? '2px 2px 0 0' : '0',
+                              }}
+                              onMouseEnter={(e) => {
+                                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                                setHoveredBar({ time: t, dim: d, tokens: val, x: rect.left + rect.width / 2, y: rect.top });
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Tooltip */}
+                {hoveredBar && (
+                  <div
+                    className="fixed z-50 bg-[#3c4043] text-white text-[11px] px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none whitespace-nowrap"
+                    style={{ left: hoveredBar.x, top: hoveredBar.y - 40, transform: 'translateX(-50%)' }}
+                  >
+                    <span className="font-medium">{hoveredBar.dim}</span>: {formatTokens(hoveredBar.tokens)} tokens
+                    <div className="text-[10px] text-[#9aa0a6]">{period === 'today' ? hoveredBar.time.slice(11) + ':00' : hoveredBar.time}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* X axis labels */}
+            <div className="flex ml-12">
+              {chartRender.timeKeys.map((t, i) => {
+                // Show fewer labels if too many
+                const show = chartRender.timeKeys.length <= 14 || i % Math.ceil(chartRender.timeKeys.length / 10) === 0;
+                return (
+                  <div key={t} className="text-[10px] text-[#70757a] text-center" style={{ width: `${100 / chartRender.timeKeys.length}%` }}>
+                    {show ? (period === 'today' ? t.slice(11) + 'h' : t.slice(5)) : ''}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 mt-3">
+              {chartRender.dimensions.map((d, i) => (
+                <div key={d} className="flex items-center gap-1.5 text-[11px] text-[#3c4043]">
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                  {d}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -229,7 +339,6 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                   <th className="py-2 font-medium text-right">Input</th>
                   <th className="py-2 font-medium text-right">Output</th>
                   <th className="py-2 font-medium text-right">Cache Read</th>
-                  <th className="py-2 font-medium text-right">Cost</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,11 +346,10 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                   <tr key={g.key} className="border-b border-[#f1f3f4] hover:bg-[#f8f9fa]">
                     <td className="py-2.5 font-medium text-[#3c4043]">{g.key}</td>
                     <td className="py-2.5 text-right text-[#70757a]">{g.count.toLocaleString()}</td>
-                    <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.tokens)}</td>
+                    <td className="py-2.5 text-right font-semibold text-[#f9ab00]">{formatTokens(g.tokens)}</td>
                     <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.input)}</td>
                     <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.output)}</td>
                     <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.cacheRead)}</td>
-                    <td className="py-2.5 text-right font-semibold text-[#f9ab00]">{formatCost(g.cost)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -249,9 +357,8 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                 <tr className="border-t-2 border-[#dadce0] font-semibold text-[#3c4043]">
                   <td className="py-2.5">Total</td>
                   <td className="py-2.5 text-right">{data.totalRecords.toLocaleString()}</td>
-                  <td className="py-2.5 text-right">{formatTokens(data.totalTokens)}</td>
+                  <td className="py-2.5 text-right text-[#f9ab00]">{formatTokens(data.totalTokens)}</td>
                   <td colSpan={3}></td>
-                  <td className="py-2.5 text-right text-[#f9ab00]">{formatCost(data.totalCost)}</td>
                 </tr>
               </tfoot>
             </table>
