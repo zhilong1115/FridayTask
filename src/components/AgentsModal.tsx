@@ -25,7 +25,7 @@ interface AgentCron {
 }
 
 const AGENTS: AgentDef[] = [
-  { id: 'polymarket', emoji: '📈', name: 'Polymarket', projectPatterns: [/polymarket/i, /trading/i] },
+  { id: 'alpha', emoji: '📈', name: 'Alpha', projectPatterns: [/polymarket/i, /trading/i] },
   { id: 'hu', emoji: '🀄', name: 'HU', projectPatterns: [/\bhu\b/i, /game/i] },
   { id: 'aspen', emoji: '📊', name: 'Aspen', projectPatterns: [/aspen/i, /quant/i, /atrade/i, /nofx/i] },
   { id: 'artist', emoji: '🍌', name: 'Artist', projectPatterns: [/artist/i, /design/i, /avatar/i, /image/i, /banana/i] },
@@ -34,7 +34,7 @@ const AGENTS: AgentDef[] = [
 ];
 
 const cronMatchPatterns: Record<string, RegExp> = {
-  polymarket: /polymarket|trading|market/i,
+  alpha: /polymarket|alpha|trading|market|crypto|stock/i,
   hu: /\bhu\b/i,
   aspen: /aspen|atrade|nofx/i,
   artist: /artist|image|banana/i,

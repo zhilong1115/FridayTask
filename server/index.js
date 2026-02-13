@@ -496,7 +496,7 @@ const CRON_JOBS_PATH = path.join(
 // ─── Agents Status API ───────────────────────────────────
 
 const AGENT_DEFS = [
-  { id: 'polymarket', emoji: '📈', name: 'Polymarket', nameCn: '交易小五', description: 'Trading & market monitoring', projectPatterns: ['polymarket', 'trading'] },
+  { id: 'alpha', emoji: '📈', name: 'Alpha', nameCn: '交易员', description: 'Trading & investing', projectPatterns: ['polymarket', 'alpha', 'trading', 'crypto', 'stock'] },
   { id: 'hu', emoji: '🀄', name: 'HU', nameCn: '游戏小五', description: 'Mahjong roguelike game dev', projectPatterns: ['hu', 'game'] },
   { id: 'aspen', emoji: '📊', name: 'Aspen', nameCn: '量化小五', description: 'AI quant trading app', projectPatterns: ['aspen', 'quant', 'atrade', 'nofx'] },
   { id: 'artist', emoji: '🍌', name: 'Artist', nameCn: '画画小五', description: 'Image & content generation', projectPatterns: ['artist', 'design', 'avatar', 'image', 'banana'] },
@@ -565,7 +565,7 @@ app.get('/api/agents/:id/crons', (_req, res) => {
     if (!agentDef) return res.status(404).json({ error: 'Agent not found' });
 
     const patterns = {
-      polymarket: /polymarket|trading|market/i,
+      alpha: /polymarket|alpha|trading|market|crypto|stock/i,
       hu: /\bhu\b/i,
       aspen: /aspen|atrade|nofx/i,
       artist: /artist|image|banana/i,
