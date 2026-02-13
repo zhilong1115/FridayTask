@@ -3,6 +3,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { execSync } from 'child_process';
 import db from './db.js';
 import { syncFridayInbox } from './friday-inbox.js';
 
@@ -538,6 +539,42 @@ app.get('/api/agents/status', (_req, res) => {
     });
 
     res.json(agents);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get cron jobs for a specific agent
+app.get('/api/agents/:id/crons', (_req, res) => {
+  const { id } = _req.params;
+  try {
+    let cronData = [];
+    try {
+      const raw = execSync('openclaw cron list --json 2>/dev/null', { encoding: 'utf-8', timeout: 5000 });
+      cronData = JSON.parse(raw);
+      if (!Array.isArray(cronData)) cronData = cronData.jobs || [];
+    } catch {
+      // Fallback to jobs.json
+      if (fs.existsSync(CRON_JOBS_PATH)) {
+        const data = JSON.parse(fs.readFileSync(CRON_JOBS_PATH, 'utf-8'));
+        cronData = data.jobs || [];
+      }
+    }
+
+    const agentDef = AGENT_DEFS.find((a) => a.id === id);
+    if (!agentDef) return res.status(404).json({ error: 'Agent not found' });
+
+    const patterns = {
+      polymarket: /polymarket|trading|market/i,
+      hu: /\bhu\b/i,
+      aspen: /aspen|atrade|nofx/i,
+      artist: /artist|image|banana/i,
+      fridaytask: /friday|task/i,
+      knowledge: /knowledge|learn|study|daily.*news|ai.*news/i,
+    };
+    const pattern = patterns[id];
+    const matched = pattern ? cronData.filter((j) => pattern.test(j.name || '')) : [];
+    res.json(matched);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

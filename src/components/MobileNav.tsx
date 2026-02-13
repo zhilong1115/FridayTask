@@ -145,7 +145,7 @@ export default function MobileNav({
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all
                 ${view === 'agents' ? 'bg-[#1a73e8] text-white' : 'bg-white text-[#70757a] border border-[#dadce0]'}`}
             >
-              🤖 小五
+              🤖 Agents
             </button>
           </div>
 
