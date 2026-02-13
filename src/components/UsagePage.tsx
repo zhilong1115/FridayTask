@@ -42,17 +42,33 @@ const COLORS = [
   '#57bb8a', '#a142f4', '#24c1e0', '#e37400', '#185abc',
 ];
 
+function localDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function localISOString(d: Date) {
+  const off = -d.getTimezoneOffset();
+  const sign = off >= 0 ? '+' : '-';
+  const h = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0');
+  const m = String(Math.abs(off) % 60).padStart(2, '0');
+  return `${localDateStr(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}${sign}${h}:${m}`;
+}
 function getDateRange(period: Period): { from?: string; to?: string } {
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
-  if (period === 'today') return { from: todayStr + 'T00:00:00Z', to: todayStr + 'T23:59:59Z' };
+  const todayStr = localDateStr(now);
+  if (period === 'today') {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    return { from: start.toISOString(), to: end.toISOString() };
+  }
   if (period === 'week') {
     const d = new Date(now);
     d.setDate(d.getDate() - d.getDay());
-    return { from: d.toISOString().slice(0, 10) + 'T00:00:00Z' };
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return { from: start.toISOString() };
   }
   if (period === 'month') {
-    return { from: todayStr.slice(0, 7) + '-01T00:00:00Z' };
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { from: start.toISOString() };
   }
   return {};
 }
@@ -274,7 +290,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                       style={{ left: hoveredBar.x, top: hoveredBar.y - 40, transform: 'translateX(-50%)' }}
                     >
                       <span className="font-medium">{hoveredBar.dim}</span>: {formatTokens(hoveredBar.tokens)} tokens
-                      <div className="text-[10px] text-[#9aa0a6]">{period === 'today' ? hoveredBar.time.slice(11) + ':00' : hoveredBar.time}</div>
+                      <div className="text-[10px] text-[#9aa0a6]">{period === 'today' ? String(new Date(hoveredBar.time + ':00:00Z').getHours()).padStart(2, '0') + ':00' : hoveredBar.time}</div>
                     </div>
                   )}
                 </div>
@@ -285,7 +301,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                   const show = chartRender.timeKeys.length <= 14 || i % Math.ceil(chartRender.timeKeys.length / 10) === 0;
                   return (
                     <div key={t} className="text-[10px] text-[#70757a] text-center" style={{ width: `${100 / chartRender.timeKeys.length}%` }}>
-                      {show ? (period === 'today' ? t.slice(11) + 'h' : t.slice(5)) : ''}
+                      {show ? (period === 'today' ? String(new Date(t + ':00:00Z').getHours()).padStart(2, '0') + 'h' : t.slice(5)) : ''}
                     </div>
                   );
                 })}
@@ -319,7 +335,11 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                 if (rowMax === 0) rowMax = 1;
 
                 const formatTimeLabel = (t: string) => {
-                  if (period === 'today') return t.slice(11, 13) + ':00';
+                  if (period === 'today') {
+                    // Convert UTC hour key to local time
+                    const d = new Date(t + ':00:00Z');
+                    return String(d.getHours()).padStart(2, '0') + ':00';
+                  }
                   return t.slice(5); // MM-DD
                 };
 
