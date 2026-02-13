@@ -8,6 +8,7 @@ import TaskModal from './components/TaskModal';
 import ArtifactsModal from './components/ArtifactsModal';
 import KnowledgeModal from './components/KnowledgeModal';
 import AgentsPage from './components/AgentsPage';
+import UsagePage from './components/UsagePage';
 import MobileNav from './components/MobileNav';
 import LoginModal from './components/LoginModal';
 import type { Task, TaskFormData, SidebarView } from './types';
@@ -29,6 +30,7 @@ export default function App() {
 
   // Modal state
   const [showAgentsPage, setShowAgentsPage] = useState(false);
+  const [showUsagePage, setShowUsagePage] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
   const [knowledgeOpen, setKnowledgeOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -142,6 +144,7 @@ export default function App() {
         onOpenAgents={() => setShowAgentsPage(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
+        onOpenUsage={() => setShowUsagePage(true)}
         isAuthenticated={isAuthenticated}
         onLogin={() => setLoginOpen(true)}
         onLogout={logout}
@@ -155,6 +158,7 @@ export default function App() {
         onOpenAgents={() => setShowAgentsPage(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
+        onOpenUsage={() => setShowUsagePage(true)}
         filterAssignee={filterAssignee}
         onFilterAssignee={setFilterAssignee}
         filterStatus={filterStatus}
@@ -166,7 +170,9 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-6 overflow-auto bg-white">
-        {showAgentsPage ? (
+        {showUsagePage ? (
+          <UsagePage onBack={() => setShowUsagePage(false)} />
+        ) : showAgentsPage ? (
           <AgentsPage
             tasks={tasks}
             cronJobs={cronJobs}
