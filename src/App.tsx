@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import CalendarView from './components/CalendarView';
 import ListView from './components/ListView';
 import TaskModal from './components/TaskModal';
-import SummaryModal from './components/SummaryModal';
+import AgentsModal from './components/AgentsModal';
 import ArtifactsModal from './components/ArtifactsModal';
 import KnowledgeModal from './components/KnowledgeModal';
 import AgentsView from './components/AgentsView';
@@ -29,7 +29,7 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState('');
 
   // Modal state
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [agentsModalOpen, setAgentsModalOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
   const [knowledgeOpen, setKnowledgeOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -140,7 +140,7 @@ export default function App() {
         filterStatus={filterStatus}
         onFilterStatus={setFilterStatus}
         onCreateTask={() => openCreate()}
-        onOpenSummary={() => setSummaryOpen(true)}
+        onOpenAgents={() => setAgentsModalOpen(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
         isAuthenticated={isAuthenticated}
@@ -153,7 +153,7 @@ export default function App() {
         view={sidebarView}
         onViewChange={setSidebarView}
         onCreateTask={() => openCreate()}
-        onOpenSummary={() => setSummaryOpen(true)}
+        onOpenAgents={() => setAgentsModalOpen(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
         filterAssignee={filterAssignee}
@@ -189,11 +189,12 @@ export default function App() {
         )}
       </main>
 
-      {/* Summary Modal */}
-      <SummaryModal
-        isOpen={summaryOpen}
-        onClose={() => setSummaryOpen(false)}
+      {/* Agents Modal */}
+      <AgentsModal
+        isOpen={agentsModalOpen}
+        onClose={() => setAgentsModalOpen(false)}
         tasks={tasks}
+        cronJobs={cronJobs}
       />
 
       {/* Artifacts Modal */}
