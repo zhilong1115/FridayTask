@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { execSync } from 'child_process';
+import readline from 'readline';
 import db from './db.js';
 import { syncFridayInbox } from './friday-inbox.js';
 
@@ -671,6 +672,123 @@ app.get('/api/knowledge/:folder/:filename', (req, res) => {
     const content = fs.readFileSync(filePath, 'utf-8');
     res.type('html').send(content);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Usage API ───────────────────────────────────────────
+
+const OPENCLAW_AGENTS_PATH = path.join(process.env.HOME || '/Users/zhilongzheng', '.openclaw', 'agents');
+let usageCache = { data: null, timestamp: 0 };
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function parseAllUsage() {
+  if (usageCache.data && Date.now() - usageCache.timestamp < CACHE_TTL) {
+    return usageCache.data;
+  }
+
+  const records = [];
+  // Find all JSONL files
+  const files = [];
+  try {
+    const agents = fs.readdirSync(OPENCLAW_AGENTS_PATH);
+    for (const agent of agents) {
+      const sessionsDir = path.join(OPENCLAW_AGENTS_PATH, agent, 'sessions');
+      try {
+        const sessionFiles = fs.readdirSync(sessionsDir);
+        for (const f of sessionFiles) {
+          if (f.endsWith('.jsonl')) files.push(path.join(sessionsDir, f));
+        }
+      } catch (_) { /* no sessions dir */ }
+    }
+  } catch (_) { /* no agents dir */ }
+
+  for (const file of files) {
+    // Extract agent id from path
+    const parts = file.split(path.sep);
+    const agentsIdx = parts.indexOf('agents');
+    const agentId = agentsIdx >= 0 ? parts[agentsIdx + 1] : 'unknown';
+
+    await new Promise((resolve, reject) => {
+      const stream = fs.createReadStream(file, { encoding: 'utf-8' });
+      const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+
+      rl.on('line', (line) => {
+        try {
+          const obj = JSON.parse(line);
+          if (obj?.message?.role === 'assistant' && obj?.message?.usage?.cost?.total != null) {
+            const msg = obj.message;
+            records.push({
+              timestamp: obj.timestamp,
+              agent: agentId,
+              model: msg.model || 'unknown',
+              provider: msg.provider || 'unknown',
+              totalTokens: msg.usage.totalTokens || 0,
+              input: msg.usage.input || 0,
+              output: msg.usage.output || 0,
+              cacheRead: msg.usage.cacheRead || 0,
+              cacheWrite: msg.usage.cacheWrite || 0,
+              costTotal: msg.usage.cost.total || 0,
+              costInput: msg.usage.cost.input || 0,
+              costOutput: msg.usage.cost.output || 0,
+              costCacheRead: msg.usage.cost.cacheRead || 0,
+              costCacheWrite: msg.usage.cost.cacheWrite || 0,
+            });
+          }
+        } catch (_) { /* skip bad lines */ }
+      });
+
+      rl.on('close', resolve);
+      rl.on('error', reject);
+    });
+  }
+
+  usageCache = { data: records, timestamp: Date.now() };
+  return records;
+}
+
+app.get('/api/usage', async (req, res) => {
+  try {
+    const { from, to, groupBy } = req.query;
+    let records = await parseAllUsage();
+
+    // Filter by date range
+    if (from) records = records.filter(r => r.timestamp >= from);
+    if (to) records = records.filter(r => r.timestamp <= to);
+
+    // Compute totals
+    const totalCost = records.reduce((s, r) => s + r.costTotal, 0);
+    const totalTokens = records.reduce((s, r) => s + r.totalTokens, 0);
+
+    // Group by
+    const groups = {};
+    for (const r of records) {
+      let key;
+      if (groupBy === 'model') key = r.model;
+      else if (groupBy === 'provider') key = r.provider;
+      else if (groupBy === 'agent') key = r.agent;
+      else if (groupBy === 'hour') key = r.timestamp?.slice(0, 13);
+      else if (groupBy === 'day') key = r.timestamp?.slice(0, 10);
+      else key = 'all';
+
+      if (!groups[key]) groups[key] = { key, cost: 0, tokens: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, count: 0 };
+      groups[key].cost += r.costTotal;
+      groups[key].tokens += r.totalTokens;
+      groups[key].input += r.input;
+      groups[key].output += r.output;
+      groups[key].cacheRead += r.cacheRead;
+      groups[key].cacheWrite += r.cacheWrite;
+      groups[key].count += 1;
+    }
+
+    res.json({
+      totalCost,
+      totalTokens,
+      totalRecords: records.length,
+      groups: Object.values(groups).sort((a, b) => b.cost - a.cost),
+    });
+  } catch (err) {
+    console.error('Usage API error:', err);
     res.status(500).json({ error: err.message });
   }
 });
