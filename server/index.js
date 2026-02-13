@@ -759,6 +759,10 @@ app.get('/api/usage', async (req, res) => {
     // Compute totals
     const totalCost = records.reduce((s, r) => s + r.costTotal, 0);
     const totalTokens = records.reduce((s, r) => s + r.totalTokens, 0);
+    const totalInput = records.reduce((s, r) => s + (r.input || 0), 0);
+    const totalOutput = records.reduce((s, r) => s + (r.output || 0), 0);
+    const totalCacheRead = records.reduce((s, r) => s + (r.cacheRead || 0), 0);
+    const totalCacheWrite = records.reduce((s, r) => s + (r.cacheWrite || 0), 0);
 
     // Group by
     const groups = {};
@@ -784,6 +788,10 @@ app.get('/api/usage', async (req, res) => {
     res.json({
       totalCost,
       totalTokens,
+      totalInput,
+      totalOutput,
+      totalCacheRead,
+      totalCacheWrite,
       totalRecords: records.length,
       groups: Object.values(groups).sort((a, b) => b.cost - a.cost),
     });
@@ -806,6 +814,8 @@ app.get('/api/usage/chart', async (req, res) => {
 
     // { [timeBucket]: { [dimValue]: tokens } }
     const buckets = {};
+    const billableBuckets = {};
+    const cacheBuckets = {};
     const dimSet = new Set();
     for (const r of records) {
       const tKey = timeBucket === 'hour' ? r.timestamp?.slice(0, 13) : r.timestamp?.slice(0, 10);
@@ -817,13 +827,17 @@ app.get('/api/usage/chart', async (req, res) => {
       if (!tKey) continue;
       dimSet.add(dKey);
       if (!buckets[tKey]) buckets[tKey] = {};
+      if (!billableBuckets[tKey]) billableBuckets[tKey] = {};
+      if (!cacheBuckets[tKey]) cacheBuckets[tKey] = {};
       buckets[tKey][dKey] = (buckets[tKey][dKey] || 0) + r.totalTokens;
+      billableBuckets[tKey][dKey] = (billableBuckets[tKey][dKey] || 0) + (r.input || 0) + (r.output || 0);
+      cacheBuckets[tKey][dKey] = (cacheBuckets[tKey][dKey] || 0) + (r.cacheRead || 0) + (r.cacheWrite || 0);
     }
 
     const timeKeys = Object.keys(buckets).sort();
     const dimensions = [...dimSet].sort();
 
-    res.json({ timeKeys, dimensions, buckets });
+    res.json({ timeKeys, dimensions, buckets, billableBuckets, cacheBuckets });
   } catch (err) {
     console.error('Usage chart API error:', err);
     res.status(500).json({ error: err.message });
