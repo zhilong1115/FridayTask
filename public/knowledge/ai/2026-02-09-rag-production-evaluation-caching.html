@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-09 - Production RAG: Evaluation, Caching & Cost Optimization</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.7; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 35px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; overflow-x: auto; font-size: 13px; line-height: 1.4; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Monaco, monospace; }
+    .highlight { background: #fff3cd; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .highlight-blue { background: #d1ecf1; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .highlight-green { background: #d4edda; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .interview { background: #f8d7da; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545; }
+    .interview h4 { color: #dc3545; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 8px 12px; border: 1px solid #dadce0; text-align: left; }
+    th { background: #f8f9fa; }
+    .series-nav { background: #e8f0fe; padding: 12px; border-radius: 8px; margin: 15px 0; }
+    .metric-card { border: 1px solid #dadce0; border-radius: 8px; padding: 15px; margin: 10px 0; }
+    .metric-card h4 { margin-top: 0; color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+<div class="series-nav">
+  📚 <strong>RAG 系列</strong>: 
+  <a href="2026-02-05-rag-pipeline-architecture.html">Day 1: Pipeline 架构</a> → 
+  <a href="2026-02-07-rag-advanced-chunking.html">Day 2: Chunking 策略</a> → 
+  <a href="2026-02-08-rag-advanced-retrieval.html">Day 3: 检索策略</a> → 
+  <strong>Day 4: 生产化 (本篇) 🎯</strong>
+</div>
+
+<h1>🏭 Production RAG: Evaluation, Caching & Cost Optimization</h1>
+<p>RAG 系列完结篇 | 📅 2026-02-09</p>
+
+<h2>📖 概览 / Overview</h2>
+<div class="bilingual">
+  <div class="zh">
+    <p>前三篇我们搞定了 RAG 的核心技术：Pipeline 架构、Chunking 策略、检索优化。但技术能跑 ≠ 能上线。</p>
+    <p>今天讲 <strong>生产化</strong>：怎么知道你的 RAG 好不好？怎么控成本？怎么让它又快又便宜？这才是面试和实际工作中最关键的部分。</p>
+  </div>
+  <div class="en">
+    <p>We've covered RAG core tech across 3 days. But working in a notebook ≠ production-ready.</p>
+    <p>Today: <strong>Evaluation</strong> (how do you know it's good?), <strong>Caching</strong> (how to make it fast?), and <strong>Cost Optimization</strong> (how to keep the bill sane?).</p>
+  </div>
+</div>
+
+<h2>🏗️ 生产 RAG 架构全景 / Production Architecture</h2>
+
+<div class="architecture">
+                        ┌─────────────────────────────────────────────┐
+                        │              Production RAG                  │
+                        └─────────────────────────────────────────────┘
+                                          │
+         ┌────────────────────────────────┼────────────────────────────────┐
+         │                                │                                │
+    ┌────▼────┐                     ┌─────▼─────┐                   ┌─────▼─────┐
+    │ EVALUATE │                     │   CACHE    │                   │ OPTIMIZE  │
+    └────┬────┘                     └─────┬─────┘                   └─────┬─────┘
+         │                                │                                │
+  ┌──────┼──────┐              ┌──────────┼──────────┐          ┌─────────┼─────────┐
+  │      │      │              │          │          │          │         │         │
+Retrieval Gen  E2E      Semantic    Exact-Match  Result    Model      Token     Async
+Quality  Quality       Cache       Cache       Cache    Routing    Budget   Processing
+  │      │      │         │          │          │          │         │         │
+Context Faithful RAGAS  Embedding   Query     LLM      Big→Small  Prompt   Batch
+Precision -ness  Score  Similarity  Hash     Response   Cascade   Compress  Queue
+</div>
+
+<h2>📊 Part 1: RAG 评估体系 / Evaluation Framework</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>RAG 评估的核心挑战：<strong>没有标准答案</strong>。不像分类任务有 accuracy，RAG 的"好不好"很主观。业界解法是用 LLM 当评委 (LLM-as-Judge)。</p>
+  </div>
+  <div class="en">
+    <p>Core challenge: <strong>no ground truth</strong> for most queries. Solution: LLM-as-Judge — use another LLM to evaluate the RAG output programmatically.</p>
+  </div>
+</div>
+
+<h3>🎯 RAGAS 框架 — 行业标准评估</h3>
+
+<div class="highlight">
+  <strong>RAGAS</strong> (Retrieval-Augmented Generation Assessment) 是目前最主流的 RAG 评估框架。核心思路：把 RAG 的好坏拆解成独立可测的维度。
+</div>
+
+<h4>四大核心指标</h4>
+
+<div class="metric-card">
+  <h4>1. Faithfulness (忠实度) — 最重要！</h4>
+  <p><strong>问题</strong>: 生成的答案是否基于检索到的内容？还是在编？</p>
+  <p><strong>计算方法</strong>:</p>
+  <ol>
+    <li>LLM 把 answer 拆成多个 claim（原子声明）</li>
+    <li>逐个检查每个 claim 是否能在 context 中找到支持</li>
+    <li>Faithfulness = 有支持的 claims / 总 claims</li>
+  </ol>
+  <p><strong>范围</strong>: 0~1，越高越好。低于 0.7 说明有严重幻觉问题。</p>
+</div>
+
+<div class="metric-card">
+  <h4>2. Answer Relevancy (答案相关性)</h4>
+  <p><strong>问题</strong>: 答案是否真的在回答用户的问题？</p>
+  <p><strong>计算方法</strong>: 让 LLM 根据 answer 反向生成问题，计算生成的问题和原始问题的语义相似度。如果答案跑题了，反向生成的问题会和原问题很不同。</p>
+</div>
+
+<div class="metric-card">
+  <h4>3. Context Precision (上下文精确度)</h4>
+  <p><strong>问题</strong>: 检索到的文档中，真正有用的排在前面了吗？</p>
+  <p><strong>计算方法</strong>: 类似 Precision@K，检查 top-K 检索结果中，相关文档的排名位置。相关文档排得越靠前，分数越高。</p>
+</div>
+
+<div class="metric-card">
+  <h4>4. Context Recall (上下文召回率)</h4>
+  <p><strong>问题</strong>: 回答问题需要的信息，都检索到了吗？</p>
+  <p><strong>计算方法</strong>: 需要 ground truth answer。把 ground truth 拆成 claims，检查有多少能在检索结果中找到支持。</p>
+</div>
+
+<pre><code class="language-python"># RAGAS 使用示例
+from ragas import evaluate
+from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+from datasets import Dataset
+
+# 准备评估数据
+eval_data = {
+    "question": ["What is RAG?", "How does chunking work?"],
+    "answer": ["RAG combines retrieval with generation...", "Chunking splits documents..."],
+    "contexts": [["RAG is a technique that..."], ["Document chunking involves..."]],
+    "ground_truth": ["RAG retrieves relevant documents...", "Chunking divides text..."]
+}
+
+dataset = Dataset.from_dict(eval_data)
+
+# 运行评估
+results = evaluate(
+    dataset,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+)
+print(results)
+# {'faithfulness': 0.85, 'answer_relevancy': 0.92, 
+#  'context_precision': 0.78, 'context_recall': 0.88}</code></pre>
+
+<div class="highlight">
+  <strong>💡 面试关键点</strong>: 被问"怎么评估 RAG"时，先说这四个指标，然后解释 <strong>Faithfulness 最重要</strong>（因为幻觉是 RAG 最大的风险），再提到评估本身也会引入 LLM 误差 → 需要人工抽样校验。
+</div>
+
+<h3>📈 评估流水线设计</h3>
+
+<div class="architecture">
+  Offline Evaluation Pipeline:
+  
+  ┌──────────┐    ┌───────────┐    ┌──────────┐    ┌───────────┐
+  │ Test Set  │───▶│ RAG Query │───▶│  RAGAS   │───▶│ Dashboard │
+  │ (Q+A+Ctx) │    │  Pipeline  │    │ Evaluate  │    │ & Alerts  │
+  └──────────┘    └───────────┘    └──────────┘    └───────────┘
+       │                                                    │
+       │         ┌──────────────┐                          │
+       └────────▶│ Human Review │◀─────────────────────────┘
+                 │  (sample 5%) │     Low score → flag
+                 └──────────────┘
+
+  Online Monitoring:
+  
+  User Query ──▶ RAG ──▶ Response ──▶ [Lightweight checks]
+                                        │
+                              ┌─────────┼─────────┐
+                              │         │         │
+                          Latency   Token     User
+                          P50/P99   Count    Thumbs
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>离线评估</strong>：定期跑测试集，全面检查质量。适合版本发布前。</p>
+    <p><strong>在线监控</strong>：轻量级指标（延迟、token 用量、用户反馈），实时发现问题。不跑 LLM-as-Judge（太贵太慢）。</p>
+    <p><strong>人工校验</strong>：抽样 5% 做 human review，校正自动化指标的偏差。</p>
+  </div>
+  <div class="en">
+    <p><strong>Offline</strong>: Full RAGAS suite on test set. Run before releases.</p>
+    <p><strong>Online</strong>: Lightweight metrics only (latency, tokens, thumbs up/down). No LLM-as-Judge in hot path.</p>
+    <p><strong>Human review</strong>: Sample 5% to calibrate automated scores.</p>
+  </div>
+</div>
+
+<h2>⚡ Part 2: Caching 策略 / Caching Strategies</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>RAG 系统有三个昂贵操作：Embedding 计算、向量检索、LLM 生成。每一层都可以缓存。</p>
+  </div>
+  <div class="en">
+    <p>Three expensive operations in RAG: embedding computation, vector search, and LLM generation. Each can be cached at different levels.</p>
+  </div>
+</div>
+
+<h3>三层缓存架构</h3>
+
+<div class="architecture">
+  User Query
+      │
+  ┌───▼───────────────────────┐
+  │ L1: Exact Match Cache     │  ← Query hash → cached response
+  │     (Redis/Memcached)     │     Hit rate: 15-30%
+  │     TTL: 1-24 hours       │     Latency: ~1ms
+  └───┬───────────────────────┘
+      │ miss
+  ┌───▼───────────────────────┐
+  │ L2: Semantic Cache         │  ← Embedding similarity > threshold
+  │     (Vector DB + Redis)    │     Hit rate: 20-40%  
+  │     Similarity > 0.95      │     Latency: ~50ms
+  └───┬───────────────────────┘
+      │ miss
+  ┌───▼───────────────────────┐
+  │ L3: Result Cache           │  ← Cache retrieval results
+  │     (skip LLM if same ctx) │     Hit rate: 30-50%
+  │     Hash(top-K docs)       │     Latency: ~100ms
+  └───┬───────────────────────┘
+      │ miss
+  ┌───▼───────────────────────┐
+  │ Full RAG Pipeline          │     Latency: 2-10s
+  │ (Embed → Retrieve → LLM)  │     Cost: $$$
+  └───────────────────────────┘
+</div>
+
+<h4>L1: Exact Match Cache — 简单有效</h4>
+
+<pre><code class="language-typescript">// 最简单的缓存：query hash
+import { createHash } from 'crypto';
+
+class ExactMatchCache {
+  private redis: Redis;
+  private ttl: number;
+
+  async get(query: string): Promise&lt;string | null&gt; {
+    const key = `rag:exact:${this.hashQuery(query)}`;
+    return this.redis.get(key);
+  }
+
+  async set(query: string, response: string): Promise&lt;void&gt; {
+    const key = `rag:exact:${this.hashQuery(query)}`;
+    await this.redis.set(key, response, 'EX', this.ttl);
+  }
+
+  private hashQuery(query: string): string {
+    // Normalize: lowercase, trim, remove extra spaces
+    const normalized = query.toLowerCase().trim().replace(/\s+/g, ' ');
+    return createHash('sha256').update(normalized).digest('hex');
+  }
+}</code></pre>
+
+<h4>L2: Semantic Cache — 核心创新</h4>
+
+<pre><code class="language-typescript">// 语义缓存：相似问题复用答案
+class SemanticCache {
+  private vectorDB: VectorStore;  // 缓存 query embeddings
+  private redis: Redis;           // 缓存 responses
+  private threshold = 0.95;       // 相似度阈值
+
+  async get(query: string): Promise&lt;string | null&gt; {
+    // 1. Embed the query
+    const queryEmbedding = await embed(query);
+    
+    // 2. Search for similar cached queries
+    const results = await this.vectorDB.search(queryEmbedding, { topK: 1 });
+    
+    if (results[0] && results[0].score > this.threshold) {
+      // 3. Similar query found — return cached response
+      const cachedId = results[0].metadata.cacheId;
+      return this.redis.get(`rag:semantic:${cachedId}`);
+    }
+    
+    return null; // Cache miss
+  }
+
+  async set(query: string, response: string): Promise&lt;void&gt; {
+    const cacheId = crypto.randomUUID();
+    const queryEmbedding = await embed(query);
+    
+    // Store embedding for future similarity search
+    await this.vectorDB.upsert({
+      id: cacheId,
+      embedding: queryEmbedding,
+      metadata: { cacheId, query, createdAt: Date.now() }
+    });
+    
+    // Store response
+    await this.redis.set(`rag:semantic:${cacheId}`, response, 'EX', 3600);
+  }
+}</code></pre>
+
+<div class="highlight-blue">
+  <strong>🤔 Semantic Cache 的坑</strong>：阈值很敏感。0.95 太高 → 命中率低；0.90 太低 → 语义不同的问题被误匹配。建议：先 0.95 上线，收集数据后调整。还要考虑 <strong>cache invalidation</strong> — 当文档更新时，相关缓存必须失效。
+</div>
+
+<h4>L3: Result Cache — 检索结果复用</h4>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>思路：如果两个不同问题检索到了<strong>完全相同的文档集合</strong>，可以跳过 LLM 重新生成。用 top-K 文档的 ID 组合做 hash。</p>
+    <p>实际中效果有限，因为不同问题即使检索到相同文档，prompt 不同也需要不同的答案。更适合用在<strong>检索结果缓存</strong>（跳过向量搜索，不跳过 LLM）。</p>
+  </div>
+  <div class="en">
+    <p>Hash the top-K document IDs. If same docs retrieved, potentially reuse. In practice, more useful for caching the retrieval step itself (skip vector search, still run LLM).</p>
+  </div>
+</div>
+
+<h2>💰 Part 3: Cost Optimization / 成本优化</h2>
+
+<h3>成本拆解</h3>
+
+<table>
+  <tr>
+    <th>Component</th>
+    <th>Cost Driver</th>
+    <th>Typical %</th>
+    <th>Optimization</th>
+  </tr>
+  <tr>
+    <td>LLM Generation</td>
+    <td>Output tokens</td>
+    <td>60-80%</td>
+    <td>Model routing, prompt compression</td>
+  </tr>
+  <tr>
+    <td>Embedding</td>
+    <td>Input tokens</td>
+    <td>5-15%</td>
+    <td>Caching, batch processing</td>
+  </tr>
+  <tr>
+    <td>Vector DB</td>
+    <td>Storage + QPS</td>
+    <td>5-10%</td>
+    <td>Index optimization, filtering</td>
+  </tr>
+  <tr>
+    <td>Reranking</td>
+    <td>Per call</td>
+    <td>5-10%</td>
+    <td>Reduce candidate set</td>
+  </tr>
+</table>
+
+<h3>🎯 策略 1: Model Routing (模型路由)</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>核心思路</strong>：不是所有问题都需要 GPT-4。简单问题用小模型，复杂问题才用大模型。</p>
+  </div>
+  <div class="en">
+    <p><strong>Key insight</strong>: Route simple queries to cheaper models, reserve expensive models for complex ones.</p>
+  </div>
+</div>
+
+<pre><code class="language-typescript">// Model routing: 分级策略
+interface ModelTier {
+  name: string;
+  model: string;
+  costPer1kTokens: number;
+  maxComplexity: number;
+}
+
+const tiers: ModelTier[] = [
+  { name: 'fast',    model: 'gpt-4o-mini',   costPer1kTokens: 0.00015, maxComplexity: 3 },
+  { name: 'balanced',model: 'gpt-4o',        costPer1kTokens: 0.0025,  maxComplexity: 7 },
+  { name: 'premium', model: 'claude-opus',   costPer1kTokens: 0.015,   maxComplexity: 10 },
+];
+
+async function routeQuery(query: string, context: string[]): Promise&lt;ModelTier&gt; {
+  // 方法 1: 规则路由（便宜，快）
+  if (query.split(' ').length < 10 && context.length <= 2) {
+    return tiers[0]; // Simple query, few docs → fast model
+  }
+  
+  // 方法 2: LLM 分类器路由（更准，有额外成本）
+  const complexity = await classifyComplexity(query); // 用小模型打分 1-10
+  return tiers.find(t => complexity <= t.maxComplexity) || tiers[2];
+}
+
+// 效果：可降低 40-60% 的 LLM 成本，同时保持 >95% 的答案质量</code></pre>
+
+<h3>🎯 策略 2: Prompt Compression (Prompt 压缩)</h3>
+
+<pre><code class="language-typescript">// 压缩 retrieved context，减少 input tokens
+async function compressContext(
+  query: string, 
+  documents: Document[], 
+  tokenBudget: number
+): Promise&lt;string&gt; {
+  // 方法 1: Extractive — 只保留相关句子
+  const relevantSentences = [];
+  for (const doc of documents) {
+    const sentences = doc.text.split('. ');
+    for (const sentence of sentences) {
+      const relevance = await quickRelevanceScore(query, sentence);
+      if (relevance > 0.7) {
+        relevantSentences.push(sentence);
+      }
+    }
+  }
+  
+  // 方法 2: Token budget — 按相关性排序后截断
+  let totalTokens = 0;
+  const selected = [];
+  for (const sent of relevantSentences.sort((a, b) => b.score - a.score)) {
+    const tokens = countTokens(sent);
+    if (totalTokens + tokens > tokenBudget) break;
+    selected.push(sent);
+    totalTokens += tokens;
+  }
+  
+  return selected.join('. ');
+}
+// 效果：Context 长度可压缩 50-70%，LLM 成本相应降低</code></pre>
+
+<h3>🎯 策略 3: Async + Batch Processing</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>不是所有 RAG 请求都需要实时响应：</p>
+    <ul>
+      <li><strong>实时</strong>：用户直接提问 → 走全 pipeline</li>
+      <li><strong>Near-real-time</strong>：后台总结、报告生成 → 攒批处理，用 Batch API（OpenAI Batch API 便宜 50%）</li>
+      <li><strong>离线</strong>：文档索引、评估 → 定时任务，用最便宜的模型</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p>Not all RAG needs real-time response. Use Batch APIs (50% cheaper) for background tasks. Reserve real-time pipeline for interactive queries only.</p>
+  </div>
+</div>
+
+<h3>💸 综合成本优化效果</h3>
+
+<table>
+  <tr>
+    <th>Strategy</th>
+    <th>Cost Reduction</th>
+    <th>Quality Impact</th>
+    <th>Implementation Effort</th>
+  </tr>
+  <tr>
+    <td>Semantic Cache</td>
+    <td>20-40%</td>
+    <td>None (exact reuse)</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <td>Model Routing</td>
+    <td>40-60%</td>
+    <td>Minimal (~2% drop)</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <td>Prompt Compression</td>
+    <td>30-50%</td>
+    <td>Low (~3% drop)</td>
+    <td>Low</td>
+  </tr>
+  <tr>
+    <td>Batch Processing</td>
+    <td>50% (batch API)</td>
+    <td>None</td>
+    <td>Low</td>
+  </tr>
+  <tr>
+    <td><strong>Combined</strong></td>
+    <td><strong>70-85%</strong></td>
+    <td><strong>~5% quality drop</strong></td>
+    <td><strong>High</strong></td>
+  </tr>
+</table>
+
+<h2>📚 可学习的模式 / Patterns to Apply</h2>
+
+<div class="highlight-green">
+  <h4>Pattern 1: Layered Caching (分层缓存)</h4>
+  <p>任何涉及多步骤 pipeline 的系统，都可以在每一步加缓存。不仅限于 RAG — API gateway、微服务、CI/CD 都适用。关键是每层缓存策略不同：精确匹配 → 语义相似 → 结果复用。</p>
+</div>
+
+<div class="highlight-green">
+  <h4>Pattern 2: Quality-Cost Tradeoff via Routing</h4>
+  <p>Model Routing 本质是"按需分配资源"。同样的思路可以用在：选择不同的检索策略、不同的 reranker、不同的 prompt 模板。核心：分类 → 分级 → 按级分配。</p>
+</div>
+
+<div class="highlight-green">
+  <h4>Pattern 3: LLM-as-Judge for Automated Evaluation</h4>
+  <p>任何需要评估"质量"但没有 ground truth 的场景，都可以考虑 LLM-as-Judge。翻译质量、代码质量、摘要质量… 关键是设计好评分维度（像 RAGAS 的 4 维）和定期人工校准。</p>
+</div>
+
+<h2>🎤 面试题 / Interview Questions</h2>
+
+<div class="interview">
+  <h4>Q1: "你怎么评估一个 RAG 系统的质量？"</h4>
+  <p><strong>答题框架</strong>:</p>
+  <ol>
+    <li><strong>指标维度</strong>: Retrieval quality (Context Precision/Recall) + Generation quality (Faithfulness + Answer Relevancy)</li>
+    <li><strong>评估方法</strong>: RAGAS 框架，LLM-as-Judge</li>
+    <li><strong>Faithfulness 最重要</strong>: 因为幻觉是 RAG 最大风险</li>
+    <li><strong>局限性</strong>: LLM 评估本身有偏差 → 需要人工抽样校验</li>
+    <li><strong>线上 vs 线下</strong>: 线下全面评估 (RAGAS)，线上轻量监控 (latency + user feedback)</li>
+  </ol>
+</div>
+
+<div class="interview">
+  <h4>Q2: "RAG 系统上线后成本太高，你怎么优化？"</h4>
+  <p><strong>答题框架</strong>:</p>
+  <ol>
+    <li><strong>先分析瓶颈</strong>: LLM token 通常占 60-80% 成本</li>
+    <li><strong>缓存</strong>: 三层缓存（精确匹配 → 语义缓存 → 结果缓存），减少重复计算</li>
+    <li><strong>模型路由</strong>: 简单查询用小模型，复杂查询用大模型</li>
+    <li><strong>Prompt 压缩</strong>: 减少 context token，只保留相关内容</li>
+    <li><strong>异步批处理</strong>: 非实时任务用 Batch API</li>
+    <li><strong>量化效果</strong>: 综合可降低 70-85% 成本</li>
+  </ol>
+</div>
+
+<div class="interview">
+  <h4>Q3: "Semantic Cache 的阈值怎么设？有什么陷阱？"</h4>
+  <p><strong>要点</strong>:</p>
+  <ul>
+    <li>起始值 0.95，观察一周后调整</li>
+    <li>陷阱 1: 同义不同意 — "How to delete my account" vs "How to remove my profile" 可能语义很近但答案不同</li>
+    <li>陷阱 2: Cache invalidation — 文档更新后缓存的答案过时</li>
+    <li>陷阱 3: 多轮对话中，同一个 query 的上下文不同 → 不能只看 query 相似度</li>
+    <li>解法: 把 session context 也纳入 cache key</li>
+  </ul>
+</div>
+
+<h2>🎓 RAG 系列总结 / Series Recap</h2>
+
+<div class="highlight-blue">
+  <h4>四天学到了什么？</h4>
+  <table>
+    <tr><th>Day</th><th>Topic</th><th>核心收获</th></tr>
+    <tr><td>Day 1</td><td>Pipeline Architecture</td><td>Offline/Online 分离、Hybrid Search + RRF 融合</td></tr>
+    <tr><td>Day 2</td><td>Advanced Chunking</td><td>Semantic/Parent-Child/Agentic 三种策略的权衡</td></tr>
+    <tr><td>Day 3</td><td>Advanced Retrieval</td><td>5 种 Query Transform + Multi-Hop 组合</td></tr>
+    <tr><td>Day 4</td><td>Production</td><td>RAGAS 评估、三层缓存、成本优化 70-85%</td></tr>
+  </table>
+  <p><strong>Phase 1.3 RAG 系统设计 ✅ 完成！</strong></p>
+  <p>下一阶段：Phase 2 — AI System Design 面试题（设计 ChatGPT、推荐系统等）</p>
+</div>
+
+<div class="series-nav">
+  📚 <strong>RAG 系列完结！</strong> 
+  <a href="2026-02-05-rag-pipeline-architecture.html">Day 1</a> → 
+  <a href="2026-02-07-rag-advanced-chunking.html">Day 2</a> → 
+  <a href="2026-02-08-rag-advanced-retrieval.html">Day 3</a> → 
+  <strong>Day 4 ✅</strong>
+</div>
+
+</body>
+</html>

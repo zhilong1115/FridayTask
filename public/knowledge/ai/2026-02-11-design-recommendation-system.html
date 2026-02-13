@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-11 — 设计推荐系统 (Netflix/YouTube)</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #fff; color: #1a1a1a; line-height: 1.7; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 35px; }
+    h3 { color: #3c4043; }
+    .architecture { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre; overflow-x: auto; line-height: 1.4; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'Courier New', monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight h4 { margin-top: 0; color: #856404; }
+    .diagram { text-align: center; margin: 20px 0; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    .tag { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    .series-nav { background: #f0f4ff; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+    .series-nav a { color: #1a73e8; text-decoration: none; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .interview-q { background: #fce8e6; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ea4335; }
+    .interview-q h4 { margin-top: 0; color: #c5221f; }
+    @media (max-width: 700px) { .bilingual { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="series-nav">
+  📚 <strong>AI System Design 面试系列</strong> — Day 2 of 5<br>
+  <a href="2026-02-10-design-chatgpt-system.html">Day 1: 设计 ChatGPT</a> → <strong>Day 2: 设计推荐系统</strong> → Day 3: 设计语义搜索
+</div>
+
+<h1>🎬 设计推荐系统 / Design a Recommendation System</h1>
+<p>
+  <span class="tag">System Design</span>
+  <span class="tag">ML Interview</span>
+  <span class="tag">Netflix</span>
+  <span class="tag">YouTube</span>
+  <span class="tag">Phase 2.1</span>
+</p>
+<p>📅 2026-02-11 | 参考: YouTube DNN Paper (Covington 2016), Netflix Prize, Industry best practices</p>
+
+<h2>📖 项目简介 / Overview</h2>
+<div class="bilingual">
+  <div class="zh">
+    <p>"设计一个推荐系统"是 ML System Design 面试中最经典的题目，几乎所有大厂（Netflix、YouTube、Amazon、TikTok）都会考。</p>
+    <p>核心挑战：从<strong>数亿候选内容</strong>中，在<strong>数百毫秒</strong>内为每个用户挑选出最相关的 5-20 个推荐。</p>
+    <p>今天重点讲解业界通用的<strong>多阶段漏斗架构</strong>：Candidate Generation → Lightweight Ranking → Heavy Ranking → Re-ranking，以及每一层背后的设计权衡。</p>
+  </div>
+  <div class="en">
+    <p>"Design a recommendation system" is THE classic ML system design interview question. Asked at nearly every major tech company.</p>
+    <p>Core challenge: select the best 5-20 items from <strong>hundreds of millions of candidates</strong> within <strong>hundreds of milliseconds</strong>.</p>
+    <p>Today we cover the industry-standard <strong>multi-stage funnel architecture</strong>: Candidate Generation → Lightweight Ranking → Heavy Ranking → Re-ranking, and the design trade-offs at each stage.</p>
+  </div>
+</div>
+
+<h2>🏗️ 整体架构 / Overall Architecture</h2>
+
+<div class="architecture">
+                        ┌─────────────────────────────────┐
+                        │         User Request            │
+                        │   (user_id, context, session)   │
+                        └───────────────┬─────────────────┘
+                                        │
+                        ┌───────────────▼─────────────────┐
+                        │    Candidate Generation Layer    │
+                        │    多路召回 (Multiple Sources)     │
+                        │                                  │
+                        │  ┌──────┐ ┌──────┐ ┌──────────┐ │
+                        │  │Two-  │ │Collab│ │ Rule-    │ │
+                        │  │Tower │ │Filter│ │ Based    │ │
+                        │  │Model │ │(CF)  │ │ (Hot/New)│ │
+                        │  └──┬───┘ └──┬───┘ └────┬─────┘ │
+                        │     └────────┴──────────┘        │
+                        │         ~10K candidates          │
+                        └───────────────┬─────────────────┘
+                                        │
+                        ┌───────────────▼─────────────────┐
+                        │    Lightweight Ranking (L1)      │
+                        │    粗排：快速过滤，优化 Recall       │
+                        │    Simple model + few features   │
+                        │         ~500 candidates          │
+                        └───────────────┬─────────────────┘
+                                        │
+                        ┌───────────────▼─────────────────┐
+                        │    Heavy Ranking (L2)            │
+                        │    精排：全特征打分                 │
+                        │    Deep model + rich features    │
+                        │    Multi-task: CTR + Watch Time  │
+                        │         ~50 candidates           │
+                        └───────────────┬─────────────────┘
+                                        │
+                        ┌───────────────▼─────────────────┐
+                        │    Re-Ranking Layer              │
+                        │    重排：业务逻辑 + 多样性           │
+                        │    Diversity, freshness, policy  │
+                        │         5-20 final results       │
+                        └─────────────────────────────────┘
+</div>
+
+<div class="highlight">
+  <h4>🔑 核心思想：逐层过滤的漏斗 / Funnel of Progressive Filtering</h4>
+  <p><strong>中文：</strong>1 亿内容不可能用一个超复杂模型全跑一遍。解法是分层：越靠前的层越快但越粗糙（召回率优先），越靠后的层越慢但越精准（精度优先）。</p>
+  <p><strong>English：</strong>You can't run a heavy model on 100M items. Solution: multi-stage funnel. Earlier stages prioritize recall (fast, rough), later stages prioritize precision (slow, accurate).</p>
+</div>
+
+<h2>✨ 阶段详解 / Stage Deep Dive</h2>
+
+<h3>Stage 1: Candidate Generation (召回层)</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>目标：</strong>从亿级 item pool 中快速找出 ~10K 个候选</p>
+    <p><strong>核心方法 — Two-Tower Model（双塔模型）：</strong></p>
+    <ul>
+      <li><strong>User Tower：</strong>编码用户特征 → 用户 embedding</li>
+      <li><strong>Item Tower：</strong>编码内容特征 → 内容 embedding</li>
+      <li>训练目标：让正样本的 user-item cosine similarity 高</li>
+      <li>服务时：用 ANN (Approximate Nearest Neighbor) 检索最近的 item</li>
+    </ul>
+    <p><strong>为什么 Two-Tower 好：</strong></p>
+    <ul>
+      <li>Item embedding 可以<strong>离线预计算</strong>，存到向量索引</li>
+      <li>在线只需算 user embedding（一次前向传播），再做 ANN 查询</li>
+      <li>延迟极低：< 10ms 找到 Top-K</li>
+    </ul>
+    <p><strong>多路召回：</strong>不只靠一个模型，并行跑多个 source：</p>
+    <ul>
+      <li>Two-Tower 个性化召回</li>
+      <li>协同过滤 (看过X的人也看了Y)</li>
+      <li>热门/新内容 (确保 cold-start coverage)</li>
+      <li>关注的创作者最新内容</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Goal:</strong> Quickly select ~10K candidates from billions of items</p>
+    <p><strong>Core Method — Two-Tower Model:</strong></p>
+    <ul>
+      <li><strong>User Tower:</strong> encodes user features → user embedding</li>
+      <li><strong>Item Tower:</strong> encodes item features → item embedding</li>
+      <li>Training: maximize cosine similarity for positive pairs</li>
+      <li>Serving: ANN (Approximate Nearest Neighbor) retrieval</li>
+    </ul>
+    <p><strong>Why Two-Tower works:</strong></p>
+    <ul>
+      <li>Item embeddings can be <strong>pre-computed offline</strong> in a vector index</li>
+      <li>Online: only compute user embedding (single forward pass) + ANN lookup</li>
+      <li>Ultra-low latency: < 10ms for Top-K</li>
+    </ul>
+    <p><strong>Multiple retrieval sources (multi-channel recall):</strong></p>
+    <ul>
+      <li>Two-Tower personalized recall</li>
+      <li>Collaborative Filtering (users who watched X also watched Y)</li>
+      <li>Trending / New content (cold-start coverage)</li>
+      <li>Subscribed creator's latest uploads</li>
+    </ul>
+  </div>
+</div>
+
+<pre><code>// Two-Tower 模型伪代码
+class TwoTowerModel {
+  userTower: DNN   // [user_id_emb, age, gender, watch_history_emb, ...] → 128d
+  itemTower: DNN   // [item_id_emb, title_emb, category, duration, ...] → 128d
+
+  // Training: contrastive loss / softmax cross-entropy
+  loss(user, posItem, negItems) {
+    userEmb  = this.userTower(user)        // [128]
+    posEmb   = this.itemTower(posItem)     // [128]
+    negEmbs  = negItems.map(i => this.itemTower(i))  // [N, 128]
+    
+    posSim   = cosineSim(userEmb, posEmb)
+    negSims  = negEmbs.map(e => cosineSim(userEmb, e))
+    return softmaxCrossEntropy(posSim, negSims)  // in-batch negatives
+  }
+  
+  // Serving: pre-compute all item embeddings → FAISS/ScaNN index
+  // Online: compute userEmb → ANN search → Top-10K items in &lt;10ms
+}</code></pre>
+
+<h3>Stage 2: Lightweight Ranking — 粗排 (L1)</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>目标：</strong>从 ~10K 砍到 ~500，快速过滤明显不好的候选</p>
+    <p><strong>模型选择：</strong>简单的浅层网络或逻辑回归</p>
+    <p><strong>关键特征：</strong>易于快速计算的特征（不做交叉特征）</p>
+    <ul>
+      <li>用户-item embedding 点积 (来自召回模型)</li>
+      <li>Item 热度统计 (CTR, 播放量)</li>
+      <li>简单的用户偏好匹配 (类目, 时长)</li>
+    </ul>
+    <p><strong>优化目标：</strong>Recall@500 —— 确保好的候选不被误删</p>
+  </div>
+  <div class="en">
+    <p><strong>Goal:</strong> Trim ~10K → ~500, quickly filter out poor candidates</p>
+    <p><strong>Model:</strong> Shallow NN or logistic regression</p>
+    <p><strong>Features:</strong> Fast-to-compute, no expensive cross-features</p>
+    <ul>
+      <li>User-item embedding dot product from retrieval</li>
+      <li>Item popularity stats (CTR, view count)</li>
+      <li>Simple preference matching (category, duration)</li>
+    </ul>
+    <p><strong>Optimization target:</strong> Recall@500 — don't drop good candidates</p>
+  </div>
+</div>
+
+<h3>Stage 3: Heavy Ranking — 精排 (L2)</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>这是整个系统最核心的模型</strong>，也是面试最爱考的部分。</p>
+    <p><strong>模型：</strong>Deep & Cross Network / Multi-task 模型</p>
+    <p><strong>Multi-Task Learning (多任务学习)：</strong></p>
+    <ul>
+      <li>Task 1: P(click) — 预测用户是否会点击</li>
+      <li>Task 2: E[watch_time] — 预测观看时长</li>
+      <li>Task 3: P(like) — 预测用户是否会点赞</li>
+      <li>Task 4: P(share) — 预测用户是否会分享</li>
+    </ul>
+    <p><strong>最终得分 = Value Model 加权组合：</strong></p>
+    <p><code>score = w1 * P(click) * E[watch_time] + w2 * P(like) + w3 * P(share) - w4 * P(dislike)</code></p>
+    <p>权重 w1-w4 由业务目标决定，可以<strong>在线调节</strong>而不重新训练模型。</p>
+  </div>
+  <div class="en">
+    <p><strong>This is the core model of the entire system</strong> and the most popular interview focus.</p>
+    <p><strong>Model:</strong> Deep & Cross Network / Multi-task model</p>
+    <p><strong>Multi-Task Learning:</strong></p>
+    <ul>
+      <li>Task 1: P(click) — predict click probability</li>
+      <li>Task 2: E[watch_time] — predict watch time</li>
+      <li>Task 3: P(like) — predict like probability</li>
+      <li>Task 4: P(share) — predict share probability</li>
+    </ul>
+    <p><strong>Final Score = Value Model weighted combination:</strong></p>
+    <p><code>score = w1 * P(click) * E[watch_time] + w2 * P(like) + w3 * P(share) - w4 * P(dislike)</code></p>
+    <p>Weights w1-w4 are determined by business objectives and can be <strong>tuned online</strong> without retraining.</p>
+  </div>
+</div>
+
+<div class="highlight">
+  <h4>💡 设计亮点：Multi-Task 的 Shared-Bottom vs MMoE</h4>
+  <p><strong>Shared-Bottom：</strong>所有 task 共享底层参数，简单但 task 冲突时表现差（如 click 和 watch_time 可能负相关——clickbait 高点击低观看）。</p>
+  <p><strong>MMoE (Multi-gate Mixture-of-Experts)：</strong>多个 expert 网络 + 每个 task 有自己的 gating 网络选择性组合 expert 输出。解决 task 冲突，Google 在 YouTube 实际使用。</p>
+</div>
+
+<pre><code>// Multi-Task Heavy Ranker 伪代码
+class HeavyRanker {
+  // 特征工程 — 这里体现系统设计功底
+  features = {
+    // User features
+    user_embedding: float[128],
+    user_age_bucket: categorical,
+    user_country: categorical,
+    recent_watch_categories: multi-hot[50],
+    avg_session_duration: float,
+    
+    // Item features
+    item_embedding: float[128],
+    item_duration: float,
+    item_freshness: float,     // hours since upload
+    item_quality_score: float, // pre-computed from likes/views ratio
+    creator_subscriber_count: float,
+    
+    // Cross features (User × Item interaction)
+    user_creator_affinity: float,    // how often user watches this creator
+    category_match_score: float,     // user pref vs item category
+    user_item_covisit: float,        // co-watch signal
+  }
+  
+  // MMoE Architecture
+  experts: DNN[8]          // 8 expert networks
+  gates: {                 // per-task gating
+    click: GatingNetwork,
+    watch_time: GatingNetwork,
+    like: GatingNetwork,
+  }
+  task_heads: {            // per-task output
+    click: Linear → sigmoid,      // P(click)
+    watch_time: Linear → ReLU,    // E[watch_time] in seconds
+    like: Linear → sigmoid,       // P(like)
+  }
+}</code></pre>
+
+<h3>Stage 4: Re-Ranking — 重排 (业务逻辑层)</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>目标：</strong>不只看单个 item 好不好，还要看整个推荐列表好不好</p>
+    <p><strong>关键策略：</strong></p>
+    <ul>
+      <li><strong>多样性 (Diversity)：</strong>MMR 算法去重，避免推 5 个同类视频</li>
+      <li><strong>新鲜度 (Freshness)：</strong>新内容 boost，保证新创作者有曝光</li>
+      <li><strong>业务规则：</strong>过滤已看、版权问题、年龄限制</li>
+      <li><strong>Exploration vs Exploitation：</strong>ε-greedy 或 Thompson Sampling 探索新兴趣</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Goal:</strong> Optimize the entire slate, not just individual items</p>
+    <p><strong>Key strategies:</strong></p>
+    <ul>
+      <li><strong>Diversity:</strong> MMR algorithm to de-duplicate categories</li>
+      <li><strong>Freshness:</strong> Boost new content, ensure creator exposure</li>
+      <li><strong>Business rules:</strong> Filter watched, copyright, age-gated</li>
+      <li><strong>Exploration:</strong> ε-greedy or Thompson Sampling for interest discovery</li>
+    </ul>
+  </div>
+</div>
+
+<h2>⚡ 关键设计权衡 / Key Design Trade-offs</h2>
+
+<table>
+  <tr><th>权衡 / Trade-off</th><th>方案 A</th><th>方案 B</th><th>推荐做法</th></tr>
+  <tr>
+    <td>Batch vs Real-time</td>
+    <td>Batch 预计算推荐（低成本）</td>
+    <td>Real-time 在线计算（高时效）</td>
+    <td>混合：召回层用 batch 预计算 embedding + 排序层 real-time</td>
+  </tr>
+  <tr>
+    <td>单目标 vs 多目标</td>
+    <td>只优化 CTR（简单）</td>
+    <td>Multi-task 多目标（复杂）</td>
+    <td>Multi-task + Value Model 加权，避免 clickbait</td>
+  </tr>
+  <tr>
+    <td>Explore vs Exploit</td>
+    <td>全用模型预测（exploit）</td>
+    <td>随机探索（explore）</td>
+    <td>90% exploit + 10% explore (Thompson Sampling)</td>
+  </tr>
+  <tr>
+    <td>实时特征 vs 延迟</td>
+    <td>用更多实时特征（准）</td>
+    <td>少用特征（快）</td>
+    <td>Feature Store 分层：L1 用缓存特征，L2 用实时特征</td>
+  </tr>
+</table>
+
+<h2>📊 容量估算 / Capacity Estimation</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <ul>
+      <li><strong>DAU：</strong>10 亿用户</li>
+      <li><strong>内容库：</strong>10 亿视频 (YouTube 量级)</li>
+      <li><strong>每用户每天请求：</strong>~50 次推荐请求</li>
+      <li><strong>QPS：</strong>10⁹ × 50 / 86400 ≈ <strong>~580K QPS</strong></li>
+      <li><strong>延迟预算：</strong></li>
+      <ul>
+        <li>召回 (ANN): < 10ms</li>
+        <li>粗排 (L1): < 20ms</li>
+        <li>精排 (L2): < 50ms (500 items × DNN inference)</li>
+        <li>重排: < 5ms</li>
+        <li>总计: < 100ms (P99 < 200ms)</li>
+      </ul>
+      <li><strong>Embedding 存储：</strong>10⁹ items × 128 dims × 4 bytes = <strong>~512 GB</strong> (FAISS 可放内存)</li>
+    </ul>
+  </div>
+  <div class="en">
+    <ul>
+      <li><strong>DAU:</strong> 1B users</li>
+      <li><strong>Content catalog:</strong> 1B videos</li>
+      <li><strong>Requests per user/day:</strong> ~50 recommendation requests</li>
+      <li><strong>QPS:</strong> 10⁹ × 50 / 86400 ≈ <strong>~580K QPS</strong></li>
+      <li><strong>Latency budget:</strong></li>
+      <ul>
+        <li>Retrieval (ANN): < 10ms</li>
+        <li>L1 Ranking: < 20ms</li>
+        <li>L2 Ranking: < 50ms</li>
+        <li>Re-ranking: < 5ms</li>
+        <li>End-to-end: < 100ms (P99 < 200ms)</li>
+      </ul>
+      <li><strong>Embedding storage:</strong> 10⁹ × 128 × 4B = <strong>~512 GB</strong> (fits in FAISS cluster)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🔧 Feature Store 架构 / Feature Engineering</h2>
+
+<div class="architecture">
+  ┌──────────────────────────────────────────────────┐
+  │                 Feature Store                     │
+  │                                                   │
+  │  ┌─────────────┐  ┌──────────────┐  ┌──────────┐ │
+  │  │  Batch       │  │  Near-RT     │  │ Real-time│ │
+  │  │  Features    │  │  Features    │  │ Features │ │
+  │  │  (daily)     │  │  (minutes)   │  │ (live)   │ │
+  │  ├─────────────┤  ├──────────────┤  ├──────────┤ │
+  │  │user_pref    │  │trending_score│  │session   │ │
+  │  │item_quality │  │recent_ctr    │  │  context │ │
+  │  │creator_stats│  │fresh_uploads │  │last_watch│ │
+  │  │embeddings   │  │social_signals│  │position  │ │
+  │  └──────┬──────┘  └──────┬───────┘  └────┬─────┘ │
+  │         │  Hive/Spark     │ Flink/Kafka   │ Redis │
+  │         └────────────────┴───────────────┘       │
+  └──────────────────────────────────────────────────┘
+</div>
+
+<div class="highlight">
+  <h4>💡 设计亮点：Training-Serving Skew 问题</h4>
+  <p><strong>问题：</strong>训练时用的特征和线上推理时的特征不一致（比如训练用的是 label 时间点的特征，但线上用的是当前特征），会导致模型效果下降。</p>
+  <p><strong>解法：</strong>Feature Store 统一管理，training pipeline 和 serving pipeline 读同一个 Feature Store，确保 point-in-time correctness。</p>
+</div>
+
+<h2>🧊 Cold Start 问题 / Cold Start</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h4>新用户 Cold Start</h4>
+    <ul>
+      <li>先推热门内容 + 基于注册信息 (年龄/地区) 的泛化推荐</li>
+      <li>Onboarding 让用户选兴趣标签</li>
+      <li>快速从 explore 模式过渡到 exploit 模式 (通常 5-10 次交互后)</li>
+    </ul>
+    <h4>新内容 Cold Start</h4>
+    <ul>
+      <li>基于内容特征 (标题/标签/视觉特征) 匹配相似已有内容的 embedding</li>
+      <li>给新内容一个 exploration budget（保证一定曝光量）</li>
+      <li>利用创作者历史表现作为 prior</li>
+    </ul>
+  </div>
+  <div class="en">
+    <h4>New User Cold Start</h4>
+    <ul>
+      <li>Start with trending + demographic-based recommendations</li>
+      <li>Onboarding flow: let users pick interest tags</li>
+      <li>Quickly transition from explore to exploit (after ~5-10 interactions)</li>
+    </ul>
+    <h4>New Item Cold Start</h4>
+    <ul>
+      <li>Content-based features (title/tags/visual) to bootstrap embedding</li>
+      <li>Exploration budget: guarantee minimum impressions</li>
+      <li>Use creator's historical performance as prior</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🎤 面试高频问题 / Interview Questions</h2>
+
+<div class="interview-q">
+  <h4>Q1: 为什么需要多阶段架构？直接用一个模型不行吗？</h4>
+  <p><strong>答：</strong>计算成本。假设精排模型推理一个 item 需要 0.1ms，10 亿 item 就需要 ~28 小时。分层后：召回（ANN, 10ms）→ 粗排（10K × 简单模型）→ 精排（500 × 复杂模型, 50ms）。总延迟从不可能降到 < 100ms。本质是<strong>用 recall 换 precision</strong>的分层策略。</p>
+</div>
+
+<div class="interview-q">
+  <h4>Q2: 如何处理 position bias？排在前面的内容天然获得更多点击。</h4>
+  <p><strong>答：</strong>三个方法：</p>
+  <ol>
+    <li><strong>训练时</strong>：将 position 作为 feature 输入模型，但 serving 时 position 设为 0 或平均值</li>
+    <li><strong>Inverse Propensity Weighting (IPW)</strong>：给不同 position 的样本不同权重</li>
+    <li><strong>Causal inference</strong>：偶尔随机打乱排序收集无偏数据</li>
+  </ol>
+</div>
+
+<div class="interview-q">
+  <h4>Q3: 如何避免推荐系统形成 "信息茧房" (filter bubble)？</h4>
+  <p><strong>答：</strong></p>
+  <ol>
+    <li><strong>Re-ranking 层加多样性约束</strong>：MMR (Maximal Marginal Relevance) 惩罚相似候选</li>
+    <li><strong>Exploration 策略</strong>：Thompson Sampling / ε-greedy 引入随机性</li>
+    <li><strong>业务指标加入多样性</strong>：除了 CTR，还追踪 category coverage / unique creators viewed</li>
+    <li><strong>Value Model 调权</strong>：降低纯 engagement 权重，提升 satisfaction 权重</li>
+  </ol>
+</div>
+
+<div class="interview-q">
+  <h4>Q4: Two-Tower 模型的局限是什么？如何改进？</h4>
+  <p><strong>答：</strong>Two-Tower 的局限是<strong>user 和 item 没有交叉 (interaction)</strong> — 各自独立编码再做点积，表达能力有限。改进方案：</p>
+  <ol>
+    <li><strong>交叉特征加到精排</strong>：Two-Tower 只用于召回，精排模型用 Deep & Cross 捕捉交叉</li>
+    <li><strong>Late interaction</strong>：如 ColBERT 的 token-level interaction，但计算代价更高</li>
+    <li><strong>混合架构</strong>：Two-Tower 做快速召回 + attention-based model 做精排</li>
+  </ol>
+</div>
+
+<h2>📚 可学习的模式 / Patterns to Learn</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <ol>
+      <li><strong>多阶段漏斗模式</strong>：适用于所有大规模检索+排序场景（搜索、广告、推荐）。面试万金油。</li>
+      <li><strong>Embedding + ANN 检索</strong>：将复杂匹配问题转化为向量空间近邻搜索，极大降低在线延迟。</li>
+      <li><strong>Multi-Task Learning</strong>：用一个模型预测多个目标，再用 Value Model 组合。解耦了 ML 训练和业务目标调优。</li>
+      <li><strong>Feature Store 分层</strong>：batch / near-real-time / real-time 三层特征体系，平衡新鲜度和成本。</li>
+      <li><strong>Explore vs Exploit</strong>：任何推荐/决策系统都需要平衡利用已知偏好和发现新兴趣。</li>
+    </ol>
+  </div>
+  <div class="en">
+    <ol>
+      <li><strong>Multi-stage funnel</strong>: Universal pattern for search, ads, recommendations. Interview gold.</li>
+      <li><strong>Embedding + ANN retrieval</strong>: Turn complex matching into vector nearest-neighbor search.</li>
+      <li><strong>Multi-Task Learning</strong>: One model, multiple objectives, combined via Value Model. Decouples ML training from business tuning.</li>
+      <li><strong>Feature Store tiers</strong>: batch / near-RT / real-time — balance freshness vs cost.</li>
+      <li><strong>Explore vs Exploit</strong>: Every recommendation system needs this balance.</li>
+    </ol>
+  </div>
+</div>
+
+<h2>🔗 与昨天的联系 / Connection to Day 1</h2>
+
+<div class="highlight">
+  <h4>ChatGPT vs 推荐系统的共通设计模式</h4>
+  <ul>
+    <li>两者都有<strong>多层处理架构</strong>：ChatGPT 的 Gateway → Router → LLM → Safety | 推荐的 Retrieval → L1 → L2 → Re-rank</li>
+    <li>两者都关注<strong>延迟优化</strong>：ChatGPT 用 SSE 流式 | 推荐用漏斗逐层减少计算量</li>
+    <li>两者都需要<strong>Safety / Policy 层</strong>：ChatGPT 的 content filter | 推荐的 re-ranking business rules</li>
+    <li>两者都涉及<strong>成本 vs 质量权衡</strong>：ChatGPT 的 model routing | 推荐的 L1 vs L2 模型复杂度差异</li>
+  </ul>
+</div>
+
+<div class="follow-up">
+  <h3>💬 后续讨论 / Follow-up Discussion</h3>
+  <p>想深入了解哪部分？比如 Two-Tower 训练细节、Feature Store 具体实现、或者面试 mock practice？</p>
+  <p>📅 明天 Day 3: <strong>设计语义搜索引擎</strong> — 从推荐到搜索，看 Embedding Retrieval 在不同场景的应用差异！</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-10 - 设计 ChatGPT：端到端对话系统 System Design</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #fff; color: #1a1a1a; line-height: 1.7; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 700px) { .bilingual { grid-template-columns: 1fr; } }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 40px; }
+    h3 { color: #3c4043; }
+    .architecture { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-blue { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-red { background: #fce4ec; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-green { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: 'SF Mono', monospace; font-size: 12px; white-space: pre; overflow-x: auto; line-height: 1.4; }
+    .interview-q { background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #9c27b0; }
+    .interview-q h4 { color: #9c27b0; margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .tag { display: inline-block; background: #e8eaed; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin: 2px; }
+    .series-badge { background: #1a73e8; color: white; padding: 4px 12px; border-radius: 16px; font-size: 13px; display: inline-block; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <span class="series-badge">🎯 Phase 2: AI System Design 面试题 — Day 1</span>
+  <h1>🏗️ 设计 ChatGPT / Design ChatGPT</h1>
+  <p>📅 2026-02-10 | 🎯 FAANG+ 面试经典题 | ⏱️ 45 min interview format</p>
+
+  <h2>📖 面试场景 / Interview Scenario</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>"请设计一个类似 ChatGPT 的对话系统"</strong></p>
+      <p>这是 2025-2026 年 AI 方向面试中最高频的 System Design 题。它涵盖了 LLM serving、实时流式输出、对话状态管理、成本控制、安全防护等核心挑战。</p>
+      <p>和传统 System Design 不同，这道题的核心难点不是 QPS 和数据库选型，而是 <strong>token 经济学</strong>、<strong>推理延迟</strong> 和 <strong>非确定性输出</strong>。</p>
+    </div>
+    <div class="en">
+      <p><strong>"Design a conversational AI system like ChatGPT"</strong></p>
+      <p>This is the #1 most-asked AI System Design question in FAANG+ interviews (2025-2026). It covers LLM serving, streaming output, conversation state management, cost control, and safety.</p>
+      <p>Unlike traditional SD, the core challenges are <strong>token economics</strong>, <strong>inference latency</strong>, and <strong>non-deterministic outputs</strong> — not QPS or DB selection.</p>
+    </div>
+  </div>
+
+  <h2>🎯 Step 1: 需求澄清 / Requirements Clarification</h2>
+  <div class="highlight">
+    <h4>⚡ 面试技巧：先问这些问题展示 LLM 意识</h4>
+    <ul>
+      <li>"支持多少并发用户？" → 估算 GPU 资源需求</li>
+      <li>"目标延迟？首 token 延迟 vs 整体延迟？" → TTFT vs TPS</li>
+      <li>"支持多模态吗（图片/文件）？" → 确定范围</li>
+      <li>"需要 RAG/工具调用吗？" → 架构复杂度</li>
+      <li>"成本预算？" → 模型选择和缓存策略</li>
+    </ul>
+  </div>
+
+  <h3>功能性需求 / Functional Requirements</h3>
+  <table>
+    <tr><th>需求</th><th>详情</th></tr>
+    <tr><td>多轮对话</td><td>维护对话历史，上下文连贯</td></tr>
+    <tr><td>流式输出</td><td>Token-by-token 实时返回（SSE）</td></tr>
+    <tr><td>对话管理</td><td>创建/删除/重命名对话，历史持久化</td></tr>
+    <tr><td>模型选择</td><td>用户可切换不同模型（GPT-4, Claude, etc.）</td></tr>
+    <tr><td>System Prompt</td><td>自定义 Instructions / Custom GPTs</td></tr>
+  </table>
+
+  <h3>非功能性需求 / Non-Functional Requirements</h3>
+  <table>
+    <tr><th>维度</th><th>目标</th><th>原因</th></tr>
+    <tr><td>TTFT (Time to First Token)</td><td>< 500ms (p95)</td><td>用户感知响应速度</td></tr>
+    <tr><td>Throughput</td><td>30-50 tokens/sec per user</td><td>接近阅读速度</td></tr>
+    <tr><td>可用性</td><td>99.9%</td><td>付费用户 SLA</td></tr>
+    <tr><td>安全性</td><td>防 prompt injection, 内容过滤</td><td>公开服务必须防护</td></tr>
+    <tr><td>成本</td><td>$0.01-0.05 per conversation</td><td>商业可行性</td></tr>
+  </table>
+
+  <h2>🏗️ Step 2: 高层架构 / High-Level Architecture</h2>
+  <div class="diagram">
+┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
+│   Client    │────▶│  API Gateway │────▶│  Chat Service   │
+│  (Web/App)  │◀────│  (Auth+Rate  │◀────│  (Orchestrator) │
+│   SSE/WS    │     │   Limit)     │     │                 │
+└─────────────┘     └──────────────┘     └────────┬────────┘
+                                                   │
+                    ┌──────────────────────────────┼──────────────────────┐
+                    │                              │                      │
+              ┌─────▼─────┐              ┌────────▼────────┐    ┌───────▼───────┐
+              │ Convo DB  │              │  LLM Gateway    │    │  Safety       │
+              │ (History  │              │  (Router +      │    │  Service      │
+              │  + State) │              │   Load Balance) │    │  (Filter)     │
+              └───────────┘              └────────┬────────┘    └───────────────┘
+                                                  │
+                                    ┌─────────────┼─────────────┐
+                                    │             │             │
+                              ┌─────▼───┐   ┌────▼────┐  ┌────▼────┐
+                              │ GPU     │   │ GPU     │  │ External│
+                              │ Cluster │   │ Cluster │  │ APIs    │
+                              │ (vLLM)  │   │ (TRT)   │  │ (OpenAI)│
+                              └─────────┘   └─────────┘  └─────────┘
+  </div>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h4>核心组件：</h4>
+      <ol>
+        <li><strong>API Gateway</strong> — 认证、限流、路由</li>
+        <li><strong>Chat Service (Orchestrator)</strong> — 核心编排层，组装 prompt、管理上下文</li>
+        <li><strong>Conversation DB</strong> — 存储对话历史和元数据</li>
+        <li><strong>LLM Gateway</strong> — 模型路由、负载均衡、fallback</li>
+        <li><strong>Safety Service</strong> — 输入/输出内容安全过滤</li>
+        <li><strong>Inference Backend</strong> — 实际 GPU 推理集群</li>
+      </ol>
+    </div>
+    <div class="en">
+      <h4>Core Components:</h4>
+      <ol>
+        <li><strong>API Gateway</strong> — Auth, rate limiting, routing</li>
+        <li><strong>Chat Service (Orchestrator)</strong> — Core orchestration: prompt assembly, context management</li>
+        <li><strong>Conversation DB</strong> — Conversation history + metadata storage</li>
+        <li><strong>LLM Gateway</strong> — Model routing, load balancing, fallback</li>
+        <li><strong>Safety Service</strong> — Input/output content filtering</li>
+        <li><strong>Inference Backend</strong> — GPU inference clusters</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>⚙️ Step 3: 核心深入 / Deep Dives</h2>
+
+  <h3>3.1 对话上下文管理 / Conversation Context Management</h3>
+  <div class="highlight">
+    <h4>💡 这是面试中最容易出彩的部分</h4>
+    <p>LLM 是无状态的 — 每次请求必须把完整对话历史发送过去。但 context window 有限（128K tokens），长对话怎么办？</p>
+  </div>
+
+  <pre><code>// Chat Service: Context Window Management
+interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+  tokenCount: number;
+  timestamp: number;
+}
+
+class ContextManager {
+  private maxTokens: number;        // e.g., 128000
+  private reserveForOutput: number; // e.g., 4096
+  
+  buildPrompt(conversation: Message[], systemPrompt: string): Message[] {
+    const budget = this.maxTokens - this.reserveForOutput;
+    const system: Message = { role: 'system', content: systemPrompt, ... };
+    let used = system.tokenCount;
+    
+    // Strategy 1: Sliding Window — keep most recent messages
+    const selected: Message[] = [system];
+    for (let i = conversation.length - 1; i >= 0; i--) {
+      if (used + conversation[i].tokenCount > budget) break;
+      selected.unshift(conversation[i]);  // prepend (keep order)
+      used += conversation[i].tokenCount;
+    }
+    
+    // Strategy 2: Summarize old context (production approach)
+    if (conversation.length > selected.length - 1) {
+      const droppedMessages = conversation.slice(0, conversation.length - selected.length + 1);
+      const summary = await this.summarize(droppedMessages);
+      selected.splice(1, 0, { role: 'system', content: `Previous context: ${summary}`, ... });
+    }
+    
+    return selected;
+  }
+}</code></pre>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h4>三种策略对比：</h4>
+      <table>
+        <tr><th>策略</th><th>优点</th><th>缺点</th></tr>
+        <tr><td>Sliding Window</td><td>简单可靠</td><td>丢失早期上下文</td></tr>
+        <tr><td>Summarization</td><td>保留关键信息</td><td>额外 LLM 调用 = 成本 + 延迟</td></tr>
+        <tr><td>RAG on History</td><td>精准召回</td><td>架构复杂</td></tr>
+      </table>
+      <p><strong>面试建议：</strong>先说 Sliding Window，再提 Summarization 作为优化。说到 RAG on History 会是加分项。</p>
+    </div>
+    <div class="en">
+      <h4>Three strategy comparison:</h4>
+      <table>
+        <tr><th>Strategy</th><th>Pros</th><th>Cons</th></tr>
+        <tr><td>Sliding Window</td><td>Simple, reliable</td><td>Loses early context</td></tr>
+        <tr><td>Summarization</td><td>Preserves key info</td><td>Extra LLM call = cost + latency</td></tr>
+        <tr><td>RAG on History</td><td>Precise recall</td><td>Architectural complexity</td></tr>
+      </table>
+      <p><strong>Interview tip:</strong> Start with Sliding Window, then propose Summarization as an optimization. Mentioning RAG on History is a bonus.</p>
+    </div>
+  </div>
+
+  <h3>3.2 流式输出架构 / Streaming Architecture</h3>
+  <div class="diagram">
+Client (Browser)                Chat Service              LLM Inference
+      │                              │                         │
+      │── POST /chat/completions ──▶│                         │
+      │                              │── gRPC stream ────────▶│
+      │◀── SSE: data: {"token":"H"} │◀── token: "H" ─────────│
+      │◀── SSE: data: {"token":"i"} │◀── token: "i" ─────────│
+      │◀── SSE: data: {"token":"!"} │◀── token: "!" ─────────│
+      │◀── SSE: data: [DONE]        │◀── EOS ────────────────│
+      │                              │                         │
+      │                              │── Save to DB ──▶ (async)│
+  </div>
+
+  <pre><code>// Server-Sent Events (SSE) Streaming
+app.post('/v1/chat/completions', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  
+  const stream = await llmGateway.createCompletion({
+    model: req.body.model,
+    messages: contextManager.buildPrompt(req.body.messages),
+    stream: true,
+  });
+  
+  let fullResponse = '';
+  
+  for await (const chunk of stream) {
+    const token = chunk.choices[0]?.delta?.content || '';
+    fullResponse += token;
+    
+    // Send token to client immediately
+    res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: token } }] })}\n\n`);
+  }
+  
+  res.write('data: [DONE]\n\n');
+  res.end();
+  
+  // Async: save to DB, run safety check on full response
+  await Promise.all([
+    conversationDB.appendMessage(conversationId, 'assistant', fullResponse),
+    safetyService.checkOutput(fullResponse),
+  ]);
+});</code></pre>
+
+  <div class="highlight-blue">
+    <h4>🔑 面试关键点：SSE vs WebSocket</h4>
+    <ul>
+      <li><strong>SSE</strong>：单向（服务器→客户端），简单可靠，HTTP/2 自动复用，ChatGPT 的选择</li>
+      <li><strong>WebSocket</strong>：双向，更低延迟，但更复杂（需要心跳、重连逻辑）</li>
+      <li><strong>面试答案：</strong>用 SSE 即可。ChatGPT 也是 SSE。只在需要实时双向（如语音）时才用 WebSocket</li>
+    </ul>
+  </div>
+
+  <h3>3.3 LLM Gateway / Model Router</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p>LLM Gateway 是最核心的基础设施组件，负责：</p>
+      <ol>
+        <li><strong>模型路由</strong> — 根据请求复杂度选择模型（小问题用小模型省钱）</li>
+        <li><strong>负载均衡</strong> — 分配请求到不同 GPU 集群</li>
+        <li><strong>Fallback</strong> — 主模型不可用时自动降级</li>
+        <li><strong>缓存</strong> — Semantic Cache 避免重复推理</li>
+        <li><strong>限流</strong> — 保护 GPU 资源不被打爆</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p>The LLM Gateway is the most critical infrastructure component:</p>
+      <ol>
+        <li><strong>Model routing</strong> — Route by complexity (small questions → small models to save cost)</li>
+        <li><strong>Load balancing</strong> — Distribute across GPU clusters</li>
+        <li><strong>Fallback</strong> — Auto-degrade when primary model is unavailable</li>
+        <li><strong>Caching</strong> — Semantic cache to avoid redundant inference</li>
+        <li><strong>Rate limiting</strong> — Protect GPU resources from overload</li>
+      </ol>
+    </div>
+  </div>
+
+  <pre><code>// Model Router: Cost-Aware Routing
+class ModelRouter {
+  async route(request: ChatRequest): Promise&lt;ModelConfig&gt; {
+    const complexity = await this.classifyComplexity(request);
+    //  ↑ 可以用小模型/规则来分类请求复杂度
+    
+    // Tier 1: Simple queries → cheap model ($0.001/req)
+    if (complexity === 'simple') {
+      return { model: 'gpt-4o-mini', maxTokens: 1024 };
+    }
+    
+    // Tier 2: Standard queries → balanced model ($0.01/req)
+    if (complexity === 'standard') {
+      return { model: 'gpt-4o', maxTokens: 4096 };
+    }
+    
+    // Tier 3: Complex reasoning → premium model ($0.05/req)
+    return { model: 'o1', maxTokens: 8192 };
+  }
+  
+  // Semantic Cache: hash embedding of the query
+  async checkCache(messages: Message[]): Promise&lt;string | null&gt; {
+    const embedding = await embed(messages[messages.length - 1].content);
+    const cached = await vectorDB.search(embedding, { threshold: 0.98 });
+    return cached?.response || null;
+  }
+}</code></pre>
+
+  <div class="highlight">
+    <h4>💰 成本优化效果（面试数据参考）</h4>
+    <table>
+      <tr><th>策略</th><th>节省</th><th>复杂度</th></tr>
+      <tr><td>Model Routing (小题小模型)</td><td>40-60%</td><td>中</td></tr>
+      <tr><td>Semantic Cache</td><td>20-30%</td><td>中</td></tr>
+      <tr><td>Prompt Compression</td><td>10-20%</td><td>低</td></tr>
+      <tr><td>KV Cache (推理层)</td><td>30-50% latency</td><td>高（vLLM）</td></tr>
+      <tr><td><strong>组合使用</strong></td><td><strong>60-80%</strong></td><td></td></tr>
+    </table>
+  </div>
+
+  <h3>3.4 安全与防护 / Safety & Security</h3>
+  <div class="diagram">
+User Input                                           Output to User
+    │                                                      ▲
+    ▼                                                      │
+┌────────────────┐                              ┌──────────────────┐
+│ Input Safety   │                              │ Output Safety    │
+│ ┌────────────┐ │                              │ ┌──────────────┐ │
+│ │ PII Filter │ │   ┌──────────────┐           │ │ Toxicity     │ │
+│ │ Injection  │ │──▶│  LLM Core    │──────────▶│ │ Hallucination│ │
+│ │ Detection  │ │   │  (Generation)│           │ │ PII Leakage  │ │
+│ │ Toxicity   │ │   └──────────────┘           │ │ Code Safety  │ │
+│ └────────────┘ │                              │ └──────────────┘ │
+└────────────────┘                              └──────────────────┘
+  </div>
+
+  <div class="highlight-red">
+    <h4>⚠️ 面试必提的安全点</h4>
+    <ol>
+      <li><strong>Prompt Injection 防护</strong> — 用户试图覆盖 system prompt（"Ignore previous instructions..."）
+        <br>→ 对策：输入检测 + system/user 消息隔离 + 输出验证</li>
+      <li><strong>PII 过滤</strong> — 防止模型泄露训练数据中的个人信息
+        <br>→ 对策：NER 检测 + 输出过滤 + 差分隐私</li>
+      <li><strong>Hallucination 缓解</strong> — 模型编造不存在的事实
+        <br>→ 对策：Grounding (RAG) + 置信度检测 + 引用来源</li>
+      <li><strong>内容安全</strong> — 有害/违法内容生成
+        <br>→ 对策：分类器过滤 + RLHF 对齐 + 人工审核队列</li>
+    </ol>
+  </div>
+
+  <h3>3.5 数据存储设计 / Storage Design</h3>
+  <pre><code>// Conversation Storage Schema
+CREATE TABLE conversations (
+  id          UUID PRIMARY KEY,
+  user_id     UUID NOT NULL,
+  title       TEXT,           -- Auto-generated from first message
+  model       VARCHAR(50),
+  system_prompt TEXT,
+  created_at  TIMESTAMP,
+  updated_at  TIMESTAMP,
+  message_count INT DEFAULT 0,
+  total_tokens  INT DEFAULT 0  -- For billing
+);
+
+CREATE TABLE messages (
+  id              UUID PRIMARY KEY,
+  conversation_id UUID REFERENCES conversations(id),
+  role            VARCHAR(20),   -- system/user/assistant/tool
+  content         TEXT,
+  token_count     INT,
+  model           VARCHAR(50),   -- Which model generated this
+  latency_ms      INT,           -- For monitoring
+  created_at      TIMESTAMP,
+  sequence_num    INT            -- Ordering within conversation
+);
+
+-- Index for fast conversation loading
+CREATE INDEX idx_messages_conv_seq ON messages(conversation_id, sequence_num);
+
+-- Partitioning by date for old conversation archival
+-- (Conversations older than 90 days → cold storage)</code></pre>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h4>存储决策：</h4>
+      <ul>
+        <li><strong>PostgreSQL</strong> 存对话和消息 — 结构化数据，ACID 保证</li>
+        <li><strong>Redis</strong> 缓存活跃对话 — 减少 DB 读取，毫秒级加载</li>
+        <li><strong>S3/GCS</strong> 归档老对话 — 90天+ 的对话转冷存储</li>
+        <li><strong>不用 NoSQL？</strong> — 消息有严格顺序性，关系型更合适</li>
+      </ul>
+    </div>
+    <div class="en">
+      <h4>Storage Decisions:</h4>
+      <ul>
+        <li><strong>PostgreSQL</strong> for conversations & messages — structured data, ACID</li>
+        <li><strong>Redis</strong> to cache active conversations — reduce DB reads, ms-level loading</li>
+        <li><strong>S3/GCS</strong> for archival — conversations 90+ days old → cold storage</li>
+        <li><strong>Why not NoSQL?</strong> — Messages have strict ordering, relational fits better</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>📐 Step 4: 扩展性设计 / Scalability</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <h4>容量估算（面试常问）：</h4>
+      <ul>
+        <li>日活用户 10M，每人平均 5 次对话</li>
+        <li>每次对话平均 2000 tokens (输入+输出)</li>
+        <li>峰值 QPS：~50K requests/sec</li>
+        <li>GPU 需求：约 10K A100 (自建) or 等价云资源</li>
+        <li>存储：~500TB/年 对话数据</li>
+      </ul>
+    </div>
+    <div class="en">
+      <h4>Capacity Estimation (common in interviews):</h4>
+      <ul>
+        <li>10M DAU, average 5 conversations each</li>
+        <li>Average 2000 tokens per conversation (in+out)</li>
+        <li>Peak QPS: ~50K requests/sec</li>
+        <li>GPU needs: ~10K A100 (self-hosted) or equivalent cloud</li>
+        <li>Storage: ~500TB/year conversation data</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-green">
+    <h4>🔑 扩展性关键决策</h4>
+    <ul>
+      <li><strong>GPU 是瓶颈，不是 CPU</strong> — 传统系统加机器就行，LLM 系统加 GPU 成本极高</li>
+      <li><strong>请求排队</strong> — GPU 满载时排队而非拒绝，用 priority queue（付费用户优先）</li>
+      <li><strong>Continuous Batching</strong> — vLLM 的核心技术，多请求共享 GPU（回顾 Day 2 vLLM 推送）</li>
+      <li><strong>KV Cache 管理</strong> — PagedAttention 避免显存浪费（回顾 Day 2 推送）</li>
+      <li><strong>水平扩展 Chat Service</strong> — 无状态设计，对话状态在 DB/Redis</li>
+    </ul>
+  </div>
+
+  <h2>🎤 Step 5: 面试高频问题 / Interview Questions</h2>
+
+  <div class="interview-q">
+    <h4>Q1: "如何处理 100 万用户同时发送请求？"</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>答题思路：</strong></p>
+        <ol>
+          <li>API Gateway 限流 — 每用户 RPM 限制</li>
+          <li>Priority Queue — 付费用户优先，免费用户排队</li>
+          <li>GPU Cluster 水平扩展 + Continuous Batching</li>
+          <li>Model Routing — 简单请求用小模型，降低 GPU 压力</li>
+          <li>Semantic Cache — 相似问题直接返回缓存</li>
+          <li>降级策略 — 极端情况：降低 max_tokens / 用更小模型</li>
+        </ol>
+      </div>
+      <div class="en">
+        <p><strong>Answer framework:</strong></p>
+        <ol>
+          <li>API Gateway rate limiting — per-user RPM limits</li>
+          <li>Priority Queue — paid users first, free users queue</li>
+          <li>GPU horizontal scaling + Continuous Batching</li>
+          <li>Model Routing — simple queries → small models, reduce GPU pressure</li>
+          <li>Semantic Cache — similar queries return cached responses</li>
+          <li>Degradation — extreme case: reduce max_tokens / use smaller models</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="interview-q">
+    <h4>Q2: "对话历史越来越长怎么办？"</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <p><strong>层层递进回答：</strong></p>
+        <ol>
+          <li><strong>Level 1:</strong> Sliding Window — 只保留最近 N 条消息</li>
+          <li><strong>Level 2:</strong> 压缩 + 摘要 — 老消息用 LLM 压缩成摘要</li>
+          <li><strong>Level 3:</strong> RAG on History — 把历史消息存入向量库，按需检索</li>
+          <li><strong>Level 4:</strong> Hierarchical Memory — 短期(滑窗) + 中期(摘要) + 长期(向量库) 三层记忆</li>
+        </ol>
+        <p>💡 <strong>加分回答：</strong>提到 OpenClaw / Claude 的 memory 机制 — 文件系统 + 语义搜索混合方案</p>
+      </div>
+      <div class="en">
+        <p><strong>Progressive answer:</strong></p>
+        <ol>
+          <li><strong>Level 1:</strong> Sliding Window — keep only recent N messages</li>
+          <li><strong>Level 2:</strong> Compression + Summary — summarize old messages via LLM</li>
+          <li><strong>Level 3:</strong> RAG on History — store history in vector DB, retrieve on demand</li>
+          <li><strong>Level 4:</strong> Hierarchical Memory — short-term (window) + mid-term (summary) + long-term (vector DB)</li>
+        </ol>
+        <p>💡 <strong>Bonus:</strong> Mention OpenClaw/Claude's memory — file system + semantic search hybrid</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="interview-q">
+    <h4>Q3: "如何防止 Prompt Injection？"</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <ol>
+          <li><strong>输入检测</strong> — 分类器检测恶意 prompt 模式</li>
+          <li><strong>角色隔离</strong> — System prompt 用特殊 delimiter 隔离，模型训练时强化边界</li>
+          <li><strong>输出验证</strong> — 检测输出是否违反 system prompt 约束</li>
+          <li><strong>Sandwich Defense</strong> — 在用户消息前后加防护 prompt</li>
+          <li><strong>最小权限</strong> — Tool Use 时限制可调用工具的范围</li>
+        </ol>
+      </div>
+      <div class="en">
+        <ol>
+          <li><strong>Input detection</strong> — Classifier to detect malicious prompt patterns</li>
+          <li><strong>Role isolation</strong> — System prompt with special delimiters, reinforced during training</li>
+          <li><strong>Output validation</strong> — Check if output violates system prompt constraints</li>
+          <li><strong>Sandwich Defense</strong> — Add safety prompts before/after user message</li>
+          <li><strong>Least privilege</strong> — Limit callable tools scope in Tool Use</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="interview-q">
+    <h4>Q4: "如何设计付费分层（Free vs Pro）？"</h4>
+    <div class="bilingual">
+      <div class="zh">
+        <table>
+          <tr><th>维度</th><th>Free</th><th>Pro ($20/mo)</th></tr>
+          <tr><td>模型</td><td>GPT-4o-mini</td><td>GPT-4o / o1</td></tr>
+          <tr><td>RPM</td><td>10/min</td><td>60/min</td></tr>
+          <tr><td>上下文</td><td>8K tokens</td><td>128K tokens</td></tr>
+          <tr><td>排队优先级</td><td>低</td><td>高（不排队）</td></tr>
+          <tr><td>功能</td><td>基本对话</td><td>+ 文件上传 + 图片生成 + Tool Use</td></tr>
+        </table>
+        <p>实现：在 API Gateway 层按 user tier 做路由和限流。</p>
+      </div>
+      <div class="en">
+        <table>
+          <tr><th>Dimension</th><th>Free</th><th>Pro ($20/mo)</th></tr>
+          <tr><td>Model</td><td>GPT-4o-mini</td><td>GPT-4o / o1</td></tr>
+          <tr><td>RPM</td><td>10/min</td><td>60/min</td></tr>
+          <tr><td>Context</td><td>8K tokens</td><td>128K tokens</td></tr>
+          <tr><td>Queue Priority</td><td>Low</td><td>High (no queue)</td></tr>
+          <tr><td>Features</td><td>Basic chat</td><td>+ File upload + Image gen + Tool Use</td></tr>
+        </table>
+        <p>Implementation: Route and rate-limit at API Gateway layer based on user tier.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>📚 可学习的模式 / Patterns to Learn</h2>
+  <div class="highlight-green">
+    <h4>从 ChatGPT 架构中提炼的通用模式：</h4>
+    <ol>
+      <li><strong>🔀 Model Router Pattern</strong> — 根据任务复杂度动态选模型（适用所有 LLM 应用）</li>
+      <li><strong>📡 SSE Streaming Pattern</strong> — Token-level 流式输出（比传统 request-response 更好的 UX）</li>
+      <li><strong>🧠 Hierarchical Memory</strong> — 多层记忆管理（短/中/长期），可用于任何有上下文的系统</li>
+      <li><strong>🛡️ Safety Sandwich</strong> — 输入过滤 → 处理 → 输出过滤的双重防护模式</li>
+      <li><strong>💰 Token Budget Management</strong> — 像管理钱一样管理 tokens（这是 LLM 系统独有的思维）</li>
+      <li><strong>📊 Async Post-Processing</strong> — 先返回结果，后台异步做 safety check / 存储 / 分析</li>
+    </ol>
+  </div>
+
+  <h2>🗺️ 面试答题框架 / Interview Answer Framework</h2>
+  <div class="architecture">
+    <h4>45 分钟分配建议：</h4>
+    <table>
+      <tr><th>阶段</th><th>时间</th><th>内容</th></tr>
+      <tr><td>1. 需求澄清</td><td>5 min</td><td>问 LLM 特有问题（token budget, 延迟, 多模态）</td></tr>
+      <tr><td>2. 高层架构</td><td>10 min</td><td>画 6 个核心组件 + 数据流</td></tr>
+      <tr><td>3. 核心深入</td><td>20 min</td><td>上下文管理 + 流式输出 + 模型路由（面试官会引导选 1-2 个）</td></tr>
+      <tr><td>4. 扩展 + 安全</td><td>8 min</td><td>容量估算 + Safety 四要素</td></tr>
+      <tr><td>5. 总结</td><td>2 min</td><td>Trade-offs 回顾 + 未来优化方向</td></tr>
+    </table>
+  </div>
+
+  <div class="follow-up">
+    <h3>💬 系列预告 / Series Preview</h3>
+    <p>🎯 <strong>Phase 2: AI System Design 面试题系列</strong></p>
+    <ul>
+      <li>✅ Day 1: 设计 ChatGPT（今天）</li>
+      <li>📋 Day 2: 设计推荐系统 (Netflix/YouTube)</li>
+      <li>📋 Day 3: 设计语义搜索引擎</li>
+      <li>📋 Day 4: 设计 RAG 知识库问答</li>
+      <li>📋 Day 5: 设计 AI Code Review 系统</li>
+    </ul>
+    <p>每篇都是完整的 45 分钟面试回答模板，可以直接用于面试准备！</p>
+  </div>
+
+  <p style="text-align: center; color: #999; margin-top: 40px;">
+    Friday's AI Knowledge Push ✨ | 2026-02-10 | Phase 2 Day 1
+  </p>
+</body>
+</html>

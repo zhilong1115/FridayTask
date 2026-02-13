@@ -70,7 +70,7 @@ export interface CronJob {
 }
 
 export type ViewMode = 'month' | 'week' | 'day';
-export type SidebarView = 'calendar' | 'list';
+export type SidebarView = 'calendar' | 'list' | 'agents';
 
 export interface TaskFormData {
   title: string;

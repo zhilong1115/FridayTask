@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🦀 Awesome OpenClaw Skills Report</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f6f8fa;
+      --bg-tertiary: #eef1f5;
+      --text: #1f2328;
+      --text-secondary: #656d76;
+      --border: #d0d7de;
+      --accent: #0969da;
+      --accent-bg: #ddf4ff;
+      --star: #e3b341;
+      --success: #1a7f37;
+      --success-bg: #dafbe1;
+      --warning: #9a6700;
+      --warning-bg: #fff8c5;
+      --code-bg: #f6f8fa;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --radius: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --bg-secondary: #161b22;
+        --bg-tertiary: #1c2128;
+        --text: #e6edf3;
+        --text-secondary: #8b949e;
+        --border: #30363d;
+        --accent: #58a6ff;
+        --accent-bg: #1a3a5c;
+        --star: #e3b341;
+        --success: #3fb950;
+        --success-bg: #1a3028;
+        --warning: #d29922;
+        --warning-bg: #2d2a1e;
+        --code-bg: #161b22;
+        --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    h1 { font-size: 2rem; margin: 2rem 0 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+    h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.2rem; margin: 2rem 0 0.8rem; }
+    p { margin: 0.6rem 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    blockquote {
+      background: var(--bg-secondary);
+      border-left: 4px solid var(--accent);
+      padding: 0.8rem 1.2rem;
+      margin: 1rem 0;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      color: var(--text-secondary);
+    }
+    blockquote strong { color: var(--text); }
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15em 0.4em;
+      font-size: 0.9em;
+      font-family: "SF Mono", "Fira Code", Menlo, monospace;
+    }
+    pre {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    pre code { background: none; border: none; padding: 0; font-size: 0.85em; }
+    .table-wrap { overflow-x: auto; margin: 1rem 0; border-radius: var(--radius); box-shadow: var(--shadow); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92em;
+      min-width: 500px;
+    }
+    thead { background: var(--bg-tertiary); }
+    th { text-align: left; padding: 0.7rem 0.8rem; font-weight: 600; border-bottom: 2px solid var(--border); white-space: nowrap; }
+    td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: var(--bg-secondary); }
+    .star { color: var(--star); }
+    .badge {
+      display: inline-block;
+      padding: 0.15em 0.6em;
+      border-radius: 2em;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+    .badge-5 { background: var(--success-bg); color: var(--success); }
+    .badge-4 { background: var(--accent-bg); color: var(--accent); }
+    .badge-3 { background: var(--warning-bg); color: var(--warning); }
+    .toc { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem 1.5rem; margin: 1.5rem 0; }
+    .toc h3 { margin: 0 0 0.8rem; font-size: 1.1rem; }
+    .toc ul { list-style: none; padding: 0; columns: 2; column-gap: 2rem; }
+    .toc li { padding: 0.2rem 0; }
+    .toc a { font-size: 0.95em; }
+    .hero { text-align: center; padding: 2rem 0 1rem; }
+    .hero h1 { border: none; font-size: 2.2rem; }
+    .hero .subtitle { color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.3rem; }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.8rem; margin: 1.5rem 0; }
+    .meta-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.8rem 1rem; }
+    .meta-card .label { font-size: 0.8em; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-card .value { font-weight: 600; margin-top: 0.2rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.8rem; margin: 1rem 0; text-align: center; }
+    .stat { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 0.5rem; }
+    .stat .num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+    .stat .label { font-size: 0.8em; color: var(--text-secondary); }
+    .category-header { display: flex; align-items: center; gap: 0.5rem; }
+    .category-count { font-size: 0.85em; color: var(--text-secondary); font-weight: 400; }
+    .skip-note { background: var(--bg-secondary); border-left: 3px solid var(--warning); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.6rem 1rem; margin: 0.8rem 0; font-size: 0.9em; color: var(--text-secondary); }
+    .install-block { background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); padding: 1rem 1.2rem; margin: 1rem 0; }
+    .install-block code { background: transparent; border: none; color: var(--success); }
+    .safety-box { background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius); padding: 1rem 1.2rem; margin: 1rem 0; }
+    .safety-box li { margin: 0.3rem 0; }
+    @media (max-width: 600px) {
+      body { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+      h2 { font-size: 1.25rem; }
+      .toc ul { columns: 1; }
+      .hero h1 { font-size: 1.6rem; }
+      table { font-size: 0.82em; }
+      th, td { padding: 0.4rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🦀 Awesome OpenClaw Skills 全面评测报告</h1>
+  <p class="subtitle">Comprehensive Review of 2999 Community Skills</p>
+</div>
+
+<div class="meta-grid">
+  <div class="meta-card">
+    <div class="label">Source / 来源</div>
+    <div class="value"><a href="https://github.com/VoltAgent/awesome-openclaw-skills">VoltAgent/awesome-openclaw-skills</a></div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Date / 日期</div>
+    <div class="value">2026-02-11</div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Reviewer / 评测视角</div>
+    <div class="value">macOS dev, AI/ML, RTX 4090, Telegram/GitHub/Gmail</div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Projects / 项目</div>
+    <div class="value">AI trading app, mahjong game, task management</div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat"><div class="num">2999</div><div class="label">Skills Reviewed</div></div>
+  <div class="stat"><div class="num">~50</div><div class="label">⭐⭐⭐⭐⭐</div></div>
+  <div class="stat"><div class="num">~95</div><div class="label">⭐⭐⭐⭐</div></div>
+  <div class="stat"><div class="num">~83</div><div class="label">⭐⭐⭐</div></div>
+</div>
+
+<hr>
+
+<div class="toc">
+  <h3>📋 Table of Contents / 目录</h3>
+  <ul>
+    <li><a href="#top20">🏆 Top 20 Must-Have Skills</a></li>
+    <li><a href="#coding">🖥️ Coding Agents &amp; IDEs (133)</a></li>
+    <li><a href="#git">🔀 Git &amp; GitHub (66)</a></li>
+    <li><a href="#browser">🌐 Browser &amp; Automation (139)</a></li>
+    <li><a href="#imagevideo">🎨 Image &amp; Video Gen (60)</a></li>
+    <li><a href="#apple">🍎 Apple Apps &amp; Services (35)</a></li>
+    <li><a href="#search">🔍 Search &amp; Research (253)</a></li>
+    <li><a href="#ai">🤖 AI &amp; LLMs (287)</a></li>
+    <li><a href="#notes">📝 Notes &amp; PKM (100)</a></li>
+    <li><a href="#smarthome">🏠 Smart Home &amp; IoT (56)</a></li>
+    <li><a href="#cli">⌨️ CLI Utilities (131)</a></li>
+    <li><a href="#clawdbot">🛠️ Clawdbot Tools (121)</a></li>
+    <li><a href="#iosdev">📱 iOS &amp; macOS Dev (17)</a></li>
+    <li><a href="#productivity">📊 Productivity &amp; Tasks (135)</a></li>
+    <li><a href="#speech">🗣️ Speech &amp; Transcription (66)</a></li>
+    <li><a href="#calendar">📅 Calendar &amp; Scheduling (51)</a></li>
+    <li><a href="#pdf">📄 PDF &amp; Documents (67)</a></li>
+    <li><a href="#security">🔒 Security &amp; Passwords (63)</a></li>
+    <li><a href="#gaming">🎮 Gaming (62)</a></li>
+    <li><a href="#communication">💬 Communication (133)</a></li>
+    <li><a href="#other">📦 Other Categories</a></li>
+    <li><a href="#stats">📊 Statistics</a></li>
+    <li><a href="#safety">⚠️ Safety Notes</a></li>
+    <li><a href="#install">🚀 Quick Start</a></li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ===== TOP 20 ===== -->
+<h2 id="top20">🏆 Top 20 必装 Skills / Must-Have Skills</h2>
+<p>These are the highest-value skills for your specific setup. Install these first.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Skill</th><th>Category</th><th>Why / 为什么</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>coding-agent</strong></td><td>Coding Agents</td><td>Run Codex/Claude Code/OpenCode as sub-agents 多编码代理调度</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>2</td><td><strong>github</strong></td><td>Git &amp; GitHub</td><td>Full <code>gh</code> CLI integration for GitHub workflows</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>3</td><td><strong>comfyui</strong></td><td>Image &amp; Video Gen</td><td>Send workflows to ComfyUI → RTX 4090 本地出图</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>4</td><td><strong>brave-search</strong></td><td>Search &amp; Research</td><td>Web search + content extraction via Brave API</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>5</td><td><strong>apple-notes</strong></td><td>Notes &amp; PKM</td><td>Manage Apple Notes via <code>memo</code> CLI on macOS</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>6</td><td><strong>obsidian</strong></td><td>Notes &amp; PKM</td><td>Full Obsidian vault integration for PKM</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>7</td><td><strong>tmux</strong></td><td>CLI Utilities</td><td>Remote-control tmux sessions 交互式CLI控制</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>8</td><td><strong>homebrew</strong></td><td>Apple Apps</td><td>Homebrew package manager integration</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>9</td><td><strong>fal-ai</strong></td><td>Image &amp; Video Gen</td><td>Generate images/videos via fal.ai (FLUX, SDXL)</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>10</td><td><strong>deep-research</strong></td><td>Search &amp; Research</td><td>Multi-step autonomous deep research agent</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>11</td><td><strong>notion</strong></td><td>Notes &amp; PKM</td><td>Notion API for pages, databases, blocks</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>12</td><td><strong>ollama-local</strong></td><td>AI &amp; LLMs</td><td>Manage local Ollama models 本地模型管理</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>13</td><td><strong>homeassistant</strong></td><td>Smart Home</td><td>Control Home Assistant devices 智能家居控制</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>14</td><td><strong>pr-reviewer</strong></td><td>Git &amp; GitHub</td><td>Automated PR code review with diff analysis</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>15</td><td><strong>peekaboo</strong></td><td>CLI Utilities</td><td>Capture &amp; automate macOS UI 屏幕操控</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>16</td><td><strong>ffmpeg-cli</strong></td><td>CLI Utilities</td><td>Comprehensive video/audio processing</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>17</td><td><strong>peft</strong></td><td>AI &amp; LLMs</td><td>LoRA/QLoRA fine-tuning guide → RTX 4090 微调</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>18</td><td><strong>sag</strong></td><td>Clawdbot Tools</td><td>ElevenLabs TTS with mac-style <code>say</code></td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td>19</td><td><strong>hackernews</strong></td><td>Search &amp; Research</td><td>Browse and search Hacker News</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td>20</td><td><strong>skill-vetting</strong></td><td>Coding Agents</td><td>Vet skills for security before installing 安全审查</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<div class="install-block">
+  <strong>安装命令 / Install:</strong> <code>npx clawhub@latest install &lt;skill-slug&gt;</code>
+</div>
+
+<hr>
+
+<h2>📋 Full Category Review / 完整分类评测</h2>
+<p>Rating criteria / 评分标准:</p>
+<ul style="list-style:none; padding-left:0;">
+  <li><span class="star">⭐⭐⭐⭐⭐</span> = Must have, directly relevant to your workflow</li>
+  <li><span class="star">⭐⭐⭐⭐</span> = Very useful, recommended</li>
+  <li><span class="star">⭐⭐⭐</span> = Situationally useful</li>
+  <li><span class="star">⭐⭐</span> = Niche use case</li>
+  <li><span class="star">⭐</span> = Low relevance to your profile</li>
+</ul>
+
+<hr>
+
+<!-- ===== CODING ===== -->
+<h3 id="coding" class="category-header">🖥️ Coding Agents &amp; IDEs <span class="category-count">(133 skills)</span></h3>
+<blockquote>编码代理与IDE — 核心开发类</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description / 描述</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>coding-agent</strong></td><td>Run Codex CLI, Claude Code, OpenCode, or Pi Coding Agent as sub-agents</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>multi-coding-agent</strong></td><td>Same as above with multi-agent orchestration</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>cc-godmode</strong></td><td>Self-orchestrating multi-agent dev workflows</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>claude-team</strong></td><td>Orchestrate multiple Claude Code workers via iTerm2</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>skill-vetting</strong></td><td>Vet ClawHub skills for security before install</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ec-task-orchestrator</strong></td><td>Autonomous multi-agent task orchestration</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>debug-pro</strong></td><td>Systematic debugging methodology</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>test-runner</strong></td><td>Write and run tests across languages/frameworks</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>tdd-guide</strong></td><td>TDD workflow with test generation, coverage</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>docker-sandbox</strong></td><td>Docker sandboxed VM environments</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>docker-essentials</strong></td><td>Essential Docker commands and workflows</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ssh-tunnel</strong></td><td>SSH tunneling, port forwarding, remote access</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>backend-patterns</strong></td><td>Backend architecture patterns, API design</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>python</strong></td><td>Python coding guidelines and best practices</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-hig</strong></td><td>Apple HIG for iOS/macOS app design</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>cursor-agent</strong></td><td>Cursor CLI agent integration</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>perry-coding-agents</strong></td><td>Dispatch tasks to OpenCode or Claude Code</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mcp-builder</strong></td><td>Guide for creating MCP servers</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>claude-optimised</strong></td><td>Guide for writing optimized CLAUDE.md files</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>agent-config</strong></td><td>Modify agent core context files</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>buildlog</strong></td><td>Record AI coding sessions as replayable logs</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>codex-orchestration</strong></td><td>Orchestration for OpenAI Codex</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>cognitive-memory</strong></td><td>Multi-store memory system</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>regex-patterns</strong></td><td>Practical regex patterns across languages</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>openspec</strong></td><td>Spec-driven development</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>piv</strong></td><td>Plan-Implement-Validate workflow loop</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<div class="skip-note"><strong>Skip / 可跳过:</strong> achurch, flirtingbots, catholic-grounding, bot-bowl-party, wyld-stallyns, soul-md, clawder (niche/novelty)</div>
+
+<hr>
+
+<!-- ===== GIT ===== -->
+<h3 id="git" class="category-header">🔀 Git &amp; GitHub <span class="category-count">(66 skills)</span></h3>
+<blockquote>Git和GitHub工具</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>github</strong></td><td>Full <code>gh</code> CLI integration</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>pr-reviewer</strong></td><td>Automated PR code review with diff analysis</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>github-pr</strong></td><td>Fetch, preview, merge, test PRs locally</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>conventional-commits</strong></td><td>Format commits using Conventional Commits</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>git-workflows</strong></td><td>Advanced git operations</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>unfuck-my-git-state</strong></td><td>Recover broken Git state 😂</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gitclaw</strong></td><td>Backup OpenClaw workspace to GitHub</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>deepwiki</strong></td><td>Query DeepWiki for repo documentation</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>trend-watcher</strong></td><td>Monitor GitHub Trending for emerging tech</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>work-report</strong></td><td>Generate work reports from git commits</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>danube</strong></td><td>100+ API tools (Gmail, GitHub, Notion) via MCP</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gitflow</strong></td><td>Monitor CI/CD pipeline status</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>git-summary</strong></td><td>Quick repo summary</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>read-github</strong></td><td>Access repo docs via gitmcp.io</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>commit-analyzer</strong></td><td>Analyze git commit patterns</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>gitload</strong></td><td>Download files/folders from GitHub URLs</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>emergency-rescue</strong></td><td>Recover from developer disasters</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>backup</strong></td><td>Backup openclaw config and skills</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== BROWSER ===== -->
+<h3 id="browser" class="category-header">🌐 Browser &amp; Automation <span class="category-count">(139 skills)</span></h3>
+<blockquote>浏览器与自动化</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>Agent Browser</strong></td><td>Fast Rust-based headless browser CLI</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>playwright-cli</strong></td><td>Browser automation via Playwright</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>firecrawl-skills</strong></td><td>Web scraping, crawling, search via Firecrawl</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mcporter</strong></td><td>List/configure/call MCP servers and tools</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>n8n-automation</strong></td><td>Manage n8n workflows from OpenClaw</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>anycrawl</strong></td><td>Web scraping/crawling API integration</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>browser-use</strong></td><td>Cloud browsers for Clawdbot</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>home-assistant</strong></td><td>Control Home Assistant from browser skills</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>clawflows</strong></td><td>Search/install/run multi-skill automations</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>context-recovery</strong></td><td>Auto-recover working context after restart</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>automation-workflows</strong></td><td>Design automation workflows</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>deep-scraper</strong></td><td>High-performance deep web scraping</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>turix-cua</strong></td><td>Computer Use Agent for macOS</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>organize-tg</strong></td><td>Auto-organize Telegram chats</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>android-adb</strong></td><td>Control Android devices via ADB</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>desktop-control</strong></td><td>Mouse/keyboard/screen automation</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>claude-chrome</strong></td><td>Claude Code + Chrome browser extension</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>stagehand-browser-cli</strong></td><td>Web browser interaction automation</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== IMAGE/VIDEO ===== -->
+<h3 id="imagevideo" class="category-header">🎨 Image &amp; Video Generation <span class="category-count">(60 skills)</span></h3>
+<blockquote>图像与视频生成 — RTX 4090 重点关注</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>comfyui</strong></td><td>Send workflow to ComfyUI, return images → 你的4090!</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>comfy-cli</strong></td><td>Install/manage/run ComfyUI instances</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>fal-ai</strong></td><td>FLUX, SDXL, Whisper via fal.ai API</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>fal-text-to-image</strong></td><td>Generate/remix/edit images via fal.ai</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>nvidia-image-gen</strong></td><td>Generate images using NVIDIA FLUX models</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ffmpeg-video-editor</strong></td><td>Generate FFmpeg commands from natural language</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>sora-video-gen</strong></td><td>Generate videos using OpenAI's Sora API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>veo</strong></td><td>Generate video using Google Veo 3.x</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>recraft</strong></td><td>Generate, vectorize, upscale images</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>runware</strong></td><td>Generate images/videos via Runware API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>pollinations</strong></td><td>Free AI generation — text, images, videos</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>video-frames</strong></td><td>Extract frames/clips from videos via ffmpeg</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>svg-draw</strong></td><td>Create SVG → PNG without external tools</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>chart-image</strong></td><td>Publication-quality charts from data</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>Excalidraw Flowchart</strong></td><td>Create flowcharts from descriptions</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>venice-ai</strong></td><td>Generate/edit/upscale images + video</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>krea-api</strong></td><td>Generate via Krea.ai API</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>narrator</strong></td><td>Live screen narration, 7 styles</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>image-resize</strong></td><td>Resize images via ImageMagick CLI</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>figma</strong></td><td>Figma design analysis and export</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>canva-connect</strong></td><td>Manage Canva designs via API</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>gamma</strong></td><td>AI presentations via Gamma.app</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>coloring-page</strong></td><td>Photo → printable coloring page</td><td><span class="star">⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== APPLE ===== -->
+<h3 id="apple" class="category-header">🍎 Apple Apps &amp; Services <span class="category-count">(35 skills)</span></h3>
+<blockquote>苹果应用与服务 — macOS 用户重点</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>homebrew</strong></td><td>Homebrew package manager</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>shortcuts-generator</strong></td><td>Generate macOS/iOS Shortcuts via plist</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mlx-stt</strong></td><td>Speech-to-text on Apple Silicon locally</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mlx-swift-lm</strong></td><td>Run LLMs on Apple Silicon via MLX</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-contacts</strong></td><td>Lookup contacts from Contacts.app</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-music</strong></td><td>Search, playlists, playback control</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-photos</strong></td><td>Photos.app integration</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-remind-me</strong></td><td>Natural language → Apple Reminders</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>caffeine</strong></td><td>Prevent screen/system sleep</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>homekit</strong></td><td>Control Apple HomeKit devices</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>icloud-findmy</strong></td><td>Find My locations and battery status</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>fzf-fuzzy-finder</strong></td><td>Fuzzy finder for CLI</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mac-tts</strong></td><td>TTS using macOS <code>say</code> command</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>mole-mac-cleanup</strong></td><td>Mac cleanup &amp; optimization</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>get-focus-mode</strong></td><td>Get current macOS Focus mode</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>drafts</strong></td><td>Manage Drafts app notes via CLI</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-mail-search</strong></td><td>Fast Apple Mail search via SQLite</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>skill-email-management</strong></td><td>Apple Mail management</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>network-scanner</strong></td><td>Network device discovery</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>voice-wake-say</strong></td><td>Speak responses aloud on macOS</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>appletv</strong></td><td>Control Apple TV via pyatv</td><td><span class="star">⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== SEARCH ===== -->
+<h3 id="search" class="category-header">🔍 Search &amp; Research <span class="category-count">(253 skills)</span></h3>
+<blockquote>搜索与研究 — 最大类别</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>brave-search</strong></td><td>Web search + content extraction via Brave</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>deep-research</strong></td><td>Multi-step autonomous research agent</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>academic-deep-research</strong></td><td>Rigorous research with full citations</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>exa</strong></td><td>Neural web search via Exa AI</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>perplexity</strong></td><td>AI-powered web search via Perplexity API</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>arxiv-watcher</strong></td><td>Search and summarize arXiv papers</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>agentic-paper-digest</strong></td><td>Summarize recent arXiv/HuggingFace papers</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>clawdhub</strong></td><td>Search/install/update agent skills</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ripgrep</strong></td><td>Blazingly fast text search (rg)</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>file-search</strong></td><td>Fast file search via <code>fd</code> and <code>rg</code></td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>hackernews</strong></td><td>Browse and search HN</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>hn-extract</strong></td><td>HN post → clean markdown</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>google-search</strong></td><td>Google Custom Search Engine</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ddg-search</strong></td><td>DuckDuckGo search</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>kagi-search</strong></td><td>Kagi search API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>tavily</strong></td><td>AI-optimized web search</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>news-aggregator</strong></td><td>Multi-source news aggregation</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>daily-ai-news-skill</strong></td><td>Aggregates latest AI news</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>zotero</strong></td><td>Manage Zotero reference libraries</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>serpapi</strong></td><td>Search across Google, Amazon, Yelp, etc.</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>jina-reader</strong></td><td>Web content extraction via Jina AI</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>youtube-full</strong></td><td>Complete YouTube toolkit — transcripts, search</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gemini-yt-transcript</strong></td><td>YouTube transcripts via Gemini</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>transcript</strong></td><td>YouTube video transcripts</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>youtube-summarizer</strong></td><td>Auto YouTube transcript + summary</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>finnhub</strong></td><td>Real-time stock quotes, market data → trading app</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>relay-for-telegram</strong></td><td>Telegram integration for agents</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>tg</strong></td><td>Telegram CLI for reading/searching</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>npm-search</strong></td><td>Search npm packages</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>last30days</strong></td><td>Research topic from last 30 days on Reddit/X</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>startups</strong></td><td>Research startups, funding, hiring trends</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>lightrag</strong></td><td>Search/manage knowledge bases via LightRAG</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>x-search</strong></td><td>Real-time X/Twitter search</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<div class="skip-note"><strong>Note:</strong> ~50+ skills are duplicates/clones of research/search functionality. Stick with brave-search + perplexity + exa for web, and arxiv-watcher + agentic-paper-digest for papers.</div>
+
+<hr>
+
+<!-- ===== AI ===== -->
+<h3 id="ai" class="category-header">🤖 AI &amp; LLMs <span class="category-count">(287 skills)</span></h3>
+<blockquote>AI与大模型 — 最大类别</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>ollama-local</strong></td><td>Manage local Ollama models</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>peft</strong></td><td>LoRA/QLoRA fine-tuning → use on RTX 4090</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gemini</strong></td><td>Gemini CLI for Q&amp;A, summaries</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gemini-deep-research</strong></td><td>Complex research via Gemini</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>research</strong></td><td>Deep research via Gemini CLI as sub-agent</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>inference-sh</strong></td><td>Run 150+ AI apps via inference.sh CLI</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>lmstudio-subagents</strong></td><td>Reduce paid provider token usage</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>openai-image-gen</strong></td><td>Batch-generate images via OpenAI API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>openai-tts</strong></td><td>Text-to-speech via OpenAI API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>llmrouter</strong></td><td>Intelligent LLM proxy routing</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>model-router</strong></td><td>Automatic AI model routing</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>llm-supervisor</strong></td><td>Rate limit handling + Ollama fallback</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>agent-orchestration</strong></td><td>Spawn and manage sub-agents</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>prompt-engineering-expert</strong></td><td>Advanced prompt optimization</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>computer-vision-expert</strong></td><td>SOTA CV expert (2026)</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>context-optimizer</strong></td><td>Context management with auto-compaction</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>knowledge-base</strong></td><td>Personal KB with SQLite + FTS5</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>jasper-recall</strong></td><td>Local RAG with ChromaDB</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>email-prompt-injection-defense</strong></td><td>Detect/block prompt injection</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>adversarial-prompting</strong></td><td>Critique and fix prompts</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>agent-memory</strong></td><td>Persistent memory for agents</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>clean-code</strong></td><td>Pragmatic coding standards</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>causal-inference</strong></td><td>Add causal reasoning to actions</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>hokipoki</strong></td><td>Switch AI models without tab switching</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>nano-banana-pro</strong></td><td>Generate/edit images inline</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>mcp-microsoft365</strong></td><td>Full Microsoft 365 integration via MCP</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<div class="skip-note"><strong>Note:</strong> This category is extremely noisy. ~100+ are social networks for bots (moltter, clawtter, instaclaw, etc.) or novelty. Focus on the tools above.</div>
+
+<hr>
+
+<!-- ===== NOTES ===== -->
+<h3 id="notes" class="category-header">📝 Notes &amp; PKM <span class="category-count">(100 skills)</span></h3>
+<blockquote>笔记与个人知识管理</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>apple-notes</strong></td><td>Manage Apple Notes via <code>memo</code> CLI</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>obsidian</strong></td><td>Full Obsidian vault automation</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>notion</strong></td><td>Notion API integration</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>bear-notes</strong></td><td>Bear notes via grizzly CLI</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>readwise</strong></td><td>Readwise highlights + Reader articles</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>zettelkasten</strong></td><td>Zettelkasten note system with AI</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>para-pkm</strong></td><td>PARA-based PKM management</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>anki-connect</strong></td><td>Anki flashcard deck management</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>raindrop</strong></td><td>Raindrop.io bookmark management</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>blogwatcher</strong></td><td>Monitor blogs/RSS for updates</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>apple-mail</strong></td><td>Apple Mail.app integration</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>calctl</strong></td><td>Manage Apple Calendar via icalBuddy</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>Notebook</strong></td><td>Local-first PKB for ideas/projects</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>gdocs-markdown</strong></td><td>Create Google Docs from Markdown</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>instapaper</strong></td><td>Instapaper CLI integration</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>cubox</strong></td><td>Save web pages to Cubox</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>linkding</strong></td><td>Manage bookmarks with Linkding</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>craft</strong></td><td>Manage Craft notes/documents</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>miniflux</strong></td><td>Browse/manage Miniflux RSS articles</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>hn-digest</strong></td><td>HN front-page digest on demand</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>newsletter-digest</strong></td><td>Summarize newsletters, extract insights</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>memory-curator</strong></td><td>Distill daily logs into compact digests</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>smart-memory</strong></td><td>Context-aware memory with dual retrieval</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>gkeep</strong></td><td>Google Keep notes integration</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== SMART HOME ===== -->
+<h3 id="smarthome" class="category-header">🏠 Smart Home &amp; IoT <span class="category-count">(56 skills)</span></h3>
+<blockquote>智能家居与物联网</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>homeassistant</strong></td><td>Control Home Assistant — plugs, lights, scenes</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>homekit</strong></td><td>Control Apple HomeKit devices</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>openhue</strong></td><td>Control Philips Hue lights/scenes</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>homebridge</strong></td><td>Control devices via Homebridge</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>frigate</strong></td><td>Frigate NVR camera access</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>camera-watch</strong></td><td>YOLOv8 camera surveillance</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>weather</strong></td><td>Weather forecasts (no API key)</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>homey</strong></td><td>Athom Homey smart home control</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>google-home</strong></td><td>Control Google Nest devices</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>govee-lights</strong></td><td>Control Govee smart lights</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>nanoleaf</strong></td><td>Control Nanoleaf panels</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>mqtt-client</strong></td><td>Connect to MQTT broker</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>eightctl</strong></td><td>Control Eight Sleep pods</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>starlink</strong></td><td>Starlink dish status/speed test</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>dirigera-control</strong></td><td>IKEA Dirigera smart home</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>bambu-cli</strong></td><td>BambuLab 3D printer control</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>robo-rock</strong></td><td>Roborock vacuum control</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>printer</strong></td><td>Manage printers via CUPS on macOS</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>little-snitch</strong></td><td>Little Snitch firewall control</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>wled</strong></td><td>Control WLED LED controllers</td><td><span class="star">⭐⭐</span></td></tr>
+<tr><td><strong>lg-thinq</strong></td><td>LG smart appliance control</td><td><span class="star">⭐⭐</span></td></tr>
+<tr><td><strong>mijia</strong></td><td>Xiaomi smart home devices</td><td><span class="star">⭐⭐</span></td></tr>
+<tr><td><strong>dyson-cli</strong></td><td>Dyson air purifiers/fans control</td><td><span class="star">⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== CLI ===== -->
+<h3 id="cli" class="category-header">⌨️ CLI Utilities <span class="category-count">(131 skills)</span></h3>
+<blockquote>命令行工具</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>tmux</strong></td><td>Remote-control tmux sessions</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>peekaboo</strong></td><td>Capture/automate macOS UI</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ffmpeg-cli</strong></td><td>Comprehensive video/audio processing</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>sag</strong></td><td>ElevenLabs TTS mac-style</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mactop</strong></td><td>Real-time Apple Silicon metrics</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>raycast</strong></td><td>Build Raycast extensions</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>create-cli</strong></td><td>Design CLI arguments/flags/subcommands</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>curl-http</strong></td><td>Essential curl for API testing</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>fd-find</strong></td><td>Fast alternative to <code>find</code></td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>jq-json-processor</strong></td><td>JSON processing/filtering with jq</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>clip-it</strong></td><td>Advanced audio/video processing</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>virustotal</strong></td><td>Scan files/URLs with VirusTotal</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gcalcli</strong></td><td>Google Calendar via CLI</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ez-google</strong></td><td>Gmail + Google Calendar automation</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>pdf</strong></td><td>PDF manipulation toolkit</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>native-app-performance</strong></td><td>macOS/iOS app profiling</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>mcp-adapter</strong></td><td>Use MCP servers for external tools</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gifgrep</strong></td><td>Search GIF providers via CLI</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>songsee</strong></td><td>Audio spectrograms/visualizations</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>process-watch</strong></td><td>Monitor system processes</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>shell-scripting</strong></td><td>Write robust shell scripts</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>openapi2cli</strong></td><td>Generate CLI from OpenAPI specs</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>tldr</strong></td><td>Simplified man pages</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>goplaces</strong></td><td>Google Places API queries</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>notebooklm-cli</strong></td><td>Google NotebookLM CLI</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>rescuetime</strong></td><td>Fetch productivity data</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== CLAWDBOT ===== -->
+<h3 id="clawdbot" class="category-header">🛠️ Clawdbot Tools <span class="category-count">(121 skills)</span></h3>
+<blockquote>OpenClaw 内部工具</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>sag</strong></td><td>ElevenLabs TTS</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>agent-builder</strong></td><td>Build high-performing OpenClaw agents</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>startclaw-optimizer</strong></td><td>Comprehensive OpenClaw optimizer</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>restart-guard</strong></td><td>Safely restart Gateway with context preservation</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ops-framework</strong></td><td>0-token jobs + monitoring framework</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>error-guard</strong></td><td>Prevent agent deadlocks</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>birthday-reminder</strong></td><td>Natural language birthday management</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>adhd-assistant</strong></td><td>ADHD-friendly life management</td><td><span class="star">⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== iOS DEV ===== -->
+<h3 id="iosdev" class="category-header">📱 iOS &amp; macOS Development <span class="category-count">(17 skills)</span></h3>
+<blockquote>iOS与macOS开发</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>apple-docs</strong></td><td>Query Apple Dev Docs + WWDC videos</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>instruments-profiling</strong></td><td>Profile native macOS/iOS apps</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>ios-simulator</strong></td><td>Automate iOS Simulator workflows</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>macos-spm-app-packaging</strong></td><td>Build SwiftPM-based macOS apps</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>swift-testing</strong></td><td>Swift testing best practices</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>app-store-optimization</strong></td><td>ASO toolkit</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>PagerKit</strong></td><td>SwiftUI paging library guide</td><td><span class="star">⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== PRODUCTIVITY ===== -->
+<h3 id="productivity" class="category-header">📊 Productivity &amp; Tasks <span class="category-count">(135 skills)</span></h3>
+<blockquote>生产力与任务管理</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>linear</strong></td><td>Linear issue tracker integration</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>todoist</strong></td><td>Todoist task management</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>things</strong></td><td>Things 3 task manager (macOS)</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>google-tasks</strong></td><td>Google Tasks management</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>jira</strong></td><td>Jira issue management</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>asana</strong></td><td>Asana project management</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>trello</strong></td><td>Trello board management</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== SPEECH ===== -->
+<h3 id="speech" class="category-header">🗣️ Speech &amp; Transcription <span class="category-count">(66 skills)</span></h3>
+<blockquote>语音与转录</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>mlx-stt</strong></td><td>Apple Silicon local STT</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>openai-tts</strong></td><td>OpenAI text-to-speech</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>voice-reply</strong></td><td>Local TTS via Piper/sherpa-onnx</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gemini-stt</strong></td><td>Transcribe via Gemini API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>openrouter-transcribe</strong></td><td>Transcribe via OpenRouter</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>groq-orpheus-tts</strong></td><td>Fast Arabic + English voices</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== CALENDAR ===== -->
+<h3 id="calendar" class="category-header">📅 Calendar &amp; Scheduling <span class="category-count">(51 skills)</span></h3>
+<blockquote>日历与日程</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>gcalcli</strong></td><td>Google Calendar CLI</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>calctl</strong></td><td>Apple Calendar via icalBuddy</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>google-calendar</strong></td><td>Google Calendar API</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== PDF ===== -->
+<h3 id="pdf" class="category-header">📄 PDF &amp; Documents <span class="category-count">(67 skills)</span></h3>
+<blockquote>PDF与文档处理</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>pdf</strong></td><td>Comprehensive PDF toolkit</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>pandic-office</strong></td><td>Markdown → PDF via pandoc</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>deepread-ocr</strong></td><td>AI-native OCR platform</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== SECURITY ===== -->
+<h3 id="security" class="category-header">🔒 Security &amp; Passwords <span class="category-count">(63 skills)</span></h3>
+<blockquote>安全与密码</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>skill-vetting</strong></td><td>Security-first skill vetting</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>virustotal</strong></td><td>Scan files/URLs</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>skillscanner</strong></td><td>Security scanner from Gen Digital</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>email-prompt-injection-defense</strong></td><td>Block prompt injection</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>input-guard</strong></td><td>Scan untrusted external text</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== GAMING ===== -->
+<h3 id="gaming" class="category-header">🎮 Gaming <span class="category-count">(62 skills)</span></h3>
+<blockquote>游戏 — 你的麻将游戏相关</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>game-cog</strong></td><td>Sprite generation tools</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>chess</strong></td><td>Chess for AI agents</td><td><span class="star">⭐⭐</span></td></tr>
+<tr><td><strong>dnd</strong></td><td>D&amp;D 5e toolkit</td><td><span class="star">⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== COMMUNICATION ===== -->
+<h3 id="communication" class="category-header">💬 Communication <span class="category-count">(133 skills)</span></h3>
+<blockquote>通讯</blockquote>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Skill</th><th>Description</th><th>Rating</th></tr></thead>
+<tbody>
+<tr><td><strong>telegram</strong> (various)</td><td>Telegram integration skills</td><td><span class="star">⭐⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>gmail</strong> (various)</td><td>Gmail integration</td><td><span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>slack</strong> (various)</td><td>Slack integration</td><td><span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>discord</strong> (various)</td><td>Discord integration</td><td><span class="star">⭐⭐⭐</span></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== OTHER ===== -->
+<h3 id="other">📦 Categories with Lower Relevance / 低相关类别</h3>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Category</th><th>Skills</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><strong>Marketing &amp; Sales</strong></td><td>145</td><td>大量SEO/CRM/Lead Gen工具。Skip unless doing marketing. <strong>growth-marketer</strong> <span class="star">⭐⭐⭐</span> if needed</td></tr>
+<tr><td><strong>Transportation</strong></td><td>73</td><td>航班、火车、出行。<strong>skiplagged-flights</strong> <span class="star">⭐⭐⭐</span> for travel</td></tr>
+<tr><td><strong>Shopping</strong></td><td>51</td><td>购物比价。<strong>amazon-teneo</strong> <span class="star">⭐⭐</span> for research</td></tr>
+<tr><td><strong>Health &amp; Fitness</strong></td><td>55</td><td>健康追踪。<strong>ouracli</strong> <span class="star">⭐⭐⭐</span> if you have Oura Ring</td></tr>
+<tr><td><strong>Personal Development</strong></td><td>56</td><td>自我提升。Mostly motivational, skip</td></tr>
+<tr><td><strong>Finance</strong></td><td>22</td><td>财务计算。<strong>financial-calculator</strong> <span class="star">⭐⭐⭐</span></td></tr>
+<tr><td><strong>Data &amp; Analytics</strong></td><td>46</td><td>数据分析。<strong>add-analytics</strong> <span class="star">⭐⭐⭐</span> for GA4</td></tr>
+<tr><td><strong>Media &amp; Streaming</strong></td><td>80</td><td>媒体播放。<strong>spotify</strong> <span class="star">⭐⭐⭐</span> skills if you use Spotify</td></tr>
+<tr><td><strong>Self-Hosted</strong></td><td>25</td><td>自托管。n8n-automation already covered above</td></tr>
+<tr><td><strong>Moltbook</strong></td><td>51</td><td>AI社交网络。Novel but niche. Skip.</td></tr>
+<tr><td><strong>Agent-to-Agent</strong></td><td>19</td><td>Agent协议。Early-stage, skip for now</td></tr>
+<tr><td><strong>Web &amp; Frontend Dev</strong></td><td>201</td><td>前端开发。<strong>api-dev</strong> <span class="star">⭐⭐⭐⭐</span>, <strong>anthropic-frontend-design</strong> <span class="star">⭐⭐⭐⭐</span></td></tr>
+<tr><td><strong>DevOps &amp; Cloud</strong></td><td>212</td><td>DevOps。terraform/k8s skills <span class="star">⭐⭐⭐</span> if you deploy to cloud</td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== STATS ===== -->
+<h2 id="stats">📊 Statistics / 统计</h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Category</th><th>Total</th><th>5⭐</th><th>4⭐</th><th>3⭐</th></tr></thead>
+<tbody>
+<tr><td>Coding Agents &amp; IDEs</td><td>133</td><td>6</td><td>10</td><td>10</td></tr>
+<tr><td>Git &amp; GitHub</td><td>66</td><td>4</td><td>8</td><td>6</td></tr>
+<tr><td>Browser &amp; Automation</td><td>139</td><td>5</td><td>8</td><td>5</td></tr>
+<tr><td>Image &amp; Video Gen</td><td>60</td><td>6</td><td>8</td><td>8</td></tr>
+<tr><td>Apple Apps</td><td>35</td><td>4</td><td>7</td><td>8</td></tr>
+<tr><td>Search &amp; Research</td><td>253</td><td>8</td><td>12</td><td>8</td></tr>
+<tr><td>AI &amp; LLMs</td><td>287</td><td>7</td><td>10</td><td>8</td></tr>
+<tr><td>Notes &amp; PKM</td><td>100</td><td>3</td><td>8</td><td>12</td></tr>
+<tr><td>Smart Home &amp; IoT</td><td>56</td><td>1</td><td>4</td><td>10</td></tr>
+<tr><td>CLI Utilities</td><td>131</td><td>6</td><td>10</td><td>8</td></tr>
+<tr><td><strong>Total Reviewed</strong></td><td><strong>2999</strong></td><td><strong>~50</strong></td><td><strong>~95</strong></td><td><strong>~83</strong></td></tr>
+</tbody>
+</table></div>
+
+<hr>
+
+<!-- ===== SAFETY ===== -->
+<h2 id="safety">⚠️ Safety Notes / 安全提醒</h2>
+
+<div class="safety-box">
+<ol>
+  <li><strong>Always vet skills before installing</strong> — use <code>skill-vetting</code> or <code>skillscanner</code></li>
+  <li><strong>Check VirusTotal reports</strong> on ClawHub before installing</li>
+  <li><strong>Many skills are from unknown authors</strong> — review source code</li>
+  <li><strong>~396 malicious skills were already filtered</strong> from the original 5,705, but some may have slipped through</li>
+  <li><strong>Crypto/blockchain skills (672) were excluded</strong> from this list</li>
+</ol>
+</div>
+
+<hr>
+
+<!-- ===== INSTALL ===== -->
+<h2 id="install">🚀 Quick Start Installation / 快速安装</h2>
+
+<pre><code># Essential toolkit 基础工具包
+npx clawhub@latest install coding-agent
+npx clawhub@latest install github
+npx clawhub@latest install brave-search
+npx clawhub@latest install tmux
+npx clawhub@latest install apple-notes
+npx clawhub@latest install obsidian
+npx clawhub@latest install comfyui
+npx clawhub@latest install fal-ai
+npx clawhub@latest install skill-vetting
+npx clawhub@latest install peekaboo
+
+# AI/ML toolkit AI工具包
+npx clawhub@latest install ollama-local
+npx clawhub@latest install peft
+npx clawhub@latest install deep-research
+npx clawhub@latest install arxiv-watcher
+
+# macOS toolkit macOS工具包
+npx clawhub@latest install homebrew
+npx clawhub@latest install mlx-stt
+npx clawhub@latest install shortcuts-generator
+npx clawhub@latest install sag</code></pre>
+
+<hr>
+
+<p style="text-align:center; color:var(--text-secondary); font-size:0.9em; margin-top:2rem;">
+  <em>Generated by Friday 🤖 on 2026-02-11. Review and pick which ones to install!</em>
+</p>
+
+</body>
+</html>

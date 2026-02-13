@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-02-12 - 设计语义搜索引擎 / Design a Semantic Search Engine</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #fff; color: #1a1a1a; line-height: 1.7; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 35px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight h4 { margin-top: 0; color: #856404; }
+    .diagram { text-align: left; margin: 20px 0; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin: 2px; }
+    .tag-interview { background: #e8f0fe; color: #1a73e8; }
+    .tag-core { background: #fce8e6; color: #d93025; }
+    .series-nav { background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 15px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 8px 12px; text-align: left; }
+    th { background: #f8f9fa; }
+    .vs-table td:first-child { font-weight: 600; width: 25%; }
+    code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .interview-q { background: #fce8e6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .interview-q h4 { color: #d93025; margin-top: 0; }
+  </style>
+</head>
+<body>
+
+  <div class="series-nav">
+    📚 <strong>AI System Design 面试系列</strong> Day 3/5
+    &nbsp;|&nbsp; <a href="2026-02-10-design-chatgpt-system.html">Day 1: ChatGPT</a>
+    &nbsp;|&nbsp; <a href="2026-02-11-design-recommendation-system.html">Day 2: 推荐系统</a>
+    &nbsp;|&nbsp; <strong>Day 3: 语义搜索</strong>
+    &nbsp;|&nbsp; Day 4: RAG 知识库
+    &nbsp;|&nbsp; Day 5: AI Code Review
+  </div>
+
+  <h1>🔍 设计语义搜索引擎 / Design a Semantic Search Engine</h1>
+  <p>
+    <span class="tag tag-interview">面试高频</span>
+    <span class="tag tag-core">核心系统</span>
+    📅 2026-02-12 | Phase 2.1 AI System Design 面试题
+  </p>
+
+  <h2>📖 题目定义 / Problem Statement</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>面试官</strong>：请设计一个语义搜索引擎，用户输入自然语言查询，系统返回语义相关的文档/商品/内容。支持十亿级文档规模。</p>
+      <p><strong>关键挑战</strong>：</p>
+      <ul>
+        <li>传统关键词搜索 → 语义理解搜索</li>
+        <li>毫秒级延迟 @ 十亿级规模</li>
+        <li>精确匹配 + 模糊语义并存</li>
+        <li>实时索引更新</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p><strong>Interviewer</strong>: Design a semantic search engine where users enter natural language queries and get semantically relevant documents. Scale to billions of documents.</p>
+      <p><strong>Key Challenges</strong>:</p>
+      <ul>
+        <li>Keyword matching → Semantic understanding</li>
+        <li>Sub-100ms latency at billion scale</li>
+        <li>Exact match + fuzzy semantic coexist</li>
+        <li>Real-time index updates</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>🏗️ 整体架构 / High-Level Architecture</h2>
+  <div class="architecture">
+    <pre>
+┌──────────────────────────────────────────────────────────────────┐
+│                        Query Flow (Online)                       │
+│                                                                  │
+│  User Query ──→ [Query Encoder] ──→ query_embedding (768d)       │
+│       │                                    │                     │
+│       ▼                                    ▼                     │
+│  [BM25 Index] ──→ keyword_results    [ANN Index] ──→ vector_results
+│       │                                    │                     │
+│       └──────────→ [Hybrid Fusion] ◄───────┘                     │
+│                         │ (RRF / Linear)                         │
+│                         ▼                                        │
+│                  [Cross-Encoder Reranker]                         │
+│                         │                                        │
+│                         ▼                                        │
+│                  Top-K Results ──→ User                           │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│                     Indexing Flow (Offline)                       │
+│                                                                  │
+│  Documents ──→ [Chunker] ──→ [Doc Encoder] ──→ doc_embedding     │
+│       │                           │                              │
+│       ▼                           ▼                              │
+│  [BM25 Inverted Index]     [Vector Index (HNSW/IVF)]            │
+│       │                           │                              │
+│       └───── Both stored in ──→ [Search DB (Vespa/Elastic)] ─────┘
+└──────────────────────────────────────────────────────────────────┘
+    </pre>
+  </div>
+
+  <h2>🔑 核心组件深度解析 / Core Components Deep Dive</h2>
+
+  <h3>1. Embedding 模型：Bi-Encoder vs Cross-Encoder</h3>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>搜索系统最关键的设计决策：<strong>用什么模型、在哪个阶段用</strong>。</p>
+      <p><strong>Bi-Encoder</strong>（双塔模型）：Query 和 Document 独立编码，用余弦相似度匹配。速度快（向量预计算），但精度较低。</p>
+      <p><strong>Cross-Encoder</strong>：Query 和 Document 拼接后一起过 Transformer。精度高（能理解交互关系），但速度慢（每对都要推理）。</p>
+      <p>💡 <strong>生产方案</strong>：Bi-Encoder 做召回（快），Cross-Encoder 做重排（精）。这就是 <strong>Retrieve-then-Rerank</strong> 范式。</p>
+    </div>
+    <div class="en">
+      <p>The most critical decision: <strong>which model, at which stage</strong>.</p>
+      <p><strong>Bi-Encoder</strong>: Encode query & doc independently, match via cosine similarity. Fast (vectors pre-computed), but lower precision.</p>
+      <p><strong>Cross-Encoder</strong>: Concatenate query + doc, pass through Transformer together. High precision (captures token-level interactions), but slow (O(n) inference).</p>
+      <p>💡 <strong>Production pattern</strong>: Bi-Encoder for retrieval (fast), Cross-Encoder for reranking (precise). This is the <strong>Retrieve-then-Rerank</strong> paradigm.</p>
+    </div>
+  </div>
+
+  <table class="vs-table">
+    <tr><th></th><th>Bi-Encoder</th><th>Cross-Encoder</th></tr>
+    <tr><td>延迟</td><td>~5ms (ANN lookup)</td><td>~50ms per pair</td></tr>
+    <tr><td>吞吐</td><td>10K+ QPS</td><td>~100 pairs/sec/GPU</td></tr>
+    <tr><td>精度 (NDCG)</td><td>~0.70</td><td>~0.85</td></tr>
+    <tr><td>用途</td><td>Stage 1: 召回</td><td>Stage 2: 重排 Top-50</td></tr>
+    <tr><td>代表模型</td><td>E5-large, BGE-M3, Cohere Embed</td><td>ms-marco-MiniLM, BGE-Reranker</td></tr>
+  </table>
+
+  <pre><code>// Retrieve-then-Rerank 伪代码
+async function semanticSearch(query: string, topK = 10) {
+  // Stage 1: Bi-Encoder 召回 (fast, broad)
+  const queryVec = await biEncoder.encode(query);
+  const candidates = await annIndex.search(queryVec, topN=100);
+
+  // Stage 1.5: BM25 keyword 召回 + 融合
+  const bm25Results = await invertedIndex.search(query, topN=100);
+  const merged = reciprocalRankFusion(candidates, bm25Results, k=60);
+
+  // Stage 2: Cross-Encoder 重排 (slow, precise)
+  const pairs = merged.slice(0, 50).map(doc => [query, doc.text]);
+  const scores = await crossEncoder.predict(pairs);
+
+  return merged.slice(0, 50)
+    .map((doc, i) => ({ ...doc, rerank_score: scores[i] }))
+    .sort((a, b) => b.rerank_score - a.rerank_score)
+    .slice(0, topK);
+}</code></pre>
+
+  <h3>2. 向量索引：ANN 算法选型</h3>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>十亿级向量不能暴力搜索，必须用 <strong>ANN (Approximate Nearest Neighbor)</strong> 算法。面试重点是理解各算法的 <strong>权衡</strong>。</p>
+    </div>
+    <div class="en">
+      <p>Billion-scale vectors require <strong>ANN (Approximate Nearest Neighbor)</strong> algorithms. Interview focus: understand <strong>trade-offs</strong> between approaches.</p>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>算法</th><th>原理</th><th>延迟</th><th>内存</th><th>适用场景</th></tr>
+    <tr>
+      <td><strong>HNSW</strong></td>
+      <td>分层可导航小世界图。多层跳表结构，高层粗搜索，低层精搜索</td>
+      <td>&lt;1ms</td>
+      <td>高 (全量在内存)</td>
+      <td>延迟敏感，&lt;100M 向量</td>
+    </tr>
+    <tr>
+      <td><strong>IVF-PQ</strong></td>
+      <td>先聚类 (IVF)，再量化压缩 (PQ)。只搜最近的几个聚类</td>
+      <td>~5ms</td>
+      <td>低 (压缩 32x)</td>
+      <td>成本敏感，1B+ 向量</td>
+    </tr>
+    <tr>
+      <td><strong>DiskANN</strong></td>
+      <td>SSD-based 图索引。Vamana 图 + PQ 压缩。仅索引放内存</td>
+      <td>~5ms</td>
+      <td>极低</td>
+      <td>超大规模，磁盘友好</td>
+    </tr>
+    <tr>
+      <td><strong>ScaNN</strong></td>
+      <td>Google 方案，量化 + 剪枝。anisotropic vector quantization</td>
+      <td>&lt;1ms</td>
+      <td>中</td>
+      <td>Google 内部推荐场景</td>
+    </tr>
+  </table>
+
+  <div class="highlight">
+    <h4>💡 面试金句：HNSW vs IVF-PQ 权衡</h4>
+    <p><strong>HNSW</strong> = 用空间换时间。图索引全量驻内存，recall@10 > 0.95，但 1B 向量 × 768d × float32 ≈ <strong>3TB 内存</strong>。</p>
+    <p><strong>IVF-PQ</strong> = 用精度换空间。Product Quantization 把 768d float32 压缩到 96 bytes (32x 压缩)，1B 向量只需 <strong>~96GB</strong>。Recall 降到 ~0.90，但 Cross-Encoder reranking 可以补回来。</p>
+    <p><strong>生产方案</strong>：Coarse retrieval (IVF-PQ, 大量文档) → Fine retrieval (HNSW, 热门文档) → Reranking。或者 HNSW + PQ 压缩的混合方案。</p>
+  </div>
+
+  <pre><code>// HNSW 核心参数 (面试要知道)
+const hnswConfig = {
+  M: 16,              // 每个节点的连接数 (越大精度越高、内存越多)
+  efConstruction: 200, // 建图时的搜索宽度 (建索引质量)
+  efSearch: 100,       // 查询时的搜索宽度 (recall vs latency)
+};
+// 关键权衡: M↑ → 精度↑ + 内存↑ + 建索引慢
+// efSearch↑ → recall↑ + 延迟↑ (运行时可调!)</code></pre>
+
+  <h3>3. Hybrid Search：语义 + 关键词融合</h3>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>为什么不能只用向量搜索？</strong></p>
+      <ul>
+        <li>精确匹配：用户搜 "error code E1234"，向量可能找到语义相近但 code 不对的结果</li>
+        <li>稀有词：新品牌名、专有名词在 embedding 空间可能没有好的表示</li>
+        <li>数字/日期：向量模型对数字不敏感</li>
+      </ul>
+      <p><strong>解决方案</strong>：<strong>Hybrid Search</strong> = BM25 (关键词) + Vector (语义)，用 RRF 融合。</p>
+    </div>
+    <div class="en">
+      <p><strong>Why not vector-only?</strong></p>
+      <ul>
+        <li>Exact match: "error code E1234" — vectors may find semantically similar but wrong codes</li>
+        <li>Rare terms: New brand names, acronyms may lack good embedding representations</li>
+        <li>Numbers/dates: Embedding models are weak with numerical values</li>
+      </ul>
+      <p><strong>Solution</strong>: <strong>Hybrid Search</strong> = BM25 (keyword) + Vector (semantic), fused with RRF.</p>
+    </div>
+  </div>
+
+  <pre><code>// Reciprocal Rank Fusion (RRF) — 面试必知的融合算法
+function reciprocalRankFusion(
+  resultSets: SearchResult[][], 
+  k: number = 60  // 调节参数，越大越平滑
+): SearchResult[] {
+  const scores = new Map&lt;string, number&gt;();
+  
+  for (const results of resultSets) {
+    for (let rank = 0; rank &lt; results.length; rank++) {
+      const docId = results[rank].id;
+      const rrfScore = 1 / (k + rank + 1);
+      scores.set(docId, (scores.get(docId) || 0) + rrfScore);
+    }
+  }
+  
+  return [...scores.entries()]
+    .sort(([, a], [, b]) => b - a)
+    .map(([id, score]) => ({ id, score }));
+}
+
+// 为什么 RRF 好？
+// 1. 不需要分数归一化 (BM25 分和余弦相似度量纲不同)
+// 2. 对异常值鲁棒 (基于排名而非分数)
+// 3. 无需训练权重 (比 linear combination 更稳定)</code></pre>
+
+  <h3>4. 容量估算 / Capacity Estimation</h3>
+
+  <div class="architecture">
+    <h4>假设：10亿文档，100K QPS</h4>
+    <table>
+      <tr><th>组件</th><th>计算</th><th>结果</th></tr>
+      <tr>
+        <td>向量存储 (raw)</td>
+        <td>1B × 768d × 4 bytes</td>
+        <td>~3 TB</td>
+      </tr>
+      <tr>
+        <td>向量存储 (PQ压缩)</td>
+        <td>1B × 96 bytes (32x)</td>
+        <td>~96 GB</td>
+      </tr>
+      <tr>
+        <td>BM25 倒排索引</td>
+        <td>~1B docs, avg 200 tokens</td>
+        <td>~500 GB</td>
+      </tr>
+      <tr>
+        <td>Embedding 推理</td>
+        <td>100K QPS × ~2ms/query</td>
+        <td>~200 GPU (A10G)</td>
+      </tr>
+      <tr>
+        <td>Reranker 推理</td>
+        <td>100K QPS × 50 pairs × ~1ms/pair</td>
+        <td>~5000 GPU 😱 → 需要优化</td>
+      </tr>
+      <tr>
+        <td>ANN 搜索</td>
+        <td>100K QPS × ~1ms (HNSW)</td>
+        <td>~100 CPU nodes</td>
+      </tr>
+    </table>
+    <p>⚠️ <strong>Reranker 是瓶颈！</strong> 优化策略：</p>
+    <ul>
+      <li>只 rerank top-20 (而不是 top-50)</li>
+      <li>用蒸馏后的小模型 (MiniLM → 6 层 vs 12 层)</li>
+      <li>批量推理 + TensorRT 加速</li>
+      <li>高流量查询用缓存跳过 reranker</li>
+    </ul>
+  </div>
+
+  <h3>5. 实时索引更新 / Real-time Indexing</h3>
+
+  <div class="bilingual">
+    <div class="zh">
+      <p>搜索引擎不能只有离线索引，新文档要尽快可搜索。</p>
+      <p><strong>双层索引架构</strong>：</p>
+      <ol>
+        <li><strong>Main Index</strong>：大型 HNSW/IVF 索引，定期（每小时/天）全量重建</li>
+        <li><strong>Delta Index</strong>：小型 in-memory 索引，实时追加新文档</li>
+        <li>查询时同时搜两个索引，合并结果</li>
+        <li>定期将 Delta 合并到 Main（类似 LSM-Tree 的 compaction）</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p>Search engines need near-real-time indexing for new documents.</p>
+      <p><strong>Two-tier index architecture</strong>:</p>
+      <ol>
+        <li><strong>Main Index</strong>: Large HNSW/IVF, rebuilt periodically (hourly/daily)</li>
+        <li><strong>Delta Index</strong>: Small in-memory index for real-time additions</li>
+        <li>Query both indexes, merge results</li>
+        <li>Periodically compact Delta into Main (like LSM-Tree compaction)</li>
+      </ol>
+    </div>
+  </div>
+
+  <pre><code>// 双层索引搜索
+async function hybridSearch(query: string) {
+  const queryVec = await encoder.encode(query);
+  
+  // 并行搜两个索引
+  const [mainResults, deltaResults] = await Promise.all([
+    mainIndex.search(queryVec, topN=100),   // 大索引 (HNSW)
+    deltaIndex.search(queryVec, topN=20),    // 小索引 (brute-force ok)
+  ]);
+  
+  // 合并 + 去重 (delta 中的版本更新)
+  return mergeAndDeduplicate(mainResults, deltaResults);
+}
+
+// 后台 compaction
+cron.schedule('0 * * * *', async () => {  // 每小时
+  const delta = await deltaIndex.drain();
+  await mainIndex.addBatch(delta);
+  await mainIndex.optimize();  // 可选: 重建图连接
+});</code></pre>
+
+  <h2>✨ 设计亮点 / Design Highlights</h2>
+
+  <div class="highlight">
+    <h4>亮点 1: Matryoshka Representation Learning (MRL) — 弹性维度</h4>
+    <p><strong>问题</strong>：768d embedding 太大，存储贵。但简单截断（取前 256d）会损失精度。</p>
+    <p><strong>方案</strong>：训练时让模型在多个维度上都有好的表示（768d, 512d, 256d, 128d），运行时按需选择维度。</p>
+    <p><strong>效果</strong>：OpenAI text-embedding-3 用 MRL，256d 的性能 ≈ 传统 1536d，存储减少 <strong>6x</strong>！</p>
+    <p><strong>面试价值</strong>：体现你了解最新的 embedding 优化技术。</p>
+  </div>
+
+  <div class="highlight">
+    <h4>亮点 2: Late Interaction (ColBERT) — 精度和速度的甜蜜点</h4>
+    <p><strong>问题</strong>：Bi-Encoder 不够精准，Cross-Encoder 不够快。</p>
+    <p><strong>方案</strong>：ColBERT 的 "late interaction"——Query 和 Doc 独立编码（像 Bi-Encoder），但在匹配时做 <strong>token-level MaxSim</strong>（像 Cross-Encoder 的部分能力）。</p>
+    <pre>// ColBERT scoring
+Score(Q, D) = Σ_i max_j  cos(q_i, d_j)
+// 每个 query token 找到最匹配的 doc token</pre>
+    <p><strong>效果</strong>：接近 Cross-Encoder 的精度，但可以预计算 doc embeddings，延迟仅 ~10ms。</p>
+  </div>
+
+  <div class="highlight">
+    <h4>亮点 3: Query Understanding Layer — 搜索不只是匹配</h4>
+    <p><strong>好的搜索系统在 encoding 前先"理解"查询</strong>：</p>
+    <ul>
+      <li><strong>Query Expansion</strong>：把 "cheap hotels SF" → "affordable accommodation San Francisco budget lodging"</li>
+      <li><strong>Intent Classification</strong>：区分 navigational (找特定网站) vs informational (找答案) vs transactional (买东西)</li>
+      <li><strong>Spell Correction</strong>："reccommendation system" → "recommendation system"</li>
+      <li><strong>Language Detection</strong>：多语言路由到不同的 embedding 模型</li>
+    </ul>
+  </div>
+
+  <h2>🎯 面试高频问题 / Interview Questions</h2>
+
+  <div class="interview-q">
+    <h4>Q1: 向量搜索如何处理 filter？比如"2024年以后发布的 AI 论文"？</h4>
+    <p><strong>答</strong>：三种策略，各有权衡：</p>
+    <ol>
+      <li><strong>Pre-filter</strong>：先用 metadata 过滤，再在子集上做 ANN。问题：过滤后数据分布变化，HNSW 图可能断裂。</li>
+      <li><strong>Post-filter</strong>：先 ANN 取 top-N（N >> K），再过滤。问题：如果 filter 很严格，可能 top-N 里没几个满足条件的。</li>
+      <li><strong>Hybrid (推荐)</strong>：用 <strong>filtered HNSW</strong>，搜索时 on-the-fly 跳过不满足条件的节点。Weaviate、Qdrant 都支持。保证 recall 的同时支持过滤。</li>
+    </ol>
+  </div>
+
+  <div class="interview-q">
+    <h4>Q2: 如何保证搜索结果的多样性（避免返回 10 个几乎相同的结果）？</h4>
+    <p><strong>答</strong>：</p>
+    <ul>
+      <li><strong>MMR (Maximal Marginal Relevance)</strong>：在选择下一个结果时，同时考虑"与 query 的相关性"和"与已选结果的差异性"。<code>score = λ × sim(q, d) - (1-λ) × max(sim(d, d_selected))</code></li>
+      <li><strong>Cluster-based</strong>：先对 candidates 聚类，每个 cluster 取 top-1</li>
+      <li><strong>Subtopic modeling</strong>：识别 query 的多个意图，每个意图都有结果覆盖</li>
+    </ul>
+  </div>
+
+  <div class="interview-q">
+    <h4>Q3: Embedding 模型如何持续优化？新品类/领域的文档搜索不准怎么办？</h4>
+    <p><strong>答</strong>：</p>
+    <ul>
+      <li><strong>Contrastive Fine-tuning</strong>：用搜索日志 (query, clicked_doc) 作为正样本，impression 未点击的做负样本。周期性微调。</li>
+      <li><strong>Hard Negative Mining</strong>：用当前模型找出"排名高但用户没点击"的结果，作为 hard negatives 训练。</li>
+      <li><strong>Domain Adaptation</strong>：在领域数据上继续预训练 (masked language modeling)，然后再微调 embedding 任务。</li>
+      <li>⚠️ 重新训练后必须 <strong>reindex 全部文档</strong>（所有 embedding 都变了）。这是很大的运维成本！</li>
+    </ul>
+  </div>
+
+  <div class="interview-q">
+    <h4>Q4: 对比三种搜索范式：BM25 Only vs Vector Only vs Hybrid。什么场景用哪个？</h4>
+    <table>
+      <tr><th>维度</th><th>BM25</th><th>Vector</th><th>Hybrid</th></tr>
+      <tr><td>精确匹配 (error codes, IDs)</td><td>✅ 强</td><td>❌ 弱</td><td>✅ 强</td></tr>
+      <tr><td>语义理解 ("how to fix")</td><td>❌ 弱</td><td>✅ 强</td><td>✅ 强</td></tr>
+      <tr><td>零样本泛化</td><td>❌</td><td>✅</td><td>✅</td></tr>
+      <tr><td>计算成本</td><td>低</td><td>高 (GPU)</td><td>最高</td></tr>
+      <tr><td>索引大小</td><td>中</td><td>高</td><td>最大</td></tr>
+      <tr><td>推荐场景</td><td>代码搜索, 日志搜索</td><td>FAQ, 客服, 多语言</td><td>通用搜索, 电商, 文档</td></tr>
+    </table>
+    <p>💡 面试总结：<strong>"生产环境几乎总是用 Hybrid"</strong>，纯向量搜索只适合特定场景（如跨语言、图片搜索）。</p>
+  </div>
+
+  <h2>📚 对比前两天 / Cross-Reference</h2>
+
+  <table>
+    <tr><th>设计模式</th><th>ChatGPT (Day 1)</th><th>推荐系统 (Day 2)</th><th>语义搜索 (Day 3)</th></tr>
+    <tr><td>核心模式</td><td>SSE 流式输出</td><td>多阶段漏斗</td><td>Retrieve → Rerank</td></tr>
+    <tr><td>延迟要求</td><td>首 Token &lt;500ms</td><td>~200ms E2E</td><td>&lt;100ms E2E</td></tr>
+    <tr><td>AI 组件</td><td>LLM (生成)</td><td>双塔 + MMoE (排序)</td><td>Bi-Encoder + Cross-Encoder</td></tr>
+    <tr><td>缓存策略</td><td>Semantic Cache</td><td>Feature Store</td><td>Query Cache + Result Cache</td></tr>
+    <tr><td>成本瓶颈</td><td>Token 生成</td><td>Training GPU</td><td>Reranker GPU + 向量存储</td></tr>
+  </table>
+
+  <div class="follow-up">
+    <h3>💬 后续讨论 / Follow-up Discussion</h3>
+    <p>明天 Day 4 将覆盖 <strong>设计 RAG 知识库问答系统</strong>，把今天的搜索引擎和 Day 1 的 ChatGPT 结合，设计企业级问答系统。这三天的内容会在 Day 4 融合！</p>
+    <p>如果对 HNSW 图的具体构建算法、PQ 量化数学原理、或 ColBERT 的实现细节感兴趣，可以深入讨论 🔍</p>
+  </div>
+
+</body>
+</html>
