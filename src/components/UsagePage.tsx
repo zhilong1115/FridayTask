@@ -284,11 +284,13 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
 
       {/* Chart Section */}
       <div className="bg-white rounded-xl border border-[#dadce0] p-4">
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <h2 className="text-sm font-semibold text-[#3c4043]">
-            {period === 'today' ? 'Hourly' : 'Daily'} Token Usage
-          </h2>
-          <div className="flex gap-3 items-center">
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-[#3c4043]">
+              {period === 'today' ? 'Hourly' : 'Daily'} Token Usage
+            </h2>
+          </div>
+          <div className="flex flex-wrap gap-2 items-center">
             {/* Token mode toggle */}
             <div className="flex gap-1 bg-[#f1f3f4] rounded-full p-0.5">
               {(['billable', 'cache', 'all'] as TokenMode[]).map(m => (
@@ -301,10 +303,11 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                       : 'text-[#70757a]'
                   }`}
                 >
-                  {m === 'billable' ? '💰 Billable' : m === 'cache' ? '📦 Cache' : '🔄 All'}
+                  {m === 'billable' ? 'Billable' : m === 'cache' ? 'Cache' : 'All'}
                 </button>
               ))}
             </div>
+            <div className="w-px h-4 bg-[#dadce0]" />
             {/* Group by */}
             <div className="flex gap-1">
               {(['none', 'model', 'agent', 'provider'] as GroupBy[]).map(g => (
