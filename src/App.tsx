@@ -8,6 +8,7 @@ import TaskModal from './components/TaskModal';
 import SummaryModal from './components/SummaryModal';
 import ArtifactsModal from './components/ArtifactsModal';
 import KnowledgeModal from './components/KnowledgeModal';
+import AgentsView from './components/AgentsView';
 import MobileNav from './components/MobileNav';
 import LoginModal from './components/LoginModal';
 import type { Task, TaskFormData, SidebarView } from './types';
@@ -175,6 +176,8 @@ export default function App() {
             filterAssignee={filterAssignee}
             filterStatus={filterStatus}
           />
+        ) : sidebarView === 'agents' ? (
+          <AgentsView tasks={tasks} cronJobs={cronJobs} />
         ) : (
           <ListView
             tasks={tasks}
