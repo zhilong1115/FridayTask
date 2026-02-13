@@ -5,10 +5,9 @@ import Sidebar from './components/Sidebar';
 import CalendarView from './components/CalendarView';
 import ListView from './components/ListView';
 import TaskModal from './components/TaskModal';
-import AgentsModal from './components/AgentsModal';
 import ArtifactsModal from './components/ArtifactsModal';
 import KnowledgeModal from './components/KnowledgeModal';
-import AgentsView from './components/AgentsView';
+import AgentsPage from './components/AgentsPage';
 import MobileNav from './components/MobileNav';
 import LoginModal from './components/LoginModal';
 import type { Task, TaskFormData, SidebarView } from './types';
@@ -29,7 +28,7 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState('');
 
   // Modal state
-  const [agentsModalOpen, setAgentsModalOpen] = useState(false);
+  const [showAgentsPage, setShowAgentsPage] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
   const [knowledgeOpen, setKnowledgeOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -140,7 +139,7 @@ export default function App() {
         filterStatus={filterStatus}
         onFilterStatus={setFilterStatus}
         onCreateTask={() => openCreate()}
-        onOpenAgents={() => setAgentsModalOpen(true)}
+        onOpenAgents={() => setShowAgentsPage(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
         isAuthenticated={isAuthenticated}
@@ -153,7 +152,7 @@ export default function App() {
         view={sidebarView}
         onViewChange={setSidebarView}
         onCreateTask={() => openCreate()}
-        onOpenAgents={() => setAgentsModalOpen(true)}
+        onOpenAgents={() => setShowAgentsPage(true)}
         onOpenArtifacts={() => setArtifactsOpen(true)}
         onOpenKnowledge={() => setKnowledgeOpen(true)}
         filterAssignee={filterAssignee}
@@ -167,7 +166,13 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-6 overflow-auto bg-white">
-        {sidebarView === 'calendar' ? (
+        {showAgentsPage ? (
+          <AgentsPage
+            tasks={tasks}
+            cronJobs={cronJobs}
+            onBack={() => setShowAgentsPage(false)}
+          />
+        ) : sidebarView === 'calendar' ? (
           <CalendarView
             tasks={tasks}
             cronJobs={cronJobs}
@@ -176,8 +181,6 @@ export default function App() {
             filterAssignee={filterAssignee}
             filterStatus={filterStatus}
           />
-        ) : sidebarView === 'agents' ? (
-          <AgentsView tasks={tasks} cronJobs={cronJobs} />
         ) : (
           <ListView
             tasks={tasks}
@@ -188,14 +191,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Agents Modal */}
-      <AgentsModal
-        isOpen={agentsModalOpen}
-        onClose={() => setAgentsModalOpen(false)}
-        tasks={tasks}
-        cronJobs={cronJobs}
-      />
 
       {/* Artifacts Modal */}
       <ArtifactsModal
