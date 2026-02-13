@@ -59,26 +59,11 @@ function getDateRange(period: Period): { from?: string; to?: string } {
 
 export default function UsagePage({ onBack }: { onBack: () => void }) {
   const [period, setPeriod] = useState<Period>('month');
-  const [groupBy, setGroupBy] = useState<GroupBy>('model');
   const [chartGroupBy, setChartGroupBy] = useState<GroupBy>('model');
-  const [data, setData] = useState<UsageData | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [allData, setAllData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoveredBar, setHoveredBar] = useState<{ time: string; dim: string; tokens: number; x: number; y: number } | null>(null);
-
-  // Fetch grouped data for table
-  useEffect(() => {
-    const range = getDateRange(period);
-    const params = new URLSearchParams();
-    if (range.from) params.set('from', range.from);
-    if (range.to) params.set('to', range.to);
-    params.set('groupBy', groupBy);
-    fetch(`${API}/api/usage?${params}`)
-      .then(r => r.json())
-      .then(setData)
-      .catch(console.error);
-  }, [period, groupBy]);
 
   // Fetch chart data
   useEffect(() => {
@@ -194,8 +179,8 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
         ))}
       </div>
 
-      {/* Stacked Bar Chart */}
-      <div className="bg-white rounded-xl border border-[#dadce0] p-4 mb-6">
+      {/* Chart Section */}
+      <div className="bg-white rounded-xl border border-[#dadce0] p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-[#3c4043]">
             {period === 'today' ? 'Hourly' : 'Daily'} Token Usage
@@ -220,151 +205,131 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
         {!chartRender ? (
           <p className="text-xs text-[#70757a] py-4 text-center">No data for this period</p>
         ) : (
-          <div className="relative">
-            {/* Y axis labels */}
-            <div className="flex">
-              <div className="w-12 shrink-0 flex flex-col justify-between text-[10px] text-[#70757a] text-right pr-2" style={{ height: 200 }}>
-                <span>{formatTokens(chartRender.maxTotal)}</span>
-                <span>{formatTokens(chartRender.maxTotal / 2)}</span>
-                <span>0</span>
-              </div>
-              {/* Chart area */}
-              <div className="flex-1 relative" style={{ height: 200 }} onMouseLeave={() => setHoveredBar(null)}>
-                {/* Grid lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                  <div className="border-b border-[#f1f3f4]" />
-                  <div className="border-b border-[#f1f3f4]" />
-                  <div className="border-b border-[#f1f3f4]" />
+          <>
+            {/* Desktop: Stacked vertical bar chart */}
+            <div className="hidden md:block relative">
+              {/* Y axis labels */}
+              <div className="flex">
+                <div className="w-12 shrink-0 flex flex-col justify-between text-[10px] text-[#70757a] text-right pr-2" style={{ height: 200 }}>
+                  <span>{formatTokens(chartRender.maxTotal)}</span>
+                  <span>{formatTokens(chartRender.maxTotal / 2)}</span>
+                  <span>0</span>
                 </div>
-                {/* Bars */}
-                <div className="absolute inset-0 flex items-end gap-[2px]">
-                  {chartRender.timeKeys.map((t) => {
-                    let total = 0;
-                    for (const d of chartRender.dimensions) total += (chartRender.buckets[t]?.[d] || 0);
-                    const barWidth = `${100 / chartRender.timeKeys.length}%`;
-                    // Stack segments bottom to top
-                    let yOffset = 0;
-                    return (
-                      <div key={t} className="relative flex flex-col-reverse" style={{ width: barWidth, height: '100%' }}>
-                        {chartRender.dimensions.map((d, i) => {
-                          const val = chartRender.buckets[t]?.[d] || 0;
-                          if (val === 0) return null;
-                          const pct = (val / chartRender.maxTotal) * 100;
-                          const bottom = (yOffset / chartRender.maxTotal) * 100;
-                          yOffset += val;
-                          return (
-                            <div
-                              key={d}
-                              className="absolute w-full cursor-pointer transition-opacity hover:opacity-80"
-                              style={{
-                                bottom: `${bottom}%`,
-                                height: `${Math.max(pct, 0.5)}%`,
-                                backgroundColor: COLORS[i % COLORS.length],
-                                borderRadius: yOffset === total ? '2px 2px 0 0' : '0',
-                              }}
-                              onMouseEnter={(e) => {
-                                const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                setHoveredBar({ time: t, dim: d, tokens: val, x: rect.left + rect.width / 2, y: rect.top });
-                              }}
-                            />
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Tooltip */}
-                {hoveredBar && (
-                  <div
-                    className="fixed z-50 bg-[#3c4043] text-white text-[11px] px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none whitespace-nowrap"
-                    style={{ left: hoveredBar.x, top: hoveredBar.y - 40, transform: 'translateX(-50%)' }}
-                  >
-                    <span className="font-medium">{hoveredBar.dim}</span>: {formatTokens(hoveredBar.tokens)} tokens
-                    <div className="text-[10px] text-[#9aa0a6]">{period === 'today' ? hoveredBar.time.slice(11) + ':00' : hoveredBar.time}</div>
+                {/* Chart area */}
+                <div className="flex-1 relative" style={{ height: 200 }} onMouseLeave={() => setHoveredBar(null)}>
+                  {/* Grid lines */}
+                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                    <div className="border-b border-[#f1f3f4]" />
+                    <div className="border-b border-[#f1f3f4]" />
+                    <div className="border-b border-[#f1f3f4]" />
                   </div>
-                )}
+                  {/* Bars */}
+                  <div className="absolute inset-0 flex items-end gap-[2px]">
+                    {chartRender.timeKeys.map((t) => {
+                      let total = 0;
+                      for (const d of chartRender.dimensions) total += (chartRender.buckets[t]?.[d] || 0);
+                      const barWidth = `${100 / chartRender.timeKeys.length}%`;
+                      let yOffset = 0;
+                      return (
+                        <div key={t} className="relative flex flex-col-reverse" style={{ width: barWidth, height: '100%' }}>
+                          {chartRender.dimensions.map((d, i) => {
+                            const val = chartRender.buckets[t]?.[d] || 0;
+                            if (val === 0) return null;
+                            const pct = (val / chartRender.maxTotal) * 100;
+                            const bottom = (yOffset / chartRender.maxTotal) * 100;
+                            yOffset += val;
+                            return (
+                              <div
+                                key={d}
+                                className="absolute w-full cursor-pointer transition-opacity hover:opacity-80"
+                                style={{
+                                  bottom: `${bottom}%`,
+                                  height: `${Math.max(pct, 0.5)}%`,
+                                  backgroundColor: COLORS[i % COLORS.length],
+                                  borderRadius: yOffset === total ? '2px 2px 0 0' : '0',
+                                }}
+                                onMouseEnter={(e) => {
+                                  const rect = (e.target as HTMLElement).getBoundingClientRect();
+                                  setHoveredBar({ time: t, dim: d, tokens: val, x: rect.left + rect.width / 2, y: rect.top });
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Tooltip */}
+                  {hoveredBar && (
+                    <div
+                      className="fixed z-50 bg-[#3c4043] text-white text-[11px] px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none whitespace-nowrap"
+                      style={{ left: hoveredBar.x, top: hoveredBar.y - 40, transform: 'translateX(-50%)' }}
+                    >
+                      <span className="font-medium">{hoveredBar.dim}</span>: {formatTokens(hoveredBar.tokens)} tokens
+                      <div className="text-[10px] text-[#9aa0a6]">{period === 'today' ? hoveredBar.time.slice(11) + ':00' : hoveredBar.time}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* X axis labels */}
+              <div className="flex ml-12">
+                {chartRender.timeKeys.map((t, i) => {
+                  const show = chartRender.timeKeys.length <= 14 || i % Math.ceil(chartRender.timeKeys.length / 10) === 0;
+                  return (
+                    <div key={t} className="text-[10px] text-[#70757a] text-center" style={{ width: `${100 / chartRender.timeKeys.length}%` }}>
+                      {show ? (period === 'today' ? t.slice(11) + 'h' : t.slice(5)) : ''}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3 mt-3">
+                {chartRender.dimensions.map((d, i) => (
+                  <div key={d} className="flex items-center gap-1.5 text-[11px] text-[#3c4043]">
+                    <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    {d}
+                  </div>
+                ))}
               </div>
             </div>
-            {/* X axis labels */}
-            <div className="flex ml-12">
-              {chartRender.timeKeys.map((t, i) => {
-                // Show fewer labels if too many
-                const show = chartRender.timeKeys.length <= 14 || i % Math.ceil(chartRender.timeKeys.length / 10) === 0;
+
+            {/* Mobile: Horizontal bar chart (aggregated by group dimension) */}
+            <div className="md:hidden">
+              {(() => {
+                // Aggregate tokens by dimension across all time keys
+                const agg: Record<string, number> = {};
+                for (const t of chartRender.timeKeys) {
+                  for (const d of chartRender.dimensions) {
+                    agg[d] = (agg[d] || 0) + (chartRender.buckets[t]?.[d] || 0);
+                  }
+                }
+                const sorted = Object.entries(agg).sort((a, b) => b[1] - a[1]);
+                const maxVal = sorted.length > 0 ? sorted[0][1] : 1;
                 return (
-                  <div key={t} className="text-[10px] text-[#70757a] text-center" style={{ width: `${100 / chartRender.timeKeys.length}%` }}>
-                    {show ? (period === 'today' ? t.slice(11) + 'h' : t.slice(5)) : ''}
+                  <div className="space-y-2">
+                    {sorted.map(([label, tokens], i) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="w-24 shrink-0 text-[11px] text-[#3c4043] font-medium truncate text-right">{label}</span>
+                        <div className="flex-1 h-6 bg-[#f1f3f4] rounded overflow-hidden">
+                          <div
+                            className="h-full rounded transition-all"
+                            style={{
+                              width: `${Math.max((tokens / maxVal) * 100, 1)}%`,
+                              backgroundColor: COLORS[i % COLORS.length],
+                            }}
+                          />
+                        </div>
+                        <span className="w-14 shrink-0 text-[11px] text-[#70757a] font-semibold text-right">{formatTokens(tokens)}</span>
+                      </div>
+                    ))}
+                    {sorted.length === 0 && (
+                      <p className="text-xs text-[#70757a] py-4 text-center">No data</p>
+                    )}
                   </div>
                 );
-              })}
+              })()}
             </div>
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3 mt-3">
-              {chartRender.dimensions.map((d, i) => (
-                <div key={d} className="flex items-center gap-1.5 text-[11px] text-[#3c4043]">
-                  <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  {d}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Group By Tabs + Table */}
-      <div className="bg-white rounded-xl border border-[#dadce0] p-4">
-        <div className="flex gap-2 mb-4">
-          {(['model', 'agent', 'provider'] as GroupBy[]).map(g => (
-            <button
-              key={g}
-              onClick={() => setGroupBy(g)}
-              className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
-                groupBy === g
-                  ? 'bg-[#e8f0fe] text-[#1a73e8]'
-                  : 'text-[#70757a] hover:bg-[#f1f3f4]'
-              }`}
-            >
-              By {g.charAt(0).toUpperCase() + g.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {data && data.groups.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-left text-[#70757a] border-b border-[#dadce0]">
-                  <th className="py-2 font-medium">{groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}</th>
-                  <th className="py-2 font-medium text-right">Requests</th>
-                  <th className="py-2 font-medium text-right">Tokens</th>
-                  <th className="py-2 font-medium text-right">Input</th>
-                  <th className="py-2 font-medium text-right">Output</th>
-                  <th className="py-2 font-medium text-right">Cache Read</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.groups.map(g => (
-                  <tr key={g.key} className="border-b border-[#f1f3f4] hover:bg-[#f8f9fa]">
-                    <td className="py-2.5 font-medium text-[#3c4043]">{g.key}</td>
-                    <td className="py-2.5 text-right text-[#70757a]">{g.count.toLocaleString()}</td>
-                    <td className="py-2.5 text-right font-semibold text-[#f9ab00]">{formatTokens(g.tokens)}</td>
-                    <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.input)}</td>
-                    <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.output)}</td>
-                    <td className="py-2.5 text-right text-[#70757a]">{formatTokens(g.cacheRead)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-[#dadce0] font-semibold text-[#3c4043]">
-                  <td className="py-2.5">Total</td>
-                  <td className="py-2.5 text-right">{data.totalRecords.toLocaleString()}</td>
-                  <td className="py-2.5 text-right text-[#f9ab00]">{formatTokens(data.totalTokens)}</td>
-                  <td colSpan={3}></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        ) : (
-          <p className="text-xs text-[#70757a] py-4 text-center">No usage data found</p>
+          </>
         )}
       </div>
     </div>
