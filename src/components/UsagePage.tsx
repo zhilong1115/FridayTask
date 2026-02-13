@@ -33,7 +33,7 @@ function formatTokens(n: number) {
 }
 
 type Period = 'today' | 'week' | 'month' | 'all';
-type GroupBy = 'model' | 'agent' | 'provider';
+type GroupBy = 'none' | 'model' | 'agent' | 'provider';
 
 // Color palette for stacked bars
 const COLORS = [
@@ -71,7 +71,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
     const params = new URLSearchParams();
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
-    params.set('groupBy', chartGroupBy);
+    params.set('groupBy', chartGroupBy === 'none' ? 'model' : chartGroupBy);
     params.set('period', period);
     fetch(`${API}/api/usage/chart?${params}`)
       .then(r => r.json())
@@ -186,7 +186,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
             {period === 'today' ? 'Hourly' : 'Daily'} Token Usage
           </h2>
           <div className="flex gap-1">
-            {(['model', 'agent', 'provider'] as GroupBy[]).map(g => (
+            {(['none', 'model', 'agent', 'provider'] as GroupBy[]).map(g => (
               <button
                 key={g}
                 onClick={() => setChartGroupBy(g)}
@@ -293,37 +293,80 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
               </div>
             </div>
 
-            {/* Mobile: Horizontal bar chart (aggregated by group dimension) */}
+            {/* Mobile: Horizontal stacked bar chart with time on Y-axis */}
             <div className="md:hidden">
               {(() => {
-                // Aggregate tokens by dimension across all time keys
-                const agg: Record<string, number> = {};
-                for (const t of chartRender.timeKeys) {
-                  for (const d of chartRender.dimensions) {
-                    agg[d] = (agg[d] || 0) + (chartRender.buckets[t]?.[d] || 0);
-                  }
+                const { timeKeys, dimensions, buckets, maxTotal } = chartRender;
+                const isNone = chartGroupBy === 'none';
+                // For 'none', merge all dimensions into a single total per time key
+                const effectiveDims = isNone ? ['Total'] : dimensions;
+
+                // Compute row totals for maxTotal recalc
+                let rowMax = 0;
+                for (const t of timeKeys) {
+                  let sum = 0;
+                  for (const d of dimensions) sum += (buckets[t]?.[d] || 0);
+                  if (sum > rowMax) rowMax = sum;
                 }
-                const sorted = Object.entries(agg).sort((a, b) => b[1] - a[1]);
-                const maxVal = sorted.length > 0 ? sorted[0][1] : 1;
+                if (rowMax === 0) rowMax = 1;
+
+                const formatTimeLabel = (t: string) => {
+                  if (period === 'today') return t.slice(11, 13) + ':00';
+                  return t.slice(5); // MM-DD
+                };
+
                 return (
-                  <div className="space-y-2">
-                    {sorted.map(([label, tokens], i) => (
-                      <div key={label} className="flex items-center gap-2">
-                        <span className="w-24 shrink-0 text-[11px] text-[#3c4043] font-medium truncate text-right">{label}</span>
-                        <div className="flex-1 h-6 bg-[#f1f3f4] rounded overflow-hidden">
-                          <div
-                            className="h-full rounded transition-all"
-                            style={{
-                              width: `${Math.max((tokens / maxVal) * 100, 1)}%`,
-                              backgroundColor: COLORS[i % COLORS.length],
-                            }}
-                          />
-                        </div>
-                        <span className="w-14 shrink-0 text-[11px] text-[#70757a] font-semibold text-right">{formatTokens(tokens)}</span>
+                  <div>
+                    <div className="space-y-1.5" style={{ maxHeight: 400, overflowY: 'auto' }}>
+                      {timeKeys.map((t) => {
+                        let total = 0;
+                        for (const d of dimensions) total += (buckets[t]?.[d] || 0);
+                        const barPct = rowMax > 0 ? (total / rowMax) * 100 : 0;
+                        return (
+                          <div key={t} className="flex items-center gap-2">
+                            <span className="w-12 shrink-0 text-[10px] text-[#70757a] font-medium text-right">{formatTimeLabel(t)}</span>
+                            <div className="flex-1 h-5 bg-[#f1f3f4] rounded overflow-hidden flex">
+                              {isNone ? (
+                                <div
+                                  className="h-full rounded"
+                                  style={{
+                                    width: `${Math.max(barPct, total > 0 ? 1 : 0)}%`,
+                                    backgroundColor: COLORS[0],
+                                  }}
+                                />
+                              ) : (
+                                dimensions.map((d, i) => {
+                                  const val = buckets[t]?.[d] || 0;
+                                  if (val === 0) return null;
+                                  const pct = (val / rowMax) * 100;
+                                  return (
+                                    <div
+                                      key={d}
+                                      className="h-full"
+                                      style={{
+                                        width: `${Math.max(pct, 0.5)}%`,
+                                        backgroundColor: COLORS[i % COLORS.length],
+                                      }}
+                                    />
+                                  );
+                                })
+                              )}
+                            </div>
+                            <span className="w-12 shrink-0 text-[10px] text-[#70757a] font-semibold text-right">{total > 0 ? formatTokens(total) : ''}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Legend */}
+                    {!isNone && effectiveDims.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {effectiveDims.map((d, i) => (
+                          <div key={d} className="flex items-center gap-1 text-[10px] text-[#3c4043]">
+                            <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                            {d}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    {sorted.length === 0 && (
-                      <p className="text-xs text-[#70757a] py-4 text-center">No data</p>
                     )}
                   </div>
                 );
