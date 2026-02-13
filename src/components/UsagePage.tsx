@@ -331,7 +331,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                                   className="h-full rounded"
                                   style={{
                                     width: `${Math.max(barPct, total > 0 ? 1 : 0)}%`,
-                                    backgroundColor: COLORS[0],
+                                    backgroundColor: '#f9ab00',
                                   }}
                                 />
                               ) : (
