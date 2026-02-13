@@ -492,6 +492,57 @@ const CRON_JOBS_PATH = path.join(
   'jobs.json'
 );
 
+// ─── Agents Status API ───────────────────────────────────
+
+const AGENT_DEFS = [
+  { id: 'polymarket', emoji: '📈', name: 'Polymarket', nameCn: '交易小五', description: 'Trading & market monitoring', projectPatterns: ['polymarket', 'trading'] },
+  { id: 'hu', emoji: '🀄', name: 'HU', nameCn: '游戏小五', description: 'Mahjong roguelike game dev', projectPatterns: ['hu', 'game'] },
+  { id: 'aspen', emoji: '📊', name: 'Aspen', nameCn: '量化小五', description: 'AI quant trading app', projectPatterns: ['aspen', 'quant', 'atrade', 'nofx'] },
+  { id: 'artist', emoji: '🍌', name: 'Artist', nameCn: '画画小五', description: 'Image & content generation', projectPatterns: ['artist', 'design', 'avatar', 'image', 'banana'] },
+  { id: 'fridaytask', emoji: '📋', name: 'FridayTask', nameCn: '任务小五', description: 'Task management system', projectPatterns: ['friday-task', 'friday', 'infra', 'task'] },
+  { id: 'knowledge', emoji: '📚', name: 'Knowledge', nameCn: '知识小五', description: 'Daily knowledge push & learning', projectPatterns: ['knowledge', 'learning', 'ai-push', 'finance-push', 'learn', 'study'] },
+];
+
+app.get('/api/agents/status', (_req, res) => {
+  try {
+    const agents = AGENT_DEFS.map((agent) => {
+      // Build SQL LIKE conditions for project matching
+      const conditions = agent.projectPatterns.map((p) => `project LIKE '%${p}%'`).join(' OR ');
+      const where = `(${conditions}) AND assignee = 'friday'`;
+
+      const inProgress = db.prepare(`SELECT COUNT(*) as c FROM tasks WHERE status = 'in-progress' AND ${where}`).get().c;
+      const approved = db.prepare(`SELECT COUNT(*) as c FROM tasks WHERE status = 'approved' AND ${where}`).get().c;
+      const pending = db.prepare(`SELECT COUNT(*) as c FROM tasks WHERE status = 'pending' AND ${where}`).get().c;
+      const done = db.prepare(`SELECT COUNT(*) as c FROM tasks WHERE status = 'done' AND ${where}`).get().c;
+      const total = db.prepare(`SELECT COUNT(*) as c FROM tasks WHERE ${where}`).get().c;
+
+      const recentTasks = db.prepare(
+        `SELECT id, title, status, project, updated_at FROM tasks WHERE ${where} ORDER BY updated_at DESC LIMIT 5`
+      ).all();
+
+      const lastDone = db.prepare(
+        `SELECT updated_at FROM tasks WHERE status = 'done' AND ${where} ORDER BY updated_at DESC LIMIT 1`
+      ).get();
+
+      let status = 'idle';
+      if (inProgress > 0) status = 'working';
+      else if (approved > 0 || pending > 0) status = 'pending';
+
+      return {
+        ...agent,
+        status,
+        stats: { inProgress, approved, pending, done, total },
+        recentTasks,
+        lastDoneAt: lastDone?.updated_at || null,
+      };
+    });
+
+    res.json(agents);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/cron-jobs', (_req, res) => {
   try {
     if (!fs.existsSync(CRON_JOBS_PATH)) {
