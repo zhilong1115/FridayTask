@@ -793,6 +793,43 @@ app.get('/api/usage', async (req, res) => {
   }
 });
 
+// Stacked chart data: group by (time, dimension)
+app.get('/api/usage/chart', async (req, res) => {
+  try {
+    const { from, to, groupBy, period } = req.query;
+    let records = await parseAllUsage();
+    if (from) records = records.filter(r => r.timestamp >= from);
+    if (to) records = records.filter(r => r.timestamp <= to);
+
+    const timeBucket = period === 'today' ? 'hour' : 'day';
+    const dim = groupBy || 'model';
+
+    // { [timeBucket]: { [dimValue]: tokens } }
+    const buckets = {};
+    const dimSet = new Set();
+    for (const r of records) {
+      const tKey = timeBucket === 'hour' ? r.timestamp?.slice(0, 13) : r.timestamp?.slice(0, 10);
+      let dKey;
+      if (dim === 'model') dKey = r.model;
+      else if (dim === 'provider') dKey = r.provider;
+      else if (dim === 'agent') dKey = r.agent;
+      else dKey = 'all';
+      if (!tKey) continue;
+      dimSet.add(dKey);
+      if (!buckets[tKey]) buckets[tKey] = {};
+      buckets[tKey][dKey] = (buckets[tKey][dKey] || 0) + r.totalTokens;
+    }
+
+    const timeKeys = Object.keys(buckets).sort();
+    const dimensions = [...dimSet].sort();
+
+    res.json({ timeKeys, dimensions, buckets });
+  } catch (err) {
+    console.error('Usage chart API error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── SPA fallback ────────────────────────────────────────
 
 app.get('*', (_req, res) => {
