@@ -37,7 +37,7 @@ type GroupBy = 'none' | 'model' | 'agent' | 'provider';
 
 // Color palette for stacked bars
 const COLORS = [
-  '#1a73e8', '#f9ab00', '#34a853', '#ea4335', '#9334e6',
+  '#f9ab00', '#1a73e8', '#34a853', '#ea4335', '#9334e6',
   '#ff6d01', '#46bdc6', '#7baaf7', '#f07b72', '#fdd663',
   '#57bb8a', '#a142f4', '#24c1e0', '#e37400', '#185abc',
 ];
@@ -113,7 +113,15 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
   // Compute chart rendering
   const chartRender = useMemo(() => {
     if (!chartData || chartData.timeKeys.length === 0) return null;
-    const { timeKeys, dimensions, buckets } = chartData;
+    const { timeKeys, dimensions: rawDims, buckets } = chartData;
+    // Sort dimensions by total tokens descending so major factor gets COLORS[0] (yellow)
+    const dimTotals = new Map<string, number>();
+    for (const d of rawDims) {
+      let total = 0;
+      for (const t of timeKeys) total += (buckets[t]?.[d] || 0);
+      dimTotals.set(d, total);
+    }
+    const dimensions = [...rawDims].sort((a, b) => (dimTotals.get(b) || 0) - (dimTotals.get(a) || 0));
     // Max stacked total
     let maxTotal = 0;
     for (const t of timeKeys) {
@@ -192,7 +200,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                 onClick={() => setChartGroupBy(g)}
                 className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
                   chartGroupBy === g
-                    ? 'bg-[#e8f0fe] text-[#1a73e8]'
+                    ? 'bg-[#fef7e0] text-[#f9ab00]'
                     : 'text-[#70757a] hover:bg-[#f1f3f4]'
                 }`}
               >
