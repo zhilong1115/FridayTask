@@ -76,7 +76,9 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
   const financeArticles = articles.filter((a) => a.folder === 'finance');
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Parse as local date to avoid timezone shift (e.g. "2026-02-13" → Feb 12 in PST)
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
