@@ -1,5 +1,5 @@
 import type { Task, CronJob } from '../types';
-import { AgentAccordion } from './AgentsModal';
+import { AgentAccordion, RobotIcon } from './AgentsModal';
 
 interface AgentsPageProps {
   tasks: Task[];
@@ -21,7 +21,7 @@ export default function AgentsPage({ tasks, cronJobs, onBack }: AgentsPageProps)
           </svg>
         </button>
         <div className="flex items-center gap-2">
-          <span className="text-xl">🤖</span>
+          <RobotIcon />
           <h2 className="text-lg font-semibold text-[#3c4043] tracking-wide">Agents</h2>
         </div>
       </div>
