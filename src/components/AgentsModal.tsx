@@ -10,9 +10,44 @@ interface AgentsModalProps {
 
 interface AgentDef {
   id: string;
-  emoji: string;
   name: string;
   projectPatterns: RegExp[];
+}
+
+function AgentIcon({ id, className = "w-6 h-6" }: { id: string; className?: string }) {
+  const props = { className, fill: "none", stroke: "#3c4043", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, viewBox: "0 0 24 24" };
+  switch (id) {
+    case 'alpha': return (<svg {...props}><polyline points="4 18 8 12 12 14 16 8 20 6" /><polyline points="16 6 20 6 20 10" /></svg>);
+    case 'hu': return (<svg {...props}><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="12" y1="4" x2="12" y2="20" /><line x1="4" y1="12" x2="20" y2="12" /><circle cx="8" cy="8" r="1" fill="#3c4043" stroke="none" /><circle cx="16" cy="16" r="1" fill="#3c4043" stroke="none" /></svg>);
+    case 'aspen': return (<svg {...props}><rect x="4" y="14" width="3" height="6" rx="0.5" /><rect x="8.5" y="10" width="3" height="10" rx="0.5" /><rect x="13" y="6" width="3" height="14" rx="0.5" /><rect x="17.5" y="4" width="3" height="16" rx="0.5" /></svg>);
+    case 'artist': return (<svg {...props}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c.55 0 1-.45 1-1v-1.5c0-.83.67-1.5 1.5-1.5H17c2.76 0 5-2.24 5-5 0-4.97-4.48-9-10-9z" fill="none" /><circle cx="7.5" cy="11.5" r="1.2" fill="#3c4043" stroke="none" /><circle cx="11" cy="7.5" r="1.2" fill="#3c4043" stroke="none" /><circle cx="15.5" cy="8.5" r="1.2" fill="#3c4043" stroke="none" /><circle cx="17" cy="12.5" r="1.2" fill="#3c4043" stroke="none" /></svg>);
+    case 'fridaytask': return (<svg {...props}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><line x1="9" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="13" y2="16" /></svg>);
+    case 'knowledge': return (<svg {...props}><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="14" y2="11" /></svg>);
+    default: return (<svg {...props}><circle cx="12" cy="12" r="8" /></svg>);
+  }
+}
+
+function StatusDot({ status }: { status: 'working' | 'pending' | 'idle' }) {
+  const color = status === 'working' ? '#1e8e3e' : status === 'pending' ? '#f9ab00' : '#dadce0';
+  return (
+    <svg className="w-2.5 h-2.5" viewBox="0 0 10 10">
+      <circle cx="5" cy="5" r="5" fill={color} />
+    </svg>
+  );
+}
+
+function RobotIcon() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="#3c4043" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <rect x="4" y="8" width="16" height="12" rx="2" />
+      <line x1="12" y1="8" x2="12" y2="4" />
+      <circle cx="12" cy="3" r="1" fill="#3c4043" stroke="none" />
+      <circle cx="9" cy="14" r="1.5" />
+      <circle cx="15" cy="14" r="1.5" />
+      <line x1="1" y1="13" x2="4" y2="13" />
+      <line x1="20" y1="13" x2="23" y2="13" />
+    </svg>
+  );
 }
 
 interface AgentCron {
@@ -25,12 +60,12 @@ interface AgentCron {
 }
 
 const AGENTS: AgentDef[] = [
-  { id: 'alpha', emoji: '📈', name: 'Alpha', projectPatterns: [/polymarket/i, /trading/i] },
-  { id: 'hu', emoji: '🀄', name: 'HU', projectPatterns: [/\bhu\b/i, /game/i] },
-  { id: 'aspen', emoji: '📊', name: 'Aspen', projectPatterns: [/aspen/i, /quant/i, /atrade/i, /nofx/i] },
-  { id: 'artist', emoji: '🍌', name: 'Artist', projectPatterns: [/artist/i, /design/i, /avatar/i, /image/i, /banana/i] },
-  { id: 'fridaytask', emoji: '📋', name: 'FridayTask', projectPatterns: [/friday/i, /infra/i, /\btask\b/i] },
-  { id: 'knowledge', emoji: '📚', name: 'Knowledge', projectPatterns: [/knowledge/i, /learning/i, /ai-push/i, /finance-push/i, /learn/i, /study/i] },
+  { id: 'alpha', name: 'Alpha', projectPatterns: [/polymarket/i, /trading/i] },
+  { id: 'hu', name: 'HU', projectPatterns: [/\bhu\b/i, /game/i] },
+  { id: 'aspen', name: 'Aspen', projectPatterns: [/aspen/i, /quant/i, /atrade/i, /nofx/i] },
+  { id: 'artist', name: 'Artist', projectPatterns: [/artist/i, /design/i, /avatar/i, /image/i, /banana/i] },
+  { id: 'fridaytask', name: 'FridayTask', projectPatterns: [/friday/i, /infra/i, /\btask\b/i] },
+  { id: 'knowledge', name: 'Knowledge', projectPatterns: [/knowledge/i, /learning/i, /ai-push/i, /finance-push/i, /learn/i, /study/i] },
 ];
 
 const cronMatchPatterns: Record<string, RegExp> = {
@@ -86,7 +121,7 @@ export default function AgentsModal({ isOpen, onClose, tasks, cronJobs }: Agents
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-[#dadce0] shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-xl">🤖</span>
+            <RobotIcon />
             <h2 className="text-lg font-semibold text-[#3c4043] tracking-wide">Agents</h2>
           </div>
           <button
@@ -163,9 +198,9 @@ export function AgentAccordion({ tasks, cronJobs }: { tasks: Task[]; cronJobs: C
 
   const statusBadge = (id: string) => {
     const t = agentTasks[id];
-    if (t.working.length > 0) return '🟢';
-    if (t.pending.length > 0) return '🟡';
-    return '⚪';
+    if (t.working.length > 0) return <StatusDot status="working" />;
+    if (t.pending.length > 0) return <StatusDot status="pending" />;
+    return <StatusDot status="idle" />;
   };
 
   const statusSummary = (id: string) => {
@@ -198,10 +233,10 @@ export function AgentAccordion({ tasks, cronJobs }: { tasks: Task[]; cronJobs: C
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f8f9fa]
                 ${isExpanded ? 'bg-[#fef7e0] border-b border-[#dadce0]' : ''}`}
             >
-              <span className="text-xl">{agent.emoji}</span>
+              <AgentIcon id={agent.id} />
               <span className="text-sm font-medium text-[#3c4043] flex-1">{agent.name}</span>
               <span className="text-xs text-[#70757a]">{statusSummary(agent.id)}</span>
-              <span className="text-sm">{statusBadge(agent.id)}</span>
+              {statusBadge(agent.id)}
               <svg
                 className={`w-4 h-4 text-[#70757a] transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"

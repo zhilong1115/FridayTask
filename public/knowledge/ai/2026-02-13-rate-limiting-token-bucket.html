@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate Limiting 深度解析：Token Bucket 算法 | Knowledge Push</title>
+<style>
+  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --orange: #d29922; --red: #f85149; --purple: #bc8cff; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; padding: 2rem; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h2 { color: var(--accent); margin: 2rem 0 1rem; font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { color: var(--green); margin: 1.5rem 0 0.8rem; font-size: 1.15rem; }
+  .meta { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.2rem 0; }
+  .card.highlight { border-left: 4px solid var(--accent); }
+  .card.warn { border-left: 4px solid var(--orange); }
+  .card.success { border-left: 4px solid var(--green); }
+  pre { background: #1a1f2b; border-radius: 8px; padding: 1.2rem; overflow-x: auto; font-size: 0.88rem; line-height: 1.5; margin: 1rem 0; }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; color: #c9d1d9; }
+  .inline-code { background: #1a1f2b; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+  th, td { padding: 0.7rem 1rem; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--card); color: var(--accent); }
+  td { background: var(--bg); }
+  .emoji { font-size: 1.2em; }
+  .tag { display: inline-block; padding: 0.15em 0.6em; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-right: 0.4em; }
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag-purple { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .thought-box { background: linear-gradient(135deg, rgba(88,166,255,0.08), rgba(188,140,255,0.08)); border: 1px solid var(--purple); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+  .thought-box h4 { color: var(--purple); margin-bottom: 0.5rem; }
+  ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+  li { margin: 0.3rem 0; }
+  .diagram { font-family: 'SF Mono', monospace; font-size: 0.85rem; line-height: 1.4; white-space: pre; color: var(--green); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>🪣 Rate Limiting 深度解析：Token Bucket 算法</h1>
+<p class="meta">
+  <span class="tag tag-blue">System Design</span>
+  <span class="tag tag-green">Rate Limiting</span>
+  <span class="tag tag-purple">Interview Ready</span>
+  2026-02-13 · Knowledge Push · AI/Tech Series
+</p>
+
+<div class="card highlight">
+<strong>💡 为什么学这个 / Why This Matters</strong><br>
+你在用 Claude Max 的时候发现了 5 小时滚动窗口限额——这背后就是 Token Bucket 算法。它是互联网世界里最基础的"流量守门员"，从 Nginx 到 AWS API Gateway，从 Stripe 到 OpenAI，几乎所有 API rate limiting 都依赖它。面试中 "Design a Rate Limiter" 也是经典系统设计题。
+</div>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2>一、Token Bucket：一个水龙头的故事 🚰</h2>
+
+<h3>直觉化理解</h3>
+<p>想象你有一个<strong>装代币的桶</strong>（Token Bucket）：</p>
+
+<div class="card success">
+<div class="diagram">
+    ┌──────────────────┐
+    │  Token Generator │  ← 匀速往桶里放代币（rate）
+    │   ⏱️ 每秒 r 个    │
+    └────────┬─────────┘
+             │ 💰💰💰
+             ▼
+    ╔══════════════════╗
+    ║   🪣 Token Bucket ║  ← 桶最多装 b 个代币（burst capacity）
+    ║   💰💰💰💰💰💰💰  ║
+    ╚════════╤═════════╝
+             │
+             ▼
+    ┌──────────────────┐
+    │  📨 每个请求消耗   │  ← 有代币 → 放行 ✅
+    │     1 个代币       │     没代币 → 拒绝 ❌ (429)
+    └──────────────────┘
+</div>
+</div>
+
+<p><strong>四个核心参数：</strong></p>
+<ol>
+  <li><strong>Rate (r)</strong>：代币补充速度，如 10 tokens/sec</li>
+  <li><strong>Burst (b)</strong>：桶的最大容量，如 100 tokens</li>
+  <li><strong>Tokens</strong>：当前桶里的代币数</li>
+  <li><strong>Last refill time</strong>：上次补充代币的时间戳</li>
+</ol>
+
+<h3>关键特性</h3>
+<div class="card">
+<p><strong>🔑 允许突发流量（Burst）</strong>：这是 Token Bucket 最大的优势。如果桶满了有 100 个代币，你可以瞬间发 100 个请求——然后回到每秒 10 个的稳态速率。</p>
+<p style="margin-top: 0.8rem;"><strong>Claude Max 的例子</strong>：5 小时滚动窗口，上限 N 条消息。你可以一口气把额度用完（burst），然后等代币慢慢回复——这就是为什么你会看到 "limit resets in X hours" 的倒计时。</p>
+</div>
+
+<h3>数学模型</h3>
+<div class="card">
+<p>在时刻 t 请求到达时：</p>
+<pre><code>// 1. 计算应该补充的代币
+elapsed = now - last_refill_time
+tokens = min(b, tokens + elapsed * r)
+last_refill_time = now
+
+// 2. 判断是否放行
+if tokens >= cost:
+    tokens -= cost
+    ALLOW ✅
+else:
+    DENY ❌ (HTTP 429 Too Many Requests)</code></pre>
+<p style="margin-top: 0.5rem; color: var(--muted);">注意：代币是"懒补充"（lazy refill）——不需要真的每秒往桶里塞，只在请求来的时候计算一下该补多少就行。这让实现极其轻量。</p>
+</div>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2>二、四大 Rate Limiting 算法对比 ⚔️</h2>
+
+<table>
+<tr>
+  <th>算法</th>
+  <th>原理</th>
+  <th>优点</th>
+  <th>缺点</th>
+  <th>适用场景</th>
+</tr>
+<tr>
+  <td><strong>Fixed Window</strong></td>
+  <td>按固定时间窗口计数（如每分钟 100 次）</td>
+  <td>实现最简单；内存小</td>
+  <td>窗口边界突发问题（59 秒 100 次 + 61 秒 100 次 = 2 秒内 200 次）</td>
+  <td>简单限流、不敏感场景</td>
+</tr>
+<tr>
+  <td><strong>Sliding Window Log</strong></td>
+  <td>记录每个请求时间戳，滑动计算窗口内请求数</td>
+  <td>精确；无边界问题</td>
+  <td>内存大（存每个请求 ts）；O(n) 清理</td>
+  <td>高精度、低流量场景</td>
+</tr>
+<tr>
+  <td><strong>Sliding Window Counter</strong></td>
+  <td>加权混合当前窗口和上一个窗口的计数</td>
+  <td>内存小；近似精确</td>
+  <td>只是近似值</td>
+  <td>实际最常用的 Fixed Window 改进版</td>
+</tr>
+<tr>
+  <td><strong>Leaky Bucket</strong></td>
+  <td>请求进队列，匀速流出处理</td>
+  <td>输出绝对平滑</td>
+  <td>无法处理突发；队列满则丢弃</td>
+  <td>网络流量整形（traffic shaping）</td>
+</tr>
+<tr>
+  <td style="color: var(--green);"><strong>Token Bucket ✅</strong></td>
+  <td>匀速补充代币，有代币就放行</td>
+  <td>允许突发；实现简单；参数直观</td>
+  <td>分布式一致性需额外设计</td>
+  <td>API 限流、网络 QoS、订阅计量</td>
+</tr>
+</table>
+
+<h3>Leaky Bucket vs Token Bucket — 最容易混淆的一对</h3>
+<div class="card warn">
+<p>一句话区分：</p>
+<ul>
+  <li><strong>Leaky Bucket</strong> = 水（请求）进桶，匀速漏出 → <strong>控制输出速率</strong>（平滑）</li>
+  <li><strong>Token Bucket</strong> = 代币匀速进桶，请求消耗代币 → <strong>控制输入速率</strong>（允许突发）</li>
+</ul>
+<p style="margin-top: 0.5rem;">Leaky Bucket 像一个<strong>严格的节拍器</strong>🎵——不管你多急，每秒只处理固定数量。<br>
+Token Bucket 像一个<strong>攒零花钱</strong>💰——攒够了可以一口气花掉，但长期来看花钱速度是恒定的。</p>
+</div>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2>三、为什么 Token Bucket 是工业界首选？</h2>
+
+<div class="card">
+<ol>
+  <li><strong>对用户友好</strong>：允许 burst。用户偶尔的请求高峰不会被粗暴拒绝，体验更好。</li>
+  <li><strong>参数语义清晰</strong>：rate = 长期平均速率，burst = 短期峰值容忍度。产品经理都能理解。</li>
+  <li><strong>实现极简</strong>：只需 2 个数字（tokens + timestamp），无需存请求日志，O(1) 时间和空间。</li>
+  <li><strong>灵活性强</strong>：
+    <ul>
+      <li>不同请求消耗不同数量的 token（如 GPT-4 消耗 10x GPT-3.5）</li>
+      <li>多层嵌套（per-user + per-IP + global）</li>
+      <li>动态调整 rate 和 burst</li>
+    </ul>
+  </li>
+  <li><strong>网络协议原生支持</strong>：Linux 内核的 <span class="inline-code">tc</span>（traffic control）直接用 Token Bucket Filter（TBF）</li>
+</ol>
+</div>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2>四、实际应用场景 🌍</h2>
+
+<h3>1. API Rate Limiting（最常见）</h3>
+<div class="card">
+<p><strong>Stripe</strong>: 100 requests/sec per API key, burst up to 200</p>
+<p><strong>GitHub API</strong>: 5000 requests/hour (token bucket with hourly refill)</p>
+<p><strong>OpenAI</strong>: TPM (tokens per minute) + RPM (requests per minute) 双重 token bucket</p>
+<pre><code>X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 42     ← 桶里剩余代币
+X-RateLimit-Reset: 1708300800 ← 下次补充时间
+Retry-After: 30               ← 429 时告诉客户端等多久</code></pre>
+</div>
+
+<h3>2. Claude Max Subscription</h3>
+<div class="card highlight">
+<p>Anthropic 的 Claude Max ($100/mo) 使用<strong>滚动窗口 Token Bucket</strong>变体：</p>
+<ul>
+  <li>Window: 5 hours (rolling)</li>
+  <li>Bucket: N messages (具体数字未公开，根据模型不同)</li>
+  <li>Refill: 消息额度在 5h 窗口内渐进恢复</li>
+  <li>不同模型消耗不同 token 数：Opus >> Sonnet >> Haiku</li>
+</ul>
+<p style="margin-top: 0.5rem;">这就是为什么你用 Opus 几条消息就触发限制，而 Haiku 可以聊很久——不同模型的"消耗成本"不同，但共享同一个桶。</p>
+</div>
+
+<h3>3. 网络 QoS（Quality of Service）</h3>
+<div class="card">
+<p>Linux 内核的 <span class="inline-code">tc tbf</span> 直接实现 Token Bucket Filter：</p>
+<pre><code># 限制 eth0 出口带宽为 1Mbit/s，burst 32KB
+tc qdisc add dev eth0 root tbf rate 1mbit burst 32kbit latency 400ms</code></pre>
+<p>AWS/GCP 的网络带宽限制、Docker 容器网络限流，底层都是 TBF。</p>
+</div>
+
+<h3>4. 其他场景</h3>
+<div class="card">
+<ul>
+  <li><strong>消息队列消费速率</strong>：Kafka consumer 用 token bucket 控制消费速度，避免压垮下游</li>
+  <li><strong>登录防暴力破解</strong>：每个 IP 每分钟最多 5 次登录尝试</li>
+  <li><strong>短信/邮件发送</strong>：防止滥用，每用户每天最多 10 条验证码</li>
+  <li><strong>微服务熔断</strong>：Envoy/Istio 的 rate limiting filter</li>
+</ul>
+</div>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2>五、代码实现 💻</h2>
+
+<h3>Python 实现（单机版）</h3>
+<pre><code>import time
+from threading import Lock
+
+class TokenBucket:
+    """Thread-safe Token Bucket rate limiter."""
+    
+    def __init__(self, rate: float, capacity: int):
+        """
+        Args:
+            rate: tokens added per second (refill rate)
+            capacity: max tokens the bucket can hold (burst size)
+        """
+        self.rate = rate
+        self.capacity = capacity
+        self.tokens = capacity  # start full
+        self.last_refill = time.monotonic()
+        self.lock = Lock()
+    
+    def consume(self, tokens: int = 1) -> bool:
+        """Try to consume tokens. Returns True if allowed."""
+        with self.lock:
+            now = time.monotonic()
+            # Lazy refill: calculate tokens earned since last check
+            elapsed = now - self.last_refill
+            self.tokens = min(
+                self.capacity,
+                self.tokens + elapsed * self.rate
+            )
+            self.last_refill = now
+            
+            if self.tokens >= tokens:
+                self.tokens -= tokens
+                return True  # ✅ Allowed
+            return False      # ❌ Rate limited
+    
+    def wait_time(self) -> float:
+        """How long until 1 token is available."""
+        if self.tokens >= 1:
+            return 0.0
+        return (1 - self.tokens) / self.rate
+
+# Usage
+limiter = TokenBucket(rate=10, capacity=100)  # 10 req/s, burst 100
+
+for i in range(120):
+    if limiter.consume():
+        print(f"Request {i}: ✅ Allowed")
+    else:
+        wait = limiter.wait_time()
+        print(f"Request {i}: ❌ Limited (retry in {wait:.2f}s)")</code></pre>
+
+<h3>Redis 实现（分布式版）</h3>
+<pre><code>-- token_bucket.lua (Redis Lua script, atomic execution)
+local key = KEYS[1]
+local rate = tonumber(ARGV[1])       -- tokens per second
+local capacity = tonumber(ARGV[2])   -- max bucket size
+local now = tonumber(ARGV[3])        -- current timestamp (ms)
+local requested = tonumber(ARGV[4])  -- tokens to consume
+
+-- Get current state
+local data = redis.call('HMGET', key, 'tokens', 'last_refill')
+local tokens = tonumber(data[1]) or capacity
+local last_refill = tonumber(data[2]) or now
+
+-- Refill tokens
+local elapsed = (now - last_refill) / 1000.0
+tokens = math.min(capacity, tokens + elapsed * rate)
+
+-- Try to consume
+local allowed = 0
+if tokens >= requested then
+    tokens = tokens - requested
+    allowed = 1
+end
+
+-- Save state (expire key after bucket-fill-time as safety)
+redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+redis.call('PEXPIRE', key, math.ceil(capacity / rate) * 2000)
+
+return { allowed, math.floor(tokens * 100) / 100 }</code></pre>
+
+<pre><code># Python wrapper
+import redis, time
+
+r = redis.Redis()
+script = r.register_script(open('token_bucket.lua').read())
+
+def is_allowed(user_id: str, rate=10, capacity=100, cost=1) -> bool:
+    key = f"ratelimit:{user_id}"
+    now_ms = int(time.time() * 1000)
+    result = script(keys=[key], args=[rate, capacity, now_ms, cost])
+    return bool(result[0])</code></pre>
+
+<!-- ==================== SECTION 6 ==================== -->
+<h2>六、面试题：Design a Distributed Rate Limiter 🎯</h2>
+
+<div class="card highlight">
+<h3>题目</h3>
+<p>设计一个分布式 rate limiter，支持多机房部署，每个 API key 限制 1000 req/min。</p>
+</div>
+
+<h3>Step 1: 需求分析</h3>
+<div class="card">
+<ul>
+  <li><strong>功能需求</strong>：按 API key 限流；返回剩余额度和重置时间；支持不同 tier</li>
+  <li><strong>非功能需求</strong>：低延迟（<1ms overhead）；高可用；最终一致即可（宁可偶尔多放几个请求，不能误杀）</li>
+  <li><strong>规模</strong>：100M DAU，peak 1M QPS</li>
+</ul>
+</div>
+
+<h3>Step 2: 高层设计</h3>
+<div class="card">
+<div class="diagram">
+Client → API Gateway → Rate Limiter Middleware → Backend Service
+                              │
+                              ▼
+                     ┌─────────────────┐
+                     │  Redis Cluster   │  ← Token Bucket state
+                     │  (per API key)   │
+                     └─────────────────┘
+                              │
+                     ┌────────┴────────┐
+                     │  Rules Config    │  ← Rate limit rules per tier
+                     │  (DB / Config)   │
+                     └─────────────────┘
+</div>
+</div>
+
+<h3>Step 3: 核心设计决策</h3>
+
+<div class="card">
+<h4>🔹 为什么选 Token Bucket？</h4>
+<p>允许 burst 对 API 用户更友好；两个参数（rate, burst）直接映射为产品需求。</p>
+
+<h4>🔹 为什么用 Redis？</h4>
+<ul>
+  <li>单线程 → 天然原子操作（Lua script 保证原子性）</li>
+  <li>内存数据库 → 低延迟</li>
+  <li>Cluster 模式 → 水平扩展（按 key hash 分片）</li>
+</ul>
+
+<h4>🔹 多机房同步策略</h4>
+<table>
+<tr><th>方案</th><th>一致性</th><th>延迟</th><th>适用</th></tr>
+<tr><td>中心化 Redis</td><td>强</td><td>高（跨机房 RTT）</td><td>严格限流</td></tr>
+<tr><td>本地 Redis + 异步同步</td><td>最终一致</td><td>低</td><td>大多数场景 ✅</td></tr>
+<tr><td>本地计数 + 定期汇总</td><td>弱</td><td>最低</td><td>容忍度高的场景</td></tr>
+</table>
+<p style="margin-top: 0.5rem;"><strong>推荐方案</strong>：每个机房有本地 Redis，按比例分配额度（如 3 个机房各分 333 req/min），定期同步调整。牺牲少量精度换取低延迟和高可用。</p>
+</div>
+
+<h3>Step 4: 容错设计</h3>
+<div class="card">
+<ul>
+  <li><strong>Redis 挂了怎么办？</strong> → Fail-open（放行）。Rate limiting 是保护措施，不应成为单点故障。可降级为本地内存 Token Bucket。</li>
+  <li><strong>时钟不同步？</strong> → 用 Redis 服务端时间（<span class="inline-code">redis.call('TIME')</span>），不依赖客户端时钟。</li>
+  <li><strong>Race condition？</strong> → Redis Lua 脚本原子执行，无需分布式锁。</li>
+  <li><strong>热点 key（大客户）？</strong> → 本地缓存 + 定期同步 Redis，减少对单个 Redis node 的压力。</li>
+</ul>
+</div>
+
+<h3>Step 5: HTTP 响应设计</h3>
+<pre><code>// 正常响应，携带限流头
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 1000          // 总额度
+X-RateLimit-Remaining: 742       // 剩余
+X-RateLimit-Reset: 1708300860    // 重置时间 (Unix epoch)
+
+// 被限流
+HTTP/1.1 429 Too Many Requests
+Retry-After: 17                  // 建议等待秒数
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1708300860
+Content-Type: application/json
+
+{"error": "rate_limit_exceeded", "message": "Too many requests"}</code></pre>
+
+<div class="thought-box">
+<h4>🤔 面试加分点</h4>
+<ul>
+  <li><strong>多维度限流</strong>：per-user, per-IP, per-endpoint, global 四层嵌套，取最严格的</li>
+  <li><strong>动态调整</strong>：根据系统负载动态降低 rate（自适应限流 / adaptive throttling）</li>
+  <li><strong>客户端配合</strong>：SDK 内置 exponential backoff + jitter，尊重 Retry-After header</li>
+  <li><strong>可观测性</strong>：Prometheus metrics（rate_limited_total, bucket_tokens histogram），Grafana dashboard</li>
+  <li><strong>公平性</strong>：使用 Weighted Token Bucket，不同 tier 的客户有不同的 rate 和 burst</li>
+</ul>
+</div>
+
+<!-- ==================== SECTION 7 ==================== -->
+<h2>七、知识图谱连接 🕸️</h2>
+
+<div class="card">
+<p>Token Bucket 和之前学过的内容的关系：</p>
+<ul>
+  <li><strong>Design ChatGPT</strong>（Day 1）→ API Gateway 层的 rate limiting 就用 Token Bucket</li>
+  <li><strong>Design Recommendation System</strong>（Day 2）→ 推荐 API 的流量控制</li>
+  <li><strong>RAG System</strong>（Phase 1.3）→ Embedding API 调用频率控制，避免被 OpenAI 限流</li>
+  <li><strong>分布式系统</strong> → Rate Limiter 是微服务架构的基础组件，和 Circuit Breaker、Bulkhead 共同构成弹性设计三板斧</li>
+</ul>
+</div>
+
+<!-- ==================== SUMMARY ==================== -->
+<h2>八、一页总结 📋</h2>
+
+<div class="card success">
+<table>
+<tr><th>概念</th><th>要记住的</th></tr>
+<tr><td>Token Bucket 原理</td><td>匀速补充代币，请求消耗代币。<strong>两个参数</strong>：rate（长期速率）+ burst（短期峰值）</td></tr>
+<tr><td>vs Leaky Bucket</td><td>Token Bucket 允许 burst（控制输入），Leaky Bucket 绝对平滑（控制输出）</td></tr>
+<tr><td>实现核心</td><td>Lazy refill：不需要定时器，请求来了才算补了多少。O(1) 时间/空间</td></tr>
+<tr><td>分布式方案</td><td>Redis Lua script 保证原子性 + 本地缓存减少跨网络调用</td></tr>
+<tr><td>容错原则</td><td>Fail-open（Redis 挂了就放行），rate limiting 不能成为系统单点故障</td></tr>
+<tr><td>Claude Max</td><td>5h rolling window Token Bucket 变体，不同模型消耗不同 token 数</td></tr>
+</table>
+</div>
+
+<div class="thought-box">
+<h4>💭 思考题 / Think About It</h4>
+<p>如果你在设计一个 AI API 平台（类似 OpenAI），你会怎么设计 rate limiting 的定价模型？</p>
+<ul>
+  <li>按请求数（RPM）还是按 token 数（TPM）计费更合理？为什么？</li>
+  <li>如何让免费用户和付费用户共享同一套系统，同时保证付费用户不被免费用户的流量影响？</li>
+  <li>Hint: 想想 <strong>Weighted Token Bucket</strong> + <strong>Priority Queue</strong> 的组合。</li>
+</ul>
+</div>
+
+<hr style="border-color: var(--border); margin: 2rem 0;">
+<p style="color: var(--muted); font-size: 0.85rem;">
+  📚 Knowledge Push · AI/Tech Series · Rate Limiting Special<br>
+  Next up: Day 5 — Design AI Code Review System
+</p>
+
+</body>
+</html>
