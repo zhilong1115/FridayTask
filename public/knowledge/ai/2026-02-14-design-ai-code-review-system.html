@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-14 - 设计 AI Code Review 系统</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #1a1a1a; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #e8eaed; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 40px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Monaco, monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-blue { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-green { background: #e6f4ea; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 13px; white-space: pre; overflow-x: auto; line-height: 1.4; }
+    .interview { background: #fce8e6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .tag { display: inline-block; background: #e8eaed; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .series-nav { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .metric { font-size: 24px; font-weight: bold; color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+<div class="series-nav">
+  <strong>📋 AI System Design 面试题系列 | Day 5 of 5 — 系列完结篇！</strong><br>
+  Day 1: <a href="2026-02-10-design-chatgpt-system.html">设计 ChatGPT</a> →
+  Day 2: <a href="2026-02-11-design-recommendation-system.html">设计推荐系统</a> →
+  Day 3: <a href="2026-02-12-design-semantic-search-engine.html">设计语义搜索引擎</a> →
+  Day 4: <a href="2026-02-13-design-rag-knowledge-base.html">设计 RAG 知识库</a> →
+  <strong>Day 5: 设计 AI Code Review 系统</strong> 🎯
+</div>
+
+<h1>🔍 设计 AI Code Review 系统 — System Design</h1>
+<p><span class="tag">AI System Design</span> <span class="tag">Code Review</span> <span class="tag">AST</span> <span class="tag">LLM</span> <span class="tag">面试高频</span></p>
+<p>参考产品: CodeRabbit, Qodo (PR-Agent), GitHub Copilot Code Review, Baz Reviewer</p>
+
+<h2>📖 题目 / Problem Statement</h2>
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>面试官：</strong>请设计一个 AI 代码审查系统，像 CodeRabbit 一样，在开发者提交 PR 时自动生成有意义的代码审查意见。</p>
+    <p><strong>核心需求：</strong></p>
+    <ul>
+      <li>每天处理 10 万+ PR，平均每个 PR 修改 15 个文件</li>
+      <li>理解代码变更的语义（不是简单 lint）</li>
+      <li>感知项目上下文、历史决策、团队规范</li>
+      <li>生成 inline 级别的审查意见 + PR 级别的总结</li>
+      <li>支持多语言（Python, TypeScript, Go, Java, Rust...）</li>
+      <li>低延迟（PR 提交后 2-5 分钟内完成）</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Interviewer:</strong> Design an AI code review system that automatically generates meaningful review comments when developers submit PRs, similar to CodeRabbit.</p>
+    <p><strong>Core requirements:</strong></p>
+    <ul>
+      <li>Process 100K+ PRs/day, avg 15 files changed per PR</li>
+      <li>Understand semantic meaning of changes (not just linting)</li>
+      <li>Context-aware: project history, design decisions, team conventions</li>
+      <li>Generate inline comments + PR-level summaries</li>
+      <li>Multi-language support</li>
+      <li>Low latency: complete within 2-5 min of PR submission</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🏗️ 高层架构 / High-Level Architecture</h2>
+
+<div class="diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                        GitHub / GitLab Webhook                       │
+│                    (PR opened / synchronized)                        │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                     1. INGESTION LAYER                                │
+│  ┌──────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │
+│  │ Webhook  │→ │ PR Metadata  │→ │ Diff Parser  │→ │ File Fetch │  │
+│  │ Receiver │  │ Extractor    │  │ (Difftastic) │  │ (Full Ctx) │  │
+│  └──────────┘  └──────────────┘  └──────────────┘  └────────────┘  │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                     2. CONTEXT ASSEMBLY LAYER                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
+│  │ AST Parser   │  │ Dependency   │  │ Knowledge Graph Query    │  │
+│  │ (Tree-sitter)│  │ Graph Builder│  │ (history, issues, rules) │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────────┘  │
+│         └──────────────────┴─────────────────────┘                   │
+│                            │                                         │
+│                    Context Package                                   │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                     3. REVIEW ENGINE (LLM)                           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
+│  │ File-Level   │  │ PR-Level     │  │ Verification Agent       │  │
+│  │ Reviewer     │  │ Summarizer   │  │ (reduce false positives) │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────────┘  │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                     4. OUTPUT & FEEDBACK LAYER                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
+│  │ Comment      │  │ De-duplicate │  │ Learning Loop            │  │
+│  │ Formatter    │  │ & Prioritize │  │ (thumbs up/down → finetune)│ │
+│  └──────────────┘  └──────────────┘  └──────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────┘
+</div>
+
+<h2>🔧 核心组件深入 / Deep Dive</h2>
+
+<h3>组件 1: Diff 解析 — 超越 git diff</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>问题：</strong>git diff 是纯文本对比，它不理解代码结构。一个简单的自动格式化可能产生上百行 diff，但语义完全没变。</p>
+    <p><strong>三层 diff 策略：</strong></p>
+    <ol>
+      <li><strong>Text Diff (git diff)</strong> — 基础层，获取变更的行</li>
+      <li><strong>Syntax Diff (Difftastic)</strong> — 语法感知，过滤格式噪音，只关注逻辑变更</li>
+      <li><strong>Semantic Diff (Tree-sitter AST)</strong> — 结构化理解：函数重命名、参数变化、依赖链</li>
+    </ol>
+    <p><strong>为什么这样设计：</strong>LLM 的 context window 有限，给它一堆格式变更的 diff 就是浪费 token。Difftastic 过滤噪音可以节省 40-60% 的 token，让 LLM 专注于真正有意义的变更。</p>
+  </div>
+  <div class="en">
+    <p><strong>Problem:</strong> git diff is text-level comparison, unaware of code structure. Auto-formatting can produce 100+ line diffs with zero semantic change.</p>
+    <p><strong>Three-tier diff strategy:</strong></p>
+    <ol>
+      <li><strong>Text Diff (git diff)</strong> — Base layer, lines changed</li>
+      <li><strong>Syntax Diff (Difftastic)</strong> — Grammar-aware, filters formatting noise</li>
+      <li><strong>Semantic Diff (Tree-sitter AST)</strong> — Structural: renames, param changes, dependency chains</li>
+    </ol>
+    <p><strong>Why:</strong> LLM context windows are finite. Feeding formatting noise wastes tokens. Difftastic filters save 40-60% tokens, letting the LLM focus on meaningful changes.</p>
+  </div>
+</div>
+
+<pre><code>// Tree-sitter AST diff example — detect function signature change
+// Before:
+function processOrder(order: Order): Result { ... }
+
+// After:  
+async function processOrder(order: Order, options?: ProcessOptions): Promise&lt;Result&gt; { ... }
+
+// AST diff detects:
+// 1. Function became async (behavioral change!)
+// 2. New optional parameter added (API change)
+// 3. Return type changed to Promise (all callers must handle async)
+// → These are HIGH-SIGNAL changes worth reviewing
+
+// Meanwhile, git diff would also show:
+// - Indentation changes in the function body (noise)
+// - Blank line additions (noise)
+// → Difftastic filters these out</code></pre>
+
+<h3>组件 2: Context Assembly — 三层上下文工程</h3>
+
+<div class="highlight">
+  <h4>💡 核心洞察：Context Engineering > Prompt Engineering</h4>
+  <p>CodeRabbit 的核心竞争力不是更好的 prompt，而是更好的 context。给 LLM 正确的上下文，比调 prompt 重要 10x。</p>
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>三层上下文模型：</strong></p>
+    <p><strong>Layer 1: Code Context（代码层）</strong></p>
+    <ul>
+      <li><strong>变更文件的完整内容</strong>（不只是 diff hunk）</li>
+      <li><strong>关联文件</strong>：import 的模块、被引用的类型定义</li>
+      <li><strong>调用链</strong>：谁调用了被修改的函数？修改会影响谁？</li>
+    </ul>
+    <p><strong>Layer 2: Project Context（项目层）</strong></p>
+    <ul>
+      <li><strong>历史 PR</strong>：这个文件 / 模块过去改过什么？上次 review 提了什么意见？</li>
+      <li><strong>Issue/Ticket</strong>：这个 PR 关联的 Jira/Linear ticket，理解开发者的 intent</li>
+      <li><strong>Architecture Rules</strong>：项目级别的约定（如 "所有 API 都要经过 auth middleware"）</li>
+    </ul>
+    <p><strong>Layer 3: Team Context（团队层）</strong></p>
+    <ul>
+      <li><strong>Review Learnings</strong>：之前 reviewer 给的 thumbs up/down，学习团队偏好</li>
+      <li><strong>Custom Instructions</strong>：团队自定义规则（如 "我们用 Result 类型而不是 throw"）</li>
+      <li><strong>Tribal Knowledge</strong>：不成文规范（"input validation 放在 lib/security"）</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Three-layer context model:</strong></p>
+    <p><strong>Layer 1: Code Context</strong></p>
+    <ul>
+      <li>Full file content (not just diff hunks)</li>
+      <li>Related files: imported modules, referenced type definitions</li>
+      <li>Call chain: who calls modified functions? Who's affected?</li>
+    </ul>
+    <p><strong>Layer 2: Project Context</strong></p>
+    <ul>
+      <li>Historical PRs: past changes to this file/module, prior review comments</li>
+      <li>Issues/Tickets: linked Jira/Linear tickets reveal developer intent</li>
+      <li>Architecture rules: project-level conventions</li>
+    </ul>
+    <p><strong>Layer 3: Team Context</strong></p>
+    <ul>
+      <li>Review learnings: past thumbs up/down feedback</li>
+      <li>Custom instructions: team-specific rules</li>
+      <li>Tribal knowledge: unwritten conventions</li>
+    </ul>
+  </div>
+</div>
+
+<div class="diagram">
+Context Assembly Pipeline:
+
+PR Webhook
+    │
+    ├──→ Git API ──→ Diff + Full Files ──→ ┐
+    │                                       │
+    ├──→ Tree-sitter ──→ AST + Call Graph ──┤
+    │                                       │
+    ├──→ Vector DB ──→ Similar Past PRs ────┤──→ Context
+    │    (LanceDB)     Related Code         │    Package
+    │                                       │
+    ├──→ Issue Tracker ──→ Ticket Context ──┤
+    │    (Jira/Linear)                      │
+    │                                       │
+    └──→ Rules DB ──→ Custom Instructions ──┘
+              Team Learnings
+
+Token Budget: ~100K tokens per review
+  - Diff + Full Files: ~40K (40%)
+  - AST / Call Graph:  ~15K (15%)
+  - Historical PRs:    ~20K (20%)
+  - Issue Context:     ~10K (10%)
+  - Rules + Learnings: ~15K (15%)
+</div>
+
+<h3>组件 3: Review Engine — Pipeline vs Agentic</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>关键架构决策：Pipeline 还是 Agentic？</strong></p>
+    <p>这是面试中的高分答题点。两种模式各有适用场景：</p>
+    
+    <p><strong>Pipeline 模式（推荐基础架构）：</strong></p>
+    <ul>
+      <li>固定流程：Diff → Context → Review → Verify → Output</li>
+      <li>每步有明确输入输出，可并行执行</li>
+      <li>延迟可预测，成本可控</li>
+      <li>适用于 95% 的常规 PR</li>
+    </ul>
+    
+    <p><strong>Agentic 模式（高级功能）：</strong></p>
+    <ul>
+      <li>Agent 有自主探索能力：看到可疑代码 → 主动查看相关文件 → 追溯 git blame → 形成完整判断</li>
+      <li>适用于复杂重构、跨模块变更</li>
+      <li>延迟不可预测，成本更高</li>
+      <li>适用于 5% 的复杂 PR</li>
+    </ul>
+
+    <p><strong>最佳实践：</strong>先用 Pipeline 做基础 review，用启发式规则检测复杂 PR，对复杂 PR 启动 Agentic review。</p>
+  </div>
+  <div class="en">
+    <p><strong>Key architecture decision: Pipeline vs Agentic?</strong></p>
+    <p>This is a high-scoring interview point.</p>
+    
+    <p><strong>Pipeline (recommended base):</strong></p>
+    <ul>
+      <li>Fixed flow: Diff → Context → Review → Verify → Output</li>
+      <li>Clear I/O per step, parallelizable</li>
+      <li>Predictable latency, controllable cost</li>
+      <li>Covers 95% of standard PRs</li>
+    </ul>
+    
+    <p><strong>Agentic (advanced):</strong></p>
+    <ul>
+      <li>Agent autonomously explores: suspicious code → check related files → git blame → form judgment</li>
+      <li>For complex refactors, cross-module changes</li>
+      <li>Unpredictable latency, higher cost</li>
+      <li>For ~5% complex PRs</li>
+    </ul>
+
+    <p><strong>Best practice:</strong> Pipeline for base review + heuristic-triggered Agentic for complex PRs.</p>
+  </div>
+</div>
+
+<pre><code>// Review Engine — file-level review pipeline
+interface ReviewPipeline {
+  // Step 1: Per-file review (parallelized across files)
+  reviewFile(context: FileReviewContext): FileReview;
+  
+  // Step 2: Cross-file analysis (sequential, needs all file reviews)
+  crossFileAnalysis(fileReviews: FileReview[]): CrossFileInsight[];
+  
+  // Step 3: PR-level summary
+  summarizePR(fileReviews: FileReview[], crossInsights: CrossFileInsight[]): PRSummary;
+  
+  // Step 4: Verification pass (reduce false positives)
+  verify(comments: ReviewComment[]): ReviewComment[];
+}
+
+interface FileReviewContext {
+  filePath: string;
+  diff: SemanticDiff;           // Difftastic output
+  fullFile: string;              // Complete file content
+  ast: ASTNode;                  // Tree-sitter AST
+  relatedFiles: RelatedFile[];   // Imports, type defs
+  historicalPRs: PRSummary[];    // Past changes to this file
+  teamRules: Rule[];             // Custom instructions
+}
+
+// Complexity detector — triggers agentic review
+function isComplexPR(pr: PRMetadata): boolean {
+  return (
+    pr.filesChanged > 30 ||
+    pr.hasSchemaChanges ||
+    pr.touchesMultipleServices ||
+    pr.deletedLines > 500 ||
+    pr.labels.includes('refactor')
+  );
+}</code></pre>
+
+<h3>组件 4: Verification Agent — 降低误报率</h3>
+
+<div class="highlight">
+  <h4>⚠️ AI Code Review 最大挑战：False Positives</h4>
+  <p>如果 10 条评论里 7 条是噪音，开发者会停止看你的评论。<strong>精准度 > 召回率</strong>。宁可漏掉一个问题，也不要给错误建议。</p>
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>三层验证机制：</strong></p>
+    <ol>
+      <li><strong>Static Analysis 交叉验证</strong>：Review 说 "这里有类型错误" → 跑 TypeScript compiler 确认</li>
+      <li><strong>LLM Self-Verification</strong>：用不同 prompt 让模型挑战自己的结论（"给出这条评论可能错误的理由"）</li>
+      <li><strong>Confidence Scoring</strong>：每条评论附带置信度，低于阈值的自动过滤或降级显示</li>
+    </ol>
+    <p><strong>效果：</strong>验证层通常过滤掉 30-40% 的初始评论，大幅提升用户信任度。</p>
+  </div>
+  <div class="en">
+    <p><strong>Three-tier verification:</strong></p>
+    <ol>
+      <li><strong>Static analysis cross-check</strong>: "Type error here" → run TypeScript compiler to confirm</li>
+      <li><strong>LLM self-verification</strong>: Challenge its own conclusions with adversarial prompt</li>
+      <li><strong>Confidence scoring</strong>: Each comment gets a confidence score; below threshold = filter/downgrade</li>
+    </ol>
+    <p><strong>Impact:</strong> Verification typically filters 30-40% of initial comments, dramatically improving user trust.</p>
+  </div>
+</div>
+
+<pre><code>// Verification Agent
+async function verifyComment(comment: ReviewComment, context: FileReviewContext): Promise&lt;VerifiedComment | null&gt; {
+  // Layer 1: Static analysis check
+  if (comment.category === 'type-error') {
+    const compilerResult = await runTypeCheck(context.fullFile);
+    if (!compilerResult.hasError(comment.line)) {
+      return null; // False positive — compiler disagrees
+    }
+  }
+
+  // Layer 2: LLM self-challenge
+  const challenge = await llm.complete({
+    system: "You are a skeptical reviewer. Find reasons why this review comment might be WRONG.",
+    user: `Comment: "${comment.text}"\nCode: ${comment.codeSnippet}\nContext: ${context.summary}`
+  });
+
+  // Layer 3: Confidence scoring
+  const confidence = await scoreConfidence(comment, challenge);
+  
+  if (confidence < 0.6) return null;         // Filter out
+  if (confidence < 0.8) comment.severity = 'nitpick';  // Downgrade
+  
+  return { ...comment, confidence, challengeReason: challenge };
+}</code></pre>
+
+<h3>组件 5: Knowledge Graph & Vector Store</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>为什么需要向量数据库？</strong></p>
+    <p>每次 review 都需要找到"相关的历史上下文"。这不是精确匹配，而是语义搜索：</p>
+    <ul>
+      <li>"之前有人改过类似的认证逻辑吗？他们犯了什么错？"</li>
+      <li>"这个模式在 codebase 里其他地方是怎么实现的？"</li>
+      <li>"上次碰到类似的性能问题，reviewer 建议了什么？"</li>
+    </ul>
+    
+    <p><strong>数据源（CodeRabbit 方案）：</strong></p>
+    <ul>
+      <li>每个 repo 一组 vector tables（不是全局共享）</li>
+      <li>索引内容：PR 摘要、review 评论、commit messages、issue descriptions</li>
+      <li>Code chunks 用 Tree-sitter 做语义分块（按函数/类，不是按行数）</li>
+      <li>实时更新：每个新 PR merge 后立即索引</li>
+    </ul>
+
+    <p><strong>CodeRabbit 用 LanceDB 的原因：</strong></p>
+    <ul>
+      <li>每个 repo 是独立的 table → 数据隔离 + 支持 on-prem</li>
+      <li>每天处理百万级向量查询，需要低延迟</li>
+      <li>支持 multimodal（代码 + 文本混合索引）</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Why vector DB?</strong></p>
+    <p>Each review needs "relevant historical context" — semantic search, not exact match:</p>
+    <ul>
+      <li>"Has someone modified similar auth logic before? What mistakes?"</li>
+      <li>"How is this pattern implemented elsewhere in the codebase?"</li>
+      <li>"What did reviewers suggest for similar perf issues?"</li>
+    </ul>
+    
+    <p><strong>Data sources (CodeRabbit approach):</strong></p>
+    <ul>
+      <li>Per-repo vector tables (not globally shared)</li>
+      <li>Indexed: PR summaries, review comments, commits, issues</li>
+      <li>Code chunks via Tree-sitter (by function/class, not line count)</li>
+      <li>Real-time: index immediately after each PR merge</li>
+    </ul>
+  </div>
+</div>
+
+<h2>📊 容量估算 / Capacity Estimation</h2>
+
+<table>
+  <tr><th>指标</th><th>数值</th><th>推导</th></tr>
+  <tr><td>Daily PRs</td><td class="metric">100K</td><td>Given</td></tr>
+  <tr><td>Avg files/PR</td><td>15</td><td>Given</td></tr>
+  <tr><td>Total file reviews/day</td><td>1.5M</td><td>100K × 15</td></tr>
+  <tr><td>Avg tokens per file review</td><td>~8K input + ~1K output</td><td>Context + diff + response</td></tr>
+  <tr><td>Total tokens/day</td><td>~13.5B input + ~1.5B output</td><td>1.5M × (8K + 1K)</td></tr>
+  <tr><td>LLM cost/day (GPT-4o-mini)</td><td>~$2,700</td><td>$0.15/1M in + $0.6/1M out</td></tr>
+  <tr><td>LLM cost/day (Claude Sonnet)</td><td>~$13,500</td><td>$3/1M in + $15/1M out (more accurate)</td></tr>
+  <tr><td>PR summary tokens</td><td>~20K in + ~2K out per PR</td><td>Aggregation of file reviews</td></tr>
+  <tr><td>Verification pass</td><td>+30% token overhead</td><td>Self-challenge on flagged comments</td></tr>
+  <tr><td>Vector DB queries/day</td><td>~3M</td><td>~2 queries/file × 1.5M files</td></tr>
+  <tr><td>Latency budget</td><td>&lt;3 min p95</td><td>Files reviewed in parallel</td></tr>
+  <tr><td>Peak QPS (webhook)</td><td>~5 PRs/sec</td><td>100K/day, peak 4x average</td></tr>
+</table>
+
+<div class="highlight-green">
+  <h4>💰 成本优化策略</h4>
+  <p><strong>Model Routing</strong>：简单文件（config, docs, tests）→ GPT-4o-mini ($0.15/1M); 核心逻辑文件 → Claude Sonnet ($3/1M)</p>
+  <p><strong>Diff-based Token Saving</strong>：Difftastic 过滤格式噪音，节省 40-60% tokens</p>
+  <p><strong>Semantic Cache</strong>：相同 pattern 的变更（如 "add try-catch"）缓存 review template</p>
+  <p><strong>混合模型后，估计日均成本：~$4,000-6,000</strong>（70% mini + 30% Sonnet）</p>
+</div>
+
+<h2>🔑 设计亮点总结 / Key Design Decisions</h2>
+
+<div class="highlight-blue">
+  <h4>亮点 1: Context Engineering > Prompt Engineering</h4>
+  <p>与其花时间调 prompt，不如投资在给 LLM 更好的上下文。三层上下文模型（Code → Project → Team）是核心竞争力。</p>
+</div>
+
+<div class="highlight-blue">
+  <h4>亮点 2: 三层 Diff（Text → Syntax → Semantic）</h4>
+  <p>用 Difftastic + Tree-sitter 替代原始 git diff，不仅节省 token，还让 LLM 能理解代码的结构性变化而非文本变化。</p>
+</div>
+
+<div class="highlight-blue">
+  <h4>亮点 3: Pipeline + Agentic 混合架构</h4>
+  <p>95% 用确定性 Pipeline（可预测、便宜），5% 复杂 PR 用 Agentic（灵活、深入）。这是成本和质量的最优权衡。</p>
+</div>
+
+<div class="highlight-blue">
+  <h4>亮点 4: Verification Agent（精准度优先）</h4>
+  <p>Static Analysis 交叉验证 + LLM 自我挑战 + 置信度评分。宁可少说，不可说错 — 这是 AI review 获得用户信任的关键。</p>
+</div>
+
+<div class="highlight-blue">
+  <h4>亮点 5: 反馈闭环（Learning Loop）</h4>
+  <p>用户的 thumbs up/down、resolve/dismiss 行为自动反哺到团队知识库。系统越用越懂你的团队，形成网络效应。</p>
+</div>
+
+<h2>🎤 面试高频问题 / Interview Questions</h2>
+
+<div class="interview">
+  <h4>Q1: 如何处理超大 PR（100+ 文件）？</h4>
+  <p><strong>答：</strong>分层处理。① 先用 AST 做变更分类（重构、新功能、bugfix、test）→ 按优先级排序。② 文件级 review 完全并行化。③ 设置 token budget 上限，超出的文件只做 summary 不做 inline comment。④ 建议开发者拆分 PR（这本身就是一条有价值的 review）。⑤ 可以用 Agent 模式做 progressive review —— 先 review 核心文件，再根据发现展开。</p>
+</div>
+
+<div class="interview">
+  <h4>Q2: 如何支持多语言？每种语言需要不同的模型吗？</h4>
+  <p><strong>答：</strong>LLM 本身是多语言的，不需要每种语言一个模型。关键在 <strong>parsing 层</strong>：① Tree-sitter 支持 200+ 语言的 AST 解析。② Difftastic 也支持多语言语法 diff。③ 语言特定的规则（如 Go 的 error handling 惯例、Rust 的 ownership 模式）通过 <strong>Custom Instructions + Few-shot Examples</strong> 注入，不需要训练新模型。④ 可以为不同语言调整 review prompt 的关注点。</p>
+</div>
+
+<div class="interview">
+  <h4>Q3: 如何减少 false positives？用户不信任怎么办？</h4>
+  <p><strong>答：</strong>这是 AI review 最关键的挑战。① <strong>Verification Agent</strong>：每条评论经过 static analysis 交叉验证 + LLM 自我挑战。② <strong>Confidence scoring</strong>：低置信度评论自动降级为 "nitpick" 或直接过滤。③ <strong>渐进式信任</strong>：新用户默认保守模式（只评论高置信度问题），随着正反馈积累逐步放开。④ <strong>用户反馈闭环</strong>：dismiss 的评论反哺 team learnings，同类评论不再出现。目标：宁可 60% 召回率 + 95% 精准率，也不要 95% 召回 + 60% 精准。</p>
+</div>
+
+<div class="interview">
+  <h4>Q4: 如何保证低延迟（2-5 分钟）？</h4>
+  <p><strong>答：</strong>① <strong>并行化</strong>：文件级 review 完全并行，15 个文件同时送 LLM → 延迟取决于最慢的一个文件，而非总和。② <strong>预计算</strong>：repo 的 AST、dependency graph、vector index 在 PR 之前就已经建好（增量更新）。③ <strong>Model routing</strong>：简单文件用快模型（GPT-4o-mini ~1s），只有核心逻辑文件用慢模型（Sonnet ~5s）。④ <strong>Streaming output</strong>：review 完一个文件就立即 post 评论，不等所有文件完成。⑤ P95 瓶颈通常在 context assembly（git API + vector search），用 cache + batch 优化。</p>
+</div>
+
+<h2>🔗 系列总结 / Series Recap</h2>
+
+<div class="highlight-green">
+  <h4>🎉 Phase 2.1 AI System Design 面试题系列完结！</h4>
+  <p>5 天覆盖了 FAANG+ 面试最高频的 5 个 AI System Design 题目：</p>
+  <table>
+    <tr><th>Day</th><th>Topic</th><th>核心架构模式</th></tr>
+    <tr><td>1</td><td>设计 ChatGPT</td><td>SSE 流式输出、LLM Gateway、Safety Pipeline</td></tr>
+    <tr><td>2</td><td>设计推荐系统</td><td>多阶段漏斗、Two-Tower、Feature Store</td></tr>
+    <tr><td>3</td><td>设计语义搜索</td><td>Bi/Cross-Encoder、ANN (HNSW)、Hybrid Search</td></tr>
+    <tr><td>4</td><td>设计 RAG 知识库</td><td>Permission-Aware Retrieval、Grounded Generation</td></tr>
+    <tr><td>5</td><td>设计 AI Code Review</td><td>Context Engineering、Pipeline+Agentic、Verification Agent</td></tr>
+  </table>
+  <p><strong>通用能力：</strong>容量估算、成本分析、延迟优化、Model Routing — 每个系统都用到了！</p>
+</div>
+
+<h2>🤔 思考题 / Think About It</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>回顾这 5 天的系统，它们其实可以互相组合：</p>
+    <ul>
+      <li>Code Review 系统的检索用的就是 Day 3 的语义搜索</li>
+      <li>Code Review 的上下文组装用的就是 Day 4 的 RAG</li>
+      <li>Code Review 的流式评论输出用的就是 Day 1 的 SSE</li>
+    </ul>
+    <p><strong>问题：如果要你设计一个 "AI 编程助手"（像 Cursor/Windsurf），你会怎么把这 5 个系统组合起来？它比任何单个系统难在哪里？</strong></p>
+  </div>
+  <div class="en">
+    <p>Looking back at all 5 systems, they can compose:</p>
+    <ul>
+      <li>Code Review's retrieval = Day 3 semantic search</li>
+      <li>Code Review's context assembly = Day 4 RAG</li>
+      <li>Code Review's streaming comments = Day 1 SSE</li>
+    </ul>
+    <p><strong>Question: If you were to design an "AI coding assistant" (like Cursor/Windsurf), how would you compose all 5 systems? What makes it harder than any individual system?</strong></p>
+  </div>
+</div>
+
+<p style="text-align: center; color: #999; margin-top: 40px;">📚 Knowledge Push by Scholar | 2026-02-14 | AI System Design Day 5/5 ✅</p>
+
+</body>
+</html>
