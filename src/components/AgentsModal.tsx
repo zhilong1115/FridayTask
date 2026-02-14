@@ -36,7 +36,7 @@ function StatusDot({ status }: { status: 'working' | 'pending' | 'idle' }) {
   );
 }
 
-function RobotIcon() {
+export function RobotIcon() {
   return (
     <svg className="w-6 h-6" fill="none" stroke="#3c4043" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <rect x="4" y="8" width="16" height="12" rx="2" />
