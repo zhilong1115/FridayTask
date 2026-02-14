@@ -2,28 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 
 const API = import.meta.env.VITE_API_URL || '';
 
-interface UsageGroup {
-  key: string;
-  cost: number;
-  tokens: number;
-  input: number;
-  output: number;
-  cacheRead: number;
-  cacheWrite: number;
-  count: number;
-}
-
-interface UsageData {
-  totalCost: number;
-  totalTokens: number;
-  totalInput: number;
-  totalOutput: number;
-  totalCacheRead: number;
-  totalCacheWrite: number;
-  totalRecords: number;
-  groups: UsageGroup[];
-}
-
 interface ChartData {
   timeKeys: string[];
   dimensions: string[];
@@ -38,11 +16,10 @@ function formatTokens(n: number) {
   return String(n);
 }
 
-type Period = 'today' | 'week' | 'month' | 'all';
+type Period = 'day' | 'week' | 'month' | 'year';
 type GroupBy = 'none' | 'model' | 'agent' | 'provider';
 type TokenMode = 'billable' | 'cache' | 'all';
 
-// Color palette for stacked bars
 const COLORS = [
   '#f9ab00', '#1a73e8', '#34a853', '#ea4335', '#9334e6',
   '#ff6d01', '#46bdc6', '#7baaf7', '#f07b72', '#fdd663',
@@ -52,88 +29,102 @@ const COLORS = [
 const BILLABLE_COLOR = '#f9ab00';
 const CACHE_COLOR = '#c4c4c4';
 
-function localDateStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-function getDateRange(period: Period): { from?: string; to?: string } {
+function getDateRange(period: Period, offset: number): { from: string; to: string } {
   const now = new Date();
-  if (period === 'today') {
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  if (period === 'day') {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
     return { from: start.toISOString(), to: end.toISOString() };
   }
   if (period === 'week') {
     const d = new Date(now);
-    d.setDate(d.getDate() - d.getDay());
+    d.setDate(d.getDate() - d.getDay() + offset * 7);
     const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    return { from: start.toISOString() };
+    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6, 23, 59, 59);
+    return { from: start.toISOString(), to: end.toISOString() };
   }
   if (period === 'month') {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { from: start.toISOString() };
+    const m = now.getMonth() + offset;
+    const y = now.getFullYear();
+    const start = new Date(y, m, 1);
+    const end = new Date(y, m + 1, 0, 23, 59, 59);
+    return { from: start.toISOString(), to: end.toISOString() };
   }
-  return {};
+  // year
+  const yr = now.getFullYear() + offset;
+  const start = new Date(yr, 0, 1);
+  const end = new Date(yr, 11, 31, 23, 59, 59);
+  return { from: start.toISOString(), to: end.toISOString() };
+}
+
+function getPeriodLabel(period: Period, offset: number): string {
+  const now = new Date();
+  if (period === 'day') {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    return `${DAYS[d.getDay()]}, ${SHORT_MONTHS[d.getMonth()]} ${d.getDate()}`;
+  }
+  if (period === 'week') {
+    const d = new Date(now);
+    d.setDate(d.getDate() - d.getDay() + offset * 7);
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6);
+    return `${SHORT_MONTHS[start.getMonth()]} ${start.getDate()} – ${SHORT_MONTHS[end.getMonth()]} ${end.getDate()}`;
+  }
+  if (period === 'month') {
+    const m = now.getMonth() + offset;
+    const d = new Date(now.getFullYear(), m, 1);
+    return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  return String(now.getFullYear() + offset);
 }
 
 export default function UsagePage({ onBack }: { onBack: () => void }) {
   const [period, setPeriod] = useState<Period>('month');
+  const [offset, setOffset] = useState(0);
   const [chartGroupBy, setChartGroupBy] = useState<GroupBy>('model');
   const [chartData, setChartData] = useState<ChartData | null>(null);
-  const [allData, setAllData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoveredBar, setHoveredBar] = useState<{ time: string; dim: string; tokens: number; x: number; y: number } | null>(null);
   const [tokenMode, setTokenMode] = useState<TokenMode>('billable');
 
+  // Reset offset when period changes
+  const handlePeriodChange = (p: Period) => {
+    setPeriod(p);
+    setOffset(0);
+  };
+
   // Fetch chart data
   useEffect(() => {
-    const range = getDateRange(period);
+    setLoading(true);
+    const range = getDateRange(period, offset);
     const params = new URLSearchParams();
-    if (range.from) params.set('from', range.from);
-    if (range.to) params.set('to', range.to);
+    params.set('from', range.from);
+    params.set('to', range.to);
     params.set('groupBy', chartGroupBy === 'none' ? 'model' : chartGroupBy);
     params.set('period', period);
     fetch(`${API}/api/usage/chart?${params}`)
       .then(r => r.json())
-      .then(setChartData)
-      .catch(console.error);
-  }, [period, chartGroupBy]);
+      .then(d => { setChartData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [period, offset, chartGroupBy]);
 
-  // Fetch all-time totals
-  useEffect(() => {
-    fetch(`${API}/api/usage?groupBy=day`)
-      .then(r => r.json())
-      .then(d => { setAllData(d); setLoading(false); })
-      .catch(console.error);
-  }, []);
-
-  const summaryCards = useMemo(() => {
-    if (!allData) return [];
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-    const weekStart = new Date(now);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    const weekStr = weekStart.toISOString().slice(0, 10);
-    const monthStr = todayStr.slice(0, 7);
-
-    let todayBillable = 0, weekBillable = 0, monthBillable = 0;
-    let todayCache = 0, weekCache = 0, monthCache = 0;
-    for (const g of allData.groups) {
-      const billable = (g.input || 0) + (g.output || 0);
-      const cache = (g.cacheRead || 0) + (g.cacheWrite || 0);
-      if (g.key === todayStr) { todayBillable += billable; todayCache += cache; }
-      if (g.key >= weekStr) { weekBillable += billable; weekCache += cache; }
-      if (g.key >= monthStr + '-01') { monthBillable += billable; monthCache += cache; }
+  // Summary: billable + cache from current chart data
+  const summary = useMemo(() => {
+    if (!chartData) return { billable: 0, cache: 0 };
+    let billable = 0, cache = 0;
+    for (const t of chartData.timeKeys) {
+      for (const d of chartData.dimensions) {
+        billable += (chartData.billableBuckets[t]?.[d] || 0);
+        cache += (chartData.cacheBuckets[t]?.[d] || 0);
+      }
     }
-    const allBillable = (allData.totalInput || 0) + (allData.totalOutput || 0);
-    const allCache = (allData.totalCacheRead || 0) + (allData.totalCacheWrite || 0);
-    return [
-      { label: 'Today', billable: todayBillable, cache: todayCache },
-      { label: 'This Week', billable: weekBillable, cache: weekCache },
-      { label: 'This Month', billable: monthBillable, cache: monthCache },
-      { label: 'All Time', billable: allBillable, cache: allCache },
-    ];
-  }, [allData]);
+    return { billable, cache };
+  }, [chartData]);
 
   // Select which buckets to use based on tokenMode
   const activeBuckets = useMemo(() => {
@@ -143,16 +134,10 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
     return chartData.buckets;
   }, [chartData, tokenMode]);
 
-  // Compute chart rendering
   const chartRender = useMemo(() => {
     if (!chartData || chartData.timeKeys.length === 0 || !activeBuckets) return null;
     const { timeKeys, dimensions: rawDims } = chartData;
     const buckets = activeBuckets;
-
-    // When groupBy=none and not 'all' mode, show single billable/cache bar
-    const useSimple = chartGroupBy === 'none' && tokenMode !== 'all';
-
-    // Sort dimensions by total tokens descending
     const dimTotals = new Map<string, number>();
     for (const d of rawDims) {
       let total = 0;
@@ -160,7 +145,6 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
       dimTotals.set(d, total);
     }
     const dimensions = [...rawDims].sort((a, b) => (dimTotals.get(b) || 0) - (dimTotals.get(a) || 0));
-
     let maxTotal = 0;
     for (const t of timeKeys) {
       let sum = 0;
@@ -168,15 +152,13 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
       if (sum > maxTotal) maxTotal = sum;
     }
     if (maxTotal === 0) maxTotal = 1;
-    return { timeKeys, dimensions, buckets, maxTotal, useSimple };
-  }, [chartData, activeBuckets, chartGroupBy, tokenMode]);
+    return { timeKeys, dimensions, buckets, maxTotal };
+  }, [chartData, activeBuckets]);
 
-  // For groupBy=none: show billable+cache stacked
   const chartRenderDual = useMemo(() => {
     if (!chartData || chartData.timeKeys.length === 0 || chartGroupBy !== 'none') return null;
     const { timeKeys, dimensions: rawDims, billableBuckets, cacheBuckets } = chartData;
     const dualDims = ['Billable', 'Cache'];
-
     let maxTotal = 0;
     const buckets: Record<string, Record<string, number>> = {};
     for (const t of timeKeys) {
@@ -193,19 +175,9 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
     return { timeKeys, dimensions: dualDims, buckets, maxTotal };
   }, [chartData, chartGroupBy, tokenMode]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 rounded-full bg-[#f9ab00] animate-pulse" />
-      </div>
-    );
-  }
-
-  // Decide which render data to use
   const useNoneDual = chartGroupBy === 'none';
   const renderData = useNoneDual ? chartRenderDual : chartRender;
 
-  // For none mode, filter dimensions based on tokenMode
   const getVisibleDims = () => {
     if (!useNoneDual || !chartRenderDual) return renderData?.dimensions || [];
     if (tokenMode === 'billable') return ['Billable'];
@@ -234,6 +206,14 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
     return max || 1;
   };
 
+  const formatTimeLabel = (t: string) => {
+    if (period === 'day') return String(new Date(t + ':00:00Z').getHours()).padStart(2, '0') + 'h';
+    if (period === 'year') return SHORT_MONTHS[parseInt(t.slice(5, 7)) - 1] || t.slice(5);
+    return t.slice(5);
+  };
+
+  const chartTitle = period === 'day' ? 'Hourly' : period === 'year' ? 'Monthly' : 'Daily';
+
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
@@ -253,33 +233,58 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {summaryCards.map(c => (
-          <div key={c.label} className="bg-white rounded-xl border border-[#dadce0] p-4">
-            <p className="text-[10px] font-semibold text-[#70757a] uppercase tracking-wider mb-1">{c.label}</p>
-            <p className="text-2xl font-bold text-[#f9ab00]">{formatTokens(c.billable)}</p>
-            <p className="text-[10px] text-[#70757a] mt-0.5">billable tokens</p>
-            <p className="text-sm font-semibold text-[#9aa0a6] mt-1">{formatTokens(c.cache)}</p>
-            <p className="text-[10px] text-[#9aa0a6]">cache tokens</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-white rounded-xl border border-[#dadce0] p-4">
+          <p className="text-[10px] font-semibold text-[#70757a] uppercase tracking-wider mb-1">Billable Tokens</p>
+          <p className="text-2xl font-bold text-[#f9ab00]">{formatTokens(summary.billable)}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-[#dadce0] p-4">
+          <p className="text-[10px] font-semibold text-[#70757a] uppercase tracking-wider mb-1">Cache Tokens</p>
+          <p className="text-2xl font-bold text-[#9aa0a6]">{formatTokens(summary.cache)}</p>
+        </div>
       </div>
 
-      {/* Period Selector */}
-      <div className="flex gap-2 mb-4">
-        {(['today', 'week', 'month', 'all'] as Period[]).map(p => (
+      {/* Period Tabs */}
+      <div className="flex gap-2 mb-3">
+        {(['day', 'week', 'month', 'year'] as Period[]).map(p => (
           <button
             key={p}
-            onClick={() => setPeriod(p)}
+            onClick={() => handlePeriodChange(p)}
             className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
               period === p
                 ? 'bg-[#f9ab00] text-white'
                 : 'bg-white border border-[#dadce0] text-[#70757a] hover:bg-[#f8f9fa]'
             }`}
           >
-            {p === 'today' ? 'Today' : p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'All Time'}
+            {p.charAt(0).toUpperCase() + p.slice(1)}
           </button>
         ))}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex items-center justify-center gap-4 mb-4">
+        <button
+          onClick={() => setOffset(o => o - 1)}
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#f1f3f4] transition-colors text-[#3c4043]"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span className="text-sm font-medium text-[#3c4043] min-w-[160px] text-center">
+          {getPeriodLabel(period, offset)}
+        </span>
+        <button
+          onClick={() => setOffset(o => o + 1)}
+          disabled={offset >= 0}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+            offset >= 0 ? 'text-[#dadce0] cursor-not-allowed' : 'hover:bg-[#f1f3f4] text-[#3c4043]'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {/* Chart Section */}
@@ -287,20 +292,17 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
         <div className="mb-3 space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-[#3c4043]">
-              {period === 'today' ? 'Hourly' : 'Daily'} Token Usage
+              {chartTitle} Token Usage
             </h2>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
-            {/* Token mode toggle */}
             <div className="flex gap-1 bg-[#f1f3f4] rounded-full p-0.5">
               {(['billable', 'cache', 'all'] as TokenMode[]).map(m => (
                 <button
                   key={m}
                   onClick={() => setTokenMode(m)}
                   className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all ${
-                    tokenMode === m
-                      ? 'bg-white text-[#3c4043] shadow-sm'
-                      : 'text-[#70757a]'
+                    tokenMode === m ? 'bg-white text-[#3c4043] shadow-sm' : 'text-[#70757a]'
                   }`}
                 >
                   {m === 'billable' ? 'Billable' : m === 'cache' ? 'Cache' : 'All'}
@@ -308,16 +310,13 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
               ))}
             </div>
             <div className="w-px h-4 bg-[#dadce0]" />
-            {/* Group by */}
             <div className="flex gap-1">
               {(['none', 'model', 'agent', 'provider'] as GroupBy[]).map(g => (
                 <button
                   key={g}
                   onClick={() => setChartGroupBy(g)}
                   className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                    chartGroupBy === g
-                      ? 'bg-[#fef7e0] text-[#f9ab00]'
-                      : 'text-[#70757a] hover:bg-[#f1f3f4]'
+                    chartGroupBy === g ? 'bg-[#fef7e0] text-[#f9ab00]' : 'text-[#70757a] hover:bg-[#f1f3f4]'
                   }`}
                 >
                   {g.charAt(0).toUpperCase() + g.slice(1)}
@@ -327,7 +326,11 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
 
-        {!renderData ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <div className="w-6 h-6 rounded-full bg-[#f9ab00] animate-pulse" />
+          </div>
+        ) : !renderData ? (
           <p className="text-xs text-[#70757a] py-4 text-center">No data for this period</p>
         ) : (() => {
           const effectiveBuckets = useNoneDual ? chartRenderDual!.buckets : renderData.buckets;
@@ -392,7 +395,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                         style={{ left: hoveredBar.x, top: hoveredBar.y - 40, transform: 'translateX(-50%)' }}
                       >
                         <span className="font-medium">{hoveredBar.dim}</span>: {formatTokens(hoveredBar.tokens)} tokens
-                        <div className="text-[10px] text-[#9aa0a6]">{period === 'today' ? String(new Date(hoveredBar.time + ':00:00Z').getHours()).padStart(2, '0') + ':00' : hoveredBar.time}</div>
+                        <div className="text-[10px] text-[#9aa0a6]">{formatTimeLabel(hoveredBar.time)}</div>
                       </div>
                     )}
                   </div>
@@ -402,7 +405,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                     const show = timeKeys.length <= 14 || i % Math.ceil(timeKeys.length / 10) === 0;
                     return (
                       <div key={t} className="text-[10px] text-[#70757a] text-center" style={{ width: `${100 / timeKeys.length}%` }}>
-                        {show ? (period === 'today' ? String(new Date(t + ':00:00Z').getHours()).padStart(2, '0') + 'h' : t.slice(5)) : ''}
+                        {show ? formatTimeLabel(t) : ''}
                       </div>
                     );
                   })}
@@ -424,12 +427,11 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
                     let total = 0;
                     for (const d of effectiveDims) total += (effectiveBuckets[t]?.[d] || 0);
                     const barPct = effectiveMax > 0 ? (total / effectiveMax) * 100 : 0;
-                    const formatTimeLabel = (t: string) => period === 'today' ? String(new Date(t + ':00:00Z').getHours()).padStart(2, '0') + ':00' : t.slice(5);
                     return (
                       <div key={t} className="flex items-center gap-2">
                         <span className="w-12 shrink-0 text-[10px] text-[#70757a] font-medium text-right">{formatTimeLabel(t)}</span>
                         <div className="flex-1 h-5 bg-[#f1f3f4] rounded overflow-hidden flex">
-                          {effectiveDims.length === 1 || (useNoneDual && effectiveDims.length === 1) ? (
+                          {effectiveDims.length === 1 ? (
                             <div className="h-full rounded" style={{ width: `${Math.max(barPct, total > 0 ? 1 : 0)}%`, backgroundColor: getBarColor(effectiveDims[0], 0) }} />
                           ) : (
                             effectiveDims.map((d, i) => {

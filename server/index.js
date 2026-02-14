@@ -809,7 +809,7 @@ app.get('/api/usage/chart', async (req, res) => {
     if (from) records = records.filter(r => r.timestamp >= from);
     if (to) records = records.filter(r => r.timestamp <= to);
 
-    const timeBucket = period === 'today' ? 'hour' : 'day';
+    const timeBucket = (period === 'today' || period === 'day') ? 'hour' : period === 'year' ? 'month' : 'day';
     const dim = groupBy || 'model';
 
     // { [timeBucket]: { [dimValue]: tokens } }
@@ -818,7 +818,7 @@ app.get('/api/usage/chart', async (req, res) => {
     const cacheBuckets = {};
     const dimSet = new Set();
     for (const r of records) {
-      const tKey = timeBucket === 'hour' ? r.timestamp?.slice(0, 13) : r.timestamp?.slice(0, 10);
+      const tKey = timeBucket === 'hour' ? r.timestamp?.slice(0, 13) : timeBucket === 'month' ? r.timestamp?.slice(0, 7) : r.timestamp?.slice(0, 10);
       let dKey;
       if (dim === 'model') dKey = r.model;
       else if (dim === 'provider') dKey = r.provider;
