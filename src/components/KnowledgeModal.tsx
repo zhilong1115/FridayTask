@@ -200,11 +200,11 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
               >
                 <span className="flex items-center gap-2">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 7c0 0 3-3 9-3s9 3 9 3"/>
-                    <path d="M3 7v6c0 5.25 3.5 8 9 8s9-2.75 9-8V7"/>
-                    <line x1="12" y1="4" x2="12" y2="2"/>
-                    <path d="M8 7v7.5" opacity="0.4"/>
-                    <path d="M16 7v7.5" opacity="0.4"/>
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V7l7-4 7 4v14"/>
+                    <path d="M9 21v-6h6v6"/>
+                    <path d="M9 10h1"/>
+                    <path d="M14 10h1"/>
                   </svg>
                   Chinese History
                 </span>
