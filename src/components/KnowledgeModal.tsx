@@ -15,7 +15,7 @@ interface KnowledgeModalProps {
 export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps) {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ai' | 'finance'>('ai');
+  const [activeTab, setActiveTab] = useState<'ai' | 'finance' | 'chinese-history' | 'world-history'>('ai');
   const [selectedArticle, setSelectedArticle] = useState<KnowledgeArticle | null>(null);
   const [articleContent, setArticleContent] = useState<string>('');
   const [loadingContent, setLoadingContent] = useState(false);
@@ -74,6 +74,8 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
 
   const aiArticles = articles.filter((a) => a.folder === 'ai');
   const financeArticles = articles.filter((a) => a.folder === 'finance');
+  const chineseHistoryArticles = articles.filter((a) => a.folder === 'chinese-history');
+  const worldHistoryArticles = articles.filter((a) => a.folder === 'world-history');
 
   const formatDate = (dateStr: string) => {
     // Parse as local date to avoid timezone shift (e.g. "2026-02-13" → Feb 12 in PST)
@@ -157,8 +159,11 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                   }`}
               >
                 <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z"/>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 0 6h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1 0-6h1V6a4 4 0 0 1 4-4z"/>
+                    <circle cx="9.5" cy="10" r="1" fill="currentColor" stroke="none"/>
+                    <circle cx="14.5" cy="10" r="1" fill="currentColor" stroke="none"/>
+                    <path d="M9 16h6"/>
                   </svg>
                   AI
                 </span>
@@ -175,12 +180,55 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                   }`}
               >
                 <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                   </svg>
                   Finance
                 </span>
                 {activeTab === 'finance' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a73e8]" />
+                )}
+              </button>
+              <button
+                onClick={() => { setActiveTab('chinese-history'); setSelectedArticle(null); }}
+                className={`px-4 py-3 text-sm font-medium transition-colors relative
+                  ${activeTab === 'chinese-history'
+                    ? 'text-[#1a73e8]'
+                    : 'text-[#70757a] hover:text-[#3c4043]'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7c0 0 3-3 9-3s9 3 9 3"/>
+                    <path d="M3 7v6c0 5.25 3.5 8 9 8s9-2.75 9-8V7"/>
+                    <line x1="12" y1="4" x2="12" y2="2"/>
+                    <path d="M8 7v7.5" opacity="0.4"/>
+                    <path d="M16 7v7.5" opacity="0.4"/>
+                  </svg>
+                  Chinese History
+                </span>
+                {activeTab === 'chinese-history' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a73e8]" />
+                )}
+              </button>
+              <button
+                onClick={() => { setActiveTab('world-history'); setSelectedArticle(null); }}
+                className={`px-4 py-3 text-sm font-medium transition-colors relative
+                  ${activeTab === 'world-history'
+                    ? 'text-[#1a73e8]'
+                    : 'text-[#70757a] hover:text-[#3c4043]'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <ellipse cx="12" cy="12" rx="4" ry="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                  </svg>
+                  History
+                </span>
+                {activeTab === 'world-history' && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a73e8]" />
                 )}
               </button>
@@ -195,7 +243,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                 </div>
               )}
 
-              {!loading && (activeTab === 'ai' ? aiArticles : financeArticles).length === 0 && (
+              {!loading && (activeTab === 'ai' ? aiArticles : activeTab === 'finance' ? financeArticles : activeTab === 'chinese-history' ? chineseHistoryArticles : worldHistoryArticles).length === 0 && (
                 <div className="text-center py-8">
                   <svg className="w-10 h-10 mx-auto text-[#dadce0] mb-2" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
@@ -207,7 +255,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                 </div>
               )}
 
-              {!loading && (activeTab === 'ai' ? aiArticles : financeArticles).map((article) => (
+              {!loading && (activeTab === 'ai' ? aiArticles : activeTab === 'finance' ? financeArticles : activeTab === 'chinese-history' ? chineseHistoryArticles : worldHistoryArticles).map((article) => (
                 <button
                   key={`${article.folder}-${article.filename}`}
                   onClick={() => fetchArticleContent(article)}
