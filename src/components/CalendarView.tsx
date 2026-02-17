@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { Task, CronJob, ViewMode } from '../types';
 import TimeGrid from './TimeGrid';
+import { resolveAgent } from '../config/agents';
 import {
   getMonthDays,
   getWeekDays,
@@ -40,7 +41,7 @@ export default function CalendarView({
     const map: Record<string, Task[]> = {};
     tasks.forEach((t) => {
       if (!t.due_date) return;
-      if (filterAssignee && t.assignee !== filterAssignee) return;
+      if (filterAssignee && resolveAgent(t.project, t.assignee).id !== filterAssignee) return;
       if (filterStatus && t.status !== filterStatus) return;
       const key = t.due_date;
       if (!map[key]) map[key] = [];

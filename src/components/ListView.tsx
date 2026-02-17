@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Task, CronJob, TaskStatus } from '../types';
+import { resolveAgent, type AgentConfig } from '../config/agents';
 
 interface ListViewProps {
   tasks: Task[];
@@ -18,8 +19,15 @@ export default function ListView({
 }: ListViewProps) {
   const groupedTasks = useMemo(() => {
     let result = [...tasks];
-    if (filterAssignee) result = result.filter((t) => t.assignee === filterAssignee);
+    if (filterAssignee) {
+      // Filter by agent: match project or assignee
+      result = result.filter((t) => {
+        const agent = resolveAgent(t.project, t.assignee);
+        return agent.id === filterAssignee;
+      });
+    }
     if (filterStatus) result = result.filter((t) => t.status === filterStatus);
+
     const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
     const statusOrder: Record<TaskStatus, number> = { pending: 0, approved: 1, 'in-progress': 2, done: 3, rejected: 4 };
     result.sort((a, b) => {
@@ -30,23 +38,26 @@ export default function ListView({
       return (a.due_date || '').localeCompare(b.due_date || '');
     });
 
-    const groups: Record<string, typeof result> = {};
+    // Group by agent
+    const groups: { agent: AgentConfig; tasks: Task[] }[] = [];
+    const agentMap = new Map<string, Task[]>();
+    const agentConfigMap = new Map<string, AgentConfig>();
+
     for (const task of result) {
-      const project = task.project || 'Uncategorized';
-      if (!groups[project]) groups[project] = [];
-      groups[project].push(task);
+      const agent = resolveAgent(task.project, task.assignee);
+      if (!agentMap.has(agent.id)) {
+        agentMap.set(agent.id, []);
+        agentConfigMap.set(agent.id, agent);
+      }
+      agentMap.get(agent.id)!.push(task);
     }
+
+    for (const [id, taskList] of agentMap) {
+      groups.push({ agent: agentConfigMap.get(id)!, tasks: taskList });
+    }
+
     return groups;
   }, [tasks, filterAssignee, filterStatus]);
-
-  const projectColors: Record<string, string> = {
-    'Aspen': '#1a73e8',
-    'Task App': '#f9ab00',
-    'Clawdbot': '#34a853',
-  };
-
-  const assigneeDot = (assignee: string) =>
-    assignee === 'friday' ? 'bg-[#f9ab00]' : 'bg-[#1a73e8]';
 
   const priorityBadge = (p: string) => {
     if (p === 'high') return 'bg-[#fce8e6] text-[#c5221f] border-[#c5221f]/20';
@@ -54,12 +65,12 @@ export default function ListView({
     return 'bg-[#f1f3f4] text-[#70757a] border-[#dadce0]';
   };
 
-  const statusConfig: Record<TaskStatus, { icon: string; color: string; badge: string }> = {
-    pending: { icon: '⏳', color: 'text-[#b06000]', badge: 'bg-[#feefc3] text-[#b06000]' },
-    approved: { icon: '✔', color: 'text-[#1967d2]', badge: 'bg-[#d2e3fc] text-[#1967d2]' },
-    'in-progress': { icon: '◑', color: 'text-[#1a73e8]', badge: 'bg-[#d2e3fc] text-[#1967d2]' },
-    done: { icon: '✓', color: 'text-[#137333]', badge: 'bg-[#ceead6] text-[#137333]' },
-    rejected: { icon: '✕', color: 'text-[#c5221f]', badge: 'bg-[#fce8e6] text-[#c5221f]' },
+  const statusConfig: Record<TaskStatus, { icon: string; color: string }> = {
+    pending: { icon: '⏳', color: 'text-[#b06000]' },
+    approved: { icon: '✔', color: 'text-[#1967d2]' },
+    'in-progress': { icon: '◑', color: 'text-[#1a73e8]' },
+    done: { icon: '✓', color: 'text-[#137333]' },
+    rejected: { icon: '✕', color: 'text-[#c5221f]' },
   };
 
   const formatDue = (date: string | null) => {
@@ -87,103 +98,103 @@ export default function ListView({
     return 'text-[#70757a]';
   };
 
-  const allTasks = Object.values(groupedTasks).flat();
+  const allTasks = groupedTasks.flatMap((g) => g.tasks);
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
       <h2 className="text-xl font-semibold text-[#3c4043] tracking-wide px-1 pb-1">All Tasks</h2>
 
-      {Object.entries(groupedTasks).map(([project, projectTasks]) => (
-        <div key={project}>
-          {/* Project header */}
+      {groupedTasks.map(({ agent, tasks: agentTasks }) => (
+        <div key={agent.id}>
+          {/* Agent header */}
           <div className="flex items-center gap-2.5 px-2 mb-2">
-            <div
-              className="w-3 h-3 rounded-sm"
-              style={{ backgroundColor: projectColors[project] || '#70757a' }}
-            />
-            <h3 className="text-sm font-semibold text-[#3c4043]">{project}</h3>
-            <span className="text-xs text-[#70757a]">{projectTasks.length}</span>
+            <span className="text-base">{agent.emoji}</span>
+            <h3 className="text-sm font-semibold text-[#3c4043]">{agent.label}</h3>
+            <span className="text-xs text-[#70757a]">{agentTasks.length}</span>
           </div>
 
-      {/* Task List */}
-      <div className="flex flex-col gap-1.5">
-        {projectTasks.map((task) => {
-          const si = statusConfig[task.status];
-          const isPending = task.status === 'pending';
-          const isDone = task.status === 'done';
-          const isRejected = task.status === 'rejected';
-          return (
-            <button
-              key={task.id}
-              onClick={() => onTaskClick(task)}
-              className={`w-full text-left px-4 py-3.5 rounded-lg bg-white
-                hover:bg-[#f1f3f4] hover:border-[#bdc1c6] transition-all group
-                ${isPending ? 'border border-dashed border-[#b06000]/30 opacity-80' : 'border border-[#dadce0]'}
-                ${isDone || isRejected ? 'opacity-60' : ''}`}
-            >
-              <div className="flex items-center gap-3">
-                {/* Status icon */}
-                <span className={`text-lg ${si.color} flex items-center`}>
-                  {task.status === 'in-progress' ? (
-                    <span className="relative flex items-center">
-                      <span className="w-2 h-2 rounded-full bg-[#1a73e8] status-pulse" />
+          {/* Task List */}
+          <div className="flex flex-col gap-1.5">
+            {agentTasks.map((task) => {
+              const si = statusConfig[task.status];
+              const isPending = task.status === 'pending';
+              const isDone = task.status === 'done';
+              const isRejected = task.status === 'rejected';
+              return (
+                <button
+                  key={task.id}
+                  onClick={() => onTaskClick(task)}
+                  className={`w-full text-left px-4 py-3.5 rounded-lg bg-white
+                    hover:bg-[#f1f3f4] hover:border-[#bdc1c6] transition-all group
+                    ${isPending ? 'border border-dashed border-[#b06000]/30 opacity-80' : 'border border-[#dadce0]'}
+                    ${isDone || isRejected ? 'opacity-60' : ''}`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Status icon */}
+                    <span className={`text-lg ${si.color} flex items-center`}>
+                      {task.status === 'in-progress' ? (
+                        <span className="relative flex items-center">
+                          <span className="w-2 h-2 rounded-full bg-[#1a73e8] status-pulse" />
+                        </span>
+                      ) : si.icon}
                     </span>
-                  ) : si.icon}
-                </span>
 
-                {/* Assignee dot */}
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${assigneeDot(task.assignee)}`} />
+                    {/* Agent color dot */}
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: agent.color }}
+                    />
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm ${isDone ? 'line-through text-[#70757a]' : isRejected ? 'line-through text-[#c5221f]/60' : 'text-[#3c4043]'}`}>
-                      {task.title}
-                    </span>
-                    {isPending && (
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#feefc3] text-[#b06000]">
-                        PENDING
-                      </span>
-                    )}
-                  </div>
-                  {task.description && (
-                    <p className="text-xs text-[#70757a] truncate mt-0.5">{task.description}</p>
-                  )}
-                  {/* Subtask progress */}
-                  {task.subtask_count > 0 && (
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <div className="flex-1 max-w-[120px] h-1.5 bg-[#f1f3f4] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#137333] rounded-full transition-all duration-300"
-                          style={{ width: `${(task.subtask_completed / task.subtask_count) * 100}%` }}
-                        />
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm ${isDone ? 'line-through text-[#70757a]' : isRejected ? 'line-through text-[#c5221f]/60' : 'text-[#3c4043]'}`}>
+                          {task.title}
+                        </span>
+                        {isPending && (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#feefc3] text-[#b06000]">
+                            PENDING
+                          </span>
+                        )}
                       </div>
-                      <span className="text-[10px] text-[#70757a]">
-                        {task.subtask_completed}/{task.subtask_count}
+                      {task.description && (
+                        <p className="text-xs text-[#70757a] truncate mt-0.5">{task.description}</p>
+                      )}
+                      {/* Subtask progress */}
+                      {task.subtask_count > 0 && (
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex-1 max-w-[120px] h-1.5 bg-[#f1f3f4] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#137333] rounded-full transition-all duration-300"
+                              style={{ width: `${(task.subtask_completed / task.subtask_count) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-[#70757a]">
+                            {task.subtask_completed}/{task.subtask_count}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Meta badges */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {task.start_time && !task.all_day && (
+                        <span className="text-xs text-[#70757a]">
+                          {task.start_time}
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-2xl border ${priorityBadge(task.priority)}`}>
+                        {task.priority}
+                      </span>
+                      <span className={`text-xs ${dueColor(task.due_date)} w-16 text-right`}>
+                        {formatDue(task.due_date)}
                       </span>
                     </div>
-                  )}
-                </div>
-
-                {/* Meta badges */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {task.start_time && !task.all_day && (
-                    <span className="text-xs text-[#70757a]">
-                      {task.start_time}
-                    </span>
-                  )}
-                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-2xl border ${priorityBadge(task.priority)}`}>
-                    {task.priority}
-                  </span>
-                  <span className={`text-xs ${dueColor(task.due_date)} w-16 text-right`}>
-                    {formatDue(task.due_date)}
-                  </span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       ))}
 
