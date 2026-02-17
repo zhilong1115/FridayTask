@@ -80,8 +80,13 @@ const cronMatchPatterns: Record<string, RegExp> = {
 type SubTab = 'working' | 'pending' | 'completed' | 'cron';
 
 function matchAgent(task: Task, agent: AgentDef): boolean {
-  if (task.assignee !== 'friday') return false;
-  return agent.projectPatterns.some((p) => p.test(task.project || ''));
+  // Direct match: assignee is the agent id
+  if (task.assignee === agent.id) return true;
+  // Legacy: assignee=friday with project pattern match
+  if (task.assignee === 'friday') {
+    return agent.projectPatterns.some((p) => p.test(task.project || ''));
+  }
+  return false;
 }
 
 function formatDate(dateStr: string | null): string {
