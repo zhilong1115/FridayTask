@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-17 - Model Serving 架构：从推理引擎到生产部署</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; }
+    h2 { color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 8px; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; line-height: 1.4; font-size: 13px; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; }
+    code { font-size: 14px; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight h4 { margin-top: 0; }
+    .compare-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; }
+    .compare-table th, .compare-table td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    .compare-table th { background: #f8f9fa; }
+    .interview { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .interview h4 { color: #2e7d32; margin-top: 0; }
+    .pattern { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .warning { background: #fce4ec; padding: 12px; border-radius: 8px; margin: 10px 0; }
+    .series-nav { background: #f3e5f5; padding: 12px; border-radius: 8px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+
+<h1>🚀 Model Serving 架构：从推理引擎到生产部署</h1>
+<p>Phase 2.2 ML System Design 要点 · Day 3 | 2026-02-17</p>
+
+<div class="series-nav">
+  📚 <strong>系列导航</strong>：
+  <a href="2026-02-15-ml-system-design-patterns.html">Day 1: 7大通用Pattern</a> →
+  <a href="2026-02-16-feature-store-design.html">Day 2: Feature Store</a> →
+  <strong>Day 3: Model Serving (本篇)</strong>
+</div>
+
+<h2>📖 为什么 Model Serving 是面试重点？</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>在 ML 系统设计面试中，「你的模型怎么上线」是必问题。训练一个好模型只是故事的一半——如何以低延迟、高吞吐、低成本把推理结果送到用户手里，才是真正的工程挑战。</p>
+    <p>Model Serving 是 Day 1 七大 Pattern 中 <strong>Offline/Online Split</strong> 和 <strong>Multi-Stage Pipeline</strong> 的落地点，也是 Day 2 Feature Store 的下游消费者。</p>
+  </div>
+  <div class="en">
+    <p>"How do you serve your model?" is a must-ask in ML system design interviews. Training a good model is only half the story — delivering predictions at low latency, high throughput, and low cost is the real engineering challenge.</p>
+    <p>Model Serving is where Day 1's Offline/Online Split and Multi-Stage Pipeline patterns land, and it's the downstream consumer of Day 2's Feature Store.</p>
+  </div>
+</div>
+
+<h2>🏗️ 三层架构 / The Three-Layer Stack</h2>
+
+<div class="architecture">
+┌─────────────────────────────────────────────────────────────────┐
+│                    Layer 3: Inference Gateway                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
+│  │ Load     │  │ A/B Test │  │ Rate     │  │ Auth &        │  │
+│  │ Balancer │  │ Router   │  │ Limiter  │  │ Observability │  │
+│  └──────────┘  └──────────┘  └──────────┘  └───────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                  Layer 2: Serving Framework                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │ Request  │  │ Batching │  │ Model    │  │ Health   │      │
+│  │ Queue    │  │ Engine   │  │ Registry │  │ Checks   │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+├─────────────────────────────────────────────────────────────────┤
+│                   Layer 1: Model Runtime                        │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │ KV Cache │  │ Quantize │  │ Attention│  │ Tensor   │      │
+│  │ Manager  │  │ Engine   │  │ Kernels  │  │ Parallel │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+└─────────────────────────────────────────────────────────────────┘
+         GPU Memory (HBM)              CPU / System Memory
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>Layer 1 - Model Runtime</strong>：最底层，管理 GPU 资源。负责 KV Cache 分配（如 vLLM 的 PagedAttention）、量化推理、注意力 kernel 优化、多 GPU 张量并行。这是「单卡跑得快不快」的问题。</p>
+    <p><strong>Layer 2 - Serving Framework</strong>：中间层，管理请求生命周期。负责 Continuous Batching、请求队列管理、模型热加载/卸载、健康检查。这是「多个请求怎么高效处理」的问题。</p>
+    <p><strong>Layer 3 - Inference Gateway</strong>：最上层，管理流量和策略。负载均衡、A/B 测试路由、限流、认证、监控。这是「面向用户的可靠性」的问题。</p>
+  </div>
+  <div class="en">
+    <p><strong>Layer 1 - Model Runtime</strong>: Manages GPU resources. KV Cache allocation (e.g., vLLM's PagedAttention), quantized inference, attention kernel optimization, tensor parallelism. This answers "how fast can one GPU run?"</p>
+    <p><strong>Layer 2 - Serving Framework</strong>: Manages request lifecycle. Continuous Batching, request queuing, hot model loading/unloading, health checks. This answers "how to handle many requests efficiently?"</p>
+    <p><strong>Layer 3 - Inference Gateway</strong>: Manages traffic and policies. Load balancing, A/B routing, rate limiting, auth, observability. This answers "how to be reliable for users?"</p>
+  </div>
+</div>
+
+<h2>⚔️ 框架选型 / Framework Comparison</h2>
+
+<table class="compare-table">
+<tr>
+  <th>维度</th>
+  <th>vLLM</th>
+  <th>TGI (HuggingFace)</th>
+  <th>TensorRT-LLM + Triton</th>
+  <th>Ollama / llama.cpp</th>
+</tr>
+<tr>
+  <td><strong>定位</strong></td>
+  <td>高吞吐 LLM serving</td>
+  <td>HF 生态一站式</td>
+  <td>极致性能</td>
+  <td>本地开发/边缘</td>
+</tr>
+<tr>
+  <td><strong>核心技术</strong></td>
+  <td>PagedAttention, Continuous Batching</td>
+  <td>Flash Attention, Token Streaming</td>
+  <td>FP8/INT4 编译优化, In-flight Batching</td>
+  <td>GGUF 量化, CPU/Metal 推理</td>
+</tr>
+<tr>
+  <td><strong>吞吐量</strong></td>
+  <td>⭐⭐⭐⭐</td>
+  <td>⭐⭐⭐</td>
+  <td>⭐⭐⭐⭐⭐</td>
+  <td>⭐⭐</td>
+</tr>
+<tr>
+  <td><strong>易用性</strong></td>
+  <td>⭐⭐⭐⭐</td>
+  <td>⭐⭐⭐⭐⭐</td>
+  <td>⭐⭐</td>
+  <td>⭐⭐⭐⭐⭐</td>
+</tr>
+<tr>
+  <td><strong>Multi-GPU</strong></td>
+  <td>Tensor + Pipeline 并行</td>
+  <td>Tensor 并行</td>
+  <td>全并行模式</td>
+  <td>有限支持</td>
+</tr>
+<tr>
+  <td><strong>Multi-Model</strong></td>
+  <td>单进程单模型</td>
+  <td>单进程单模型</td>
+  <td>Triton 支持多模型</td>
+  <td>按需加载/卸载</td>
+</tr>
+<tr>
+  <td><strong>适用场景</strong></td>
+  <td>生产 LLM API</td>
+  <td>HF 模型快速上线</td>
+  <td>大规模推理集群</td>
+  <td>原型/边缘/本地</td>
+</tr>
+</table>
+
+<div class="highlight">
+  <h4>💡 面试选型公式 / Interview Selection Formula</h4>
+  <p><strong>原型 → Ollama/TGI → 生产 → vLLM → 极致优化 → TensorRT-LLM + Triton</strong></p>
+  <p>面试时按场景递进地讲，比单说一个框架好得多。展示你理解不同阶段的需求。</p>
+</div>
+
+<h2>🔄 四种部署策略 / Four Deployment Strategies</h2>
+
+<div class="architecture">
+Strategy 1: Blue-Green              Strategy 2: Canary
+┌──────────┐  100%→0%              ┌──────────┐  95% ──→ 0%
+│ Model v1 │ ──────────┐           │ Model v1 │ ─────────┐
+│ (Blue)   │           │ switch    │ (Stable) │          │ gradual
+└──────────┘           ▼           └──────────┘          ▼
+┌──────────┐  0%→100%             ┌──────────┐  5% ──→ 100%
+│ Model v2 │ ─────────            │ Model v2 │ ─────────
+│ (Green)  │                       │ (Canary) │
+└──────────┘                       └──────────┘
+
+Strategy 3: Shadow                  Strategy 4: Multi-Armed Bandit
+┌──────────┐  100% (serve)         ┌──────────┐  ← dynamic %
+│ Model v1 │ → Response            │ Model A  │
+└──────────┘                       ├──────────┤  ← dynamic %
+┌──────────┐  100% (log only)      │ Model B  │
+│ Model v2 │ → /dev/null           ├──────────┤  ← dynamic %
+└──────────┘  (compare offline)    │ Model C  │  reward-based
+                                   └──────────┘  allocation
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <h4>1. Blue-Green（蓝绿部署）</h4>
+    <p>最简单粗暴：两套完整环境，一键切换。优点是回滚秒级；缺点是要 2x 资源（GPU 很贵！）。适合低频更新、不能出错的场景。</p>
+    
+    <h4>2. Canary（金丝雀发布）⭐ 最常用</h4>
+    <p>逐步放量：5% → 25% → 50% → 100%。每步监控关键指标（延迟 P99、错误率、业务指标）。自动回滚条件触发 = 安全网。<strong>面试必讲这个。</strong></p>
+    
+    <h4>3. Shadow（影子模式）</h4>
+    <p>新模型接收真实流量但不返回结果，只记录日志做离线对比。零用户影响，但 2x 计算成本。适合高风险场景（金融、医疗）。</p>
+    
+    <h4>4. Multi-Armed Bandit（多臂老虎机）</h4>
+    <p>动态分配流量：根据实时指标自动把更多流量导向表现好的模型。比固定 A/B 测试收敛更快，但实现复杂。适合推荐系统等有明确 reward 的场景。</p>
+  </div>
+  <div class="en">
+    <h4>1. Blue-Green</h4>
+    <p>Simplest: two full environments, instant switch. Rollback in seconds, but requires 2x resources (GPUs are expensive!). For low-frequency, zero-tolerance updates.</p>
+    
+    <h4>2. Canary ⭐ Most Common</h4>
+    <p>Gradual rollout: 5% → 25% → 50% → 100%. Monitor key metrics (P99 latency, error rate, business KPIs) at each step. Auto-rollback as safety net. <strong>Must-discuss in interviews.</strong></p>
+    
+    <h4>3. Shadow</h4>
+    <p>New model receives real traffic but doesn't serve responses — logs only for offline comparison. Zero user impact, but 2x compute. For high-risk domains (finance, healthcare).</p>
+    
+    <h4>4. Multi-Armed Bandit</h4>
+    <p>Dynamic allocation: automatically routes more traffic to better-performing models based on real-time rewards. Converges faster than fixed A/B, but complex to implement. Great for recommendation systems with clear reward signals.</p>
+  </div>
+</div>
+
+<h2>📊 Auto-Scaling 策略 / GPU-Aware Scaling</h2>
+
+<div class="highlight">
+  <h4>核心难点：GPU ≠ CPU</h4>
+  <p>CPU auto-scaling 看 CPU 利用率就行。GPU 不一样——模型加载到显存需要 30-120 秒（冷启动），而且 GPU 利用率不能简单对应请求量。需要更智能的指标。</p>
+</div>
+
+<pre><code># 生产级 Auto-Scaling 指标组合
+scaling_config:
+  metrics:
+    # 主指标：请求队列深度（最直接反映供需关系）
+    - name: pending_requests
+      target: 10          # 每个 replica 的队列上限
+      type: AverageValue
+    
+    # 辅助指标：GPU 显存利用率
+    - name: gpu_memory_utilization
+      target: 85%         # KV Cache 接近满 = 需要扩容
+      type: Utilization
+    
+    # 辅助指标：TTFT (Time to First Token)
+      - name: p95_time_to_first_token_ms
+      target: 500         # 超过 500ms = 用户体验变差
+      type: AverageValue
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1分钟内持续压力才扩
+      policies:
+        - type: Pods
+          value: 2                     # 每次最多加 2 个 pod
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5分钟冷却期（GPU 贵，别抖动）
+      policies:
+        - type: Pods
+          value: 1                     # 每次只减 1 个 pod
+          periodSeconds: 300
+
+  # 预热策略：对抗冷启动
+  warmup:
+    modelPreload: true           # Pod 启动时预加载模型
+    healthCheckDelay: 120s       # 等模型加载完才接流量
+    warmupRequests: 10           # 发 10 个测试请求预热 KV Cache</code></pre>
+
+<div class="pattern">
+  <h4>🎯 面试关键点 / Interview Key Points</h4>
+  <ul>
+    <li><strong>冷启动对策</strong>：Model Preloading + Warm Pool（保持 N 个待命实例）+ 预测性扩容（根据历史流量提前扩）</li>
+    <li><strong>缩容要谨慎</strong>：GPU 实例贵 + 冷启动慢 → 缩容窗口必须长（5-15分钟）</li>
+    <li><strong>多模型共享 GPU</strong>：用 Triton 的 Model Ensemble 或 NVIDIA MPS 让小模型共享一张卡</li>
+  </ul>
+</div>
+
+<h2>🛡️ 生产化必备 / Production Essentials</h2>
+
+<h3>1. 健康检查三级体系</h3>
+
+<pre><code># Level 1: Liveness — 进程还活着吗？
+GET /health → 200 OK
+
+# Level 2: Readiness — 模型加载完了吗？能接请求吗？
+GET /ready → 200 OK (model loaded, GPU memory allocated)
+           → 503 (still loading / OOM recovery)
+
+# Level 3: Inference Health — 推理质量正常吗？
+POST /health/inference
+  → Run canary prompt, check latency < threshold
+  → Detect: GPU error (NaN outputs), memory leak, KV cache corruption</code></pre>
+
+<h3>2. Graceful Degradation 优雅降级</h3>
+
+<div class="architecture">
+正常模式:            降级模式 (过载时):         熔断模式 (故障时):
+User → GPT-4o       User → GPT-4o-mini       User → Cached Response
+     → Full ctx          → Truncated ctx           → Fallback message
+     → Streaming         → Non-streaming            → "稍后重试"
+     
+触发条件:            触发条件:                  触发条件:
+QPS < 1000           QPS > 1000 or P99 > 2s    Error rate > 10%
+GPU util < 80%       GPU util > 90%             GPU unreachable
+</div>
+
+<h3>3. 关键监控指标 / Key Metrics</h3>
+
+<table class="compare-table">
+<tr>
+  <th>层级</th>
+  <th>指标</th>
+  <th>告警阈值</th>
+  <th>含义</th>
+</tr>
+<tr>
+  <td>用户体验</td>
+  <td>TTFT (Time to First Token)</td>
+  <td>P95 > 1s</td>
+  <td>用户等第一个字的时间</td>
+</tr>
+<tr>
+  <td>用户体验</td>
+  <td>TPS (Tokens Per Second)</td>
+  <td>&lt; 20 tok/s</td>
+  <td>生成速度，影响流式体验</td>
+</tr>
+<tr>
+  <td>系统健康</td>
+  <td>KV Cache 利用率</td>
+  <td>> 90%</td>
+  <td>满了会拒绝新请求</td>
+</tr>
+<tr>
+  <td>系统健康</td>
+  <td>Batch Size (Running)</td>
+  <td>持续 max</td>
+  <td>GPU 满载，延迟会上升</td>
+</tr>
+<tr>
+  <td>成本</td>
+  <td>GPU 利用率</td>
+  <td>&lt; 30%</td>
+  <td>浪费钱，应该缩容或共享</td>
+</tr>
+<tr>
+  <td>成本</td>
+  <td>$/1M tokens</td>
+  <td>持续上升</td>
+  <td>效率下降，检查 batching</td>
+</tr>
+</table>
+
+<h2>💻 端到端设计：面试完整回答 / Complete Interview Answer</h2>
+
+<div class="architecture">
+                    ┌─────────────────┐
+                    │   API Gateway   │ ← Auth, Rate Limit, Logging
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │  Model Router   │ ← A/B Test, Canary, Fallback
+                    └────────┬────────┘
+                    ┌────────┼────────┐
+              ┌─────▼──┐ ┌──▼─────┐ ┌▼────────┐
+              │ vLLM   │ │ vLLM   │ │ Triton  │ ← Serving Layer
+              │ GPT-4o │ │ GPT-4m │ │ Embed   │
+              │ (4×H100│ │(1×H100)│ │(1×A100) │
+              └────┬───┘ └───┬────┘ └────┬────┘
+                   │         │           │
+              ┌────▼─────────▼───────────▼────┐
+              │        Feature Store          │ ← Day 2 的数据层
+              │   (User context, history)     │
+              └───────────────────────────────┘
+                             │
+              ┌──────────────▼────────────────┐
+              │      Monitoring & Alerting    │
+              │  TTFT, TPS, GPU%, Error Rate  │
+              │  Prometheus → Grafana → PD    │
+              └───────────────────────────────┘
+</div>
+
+<div class="highlight">
+  <h4>🗣️ 面试话术 / Interview Talking Points</h4>
+  <ol>
+    <li><strong>分层讲</strong>：先画三层架构（Runtime → Serving → Gateway），展示你理解不同抽象层的职责</li>
+    <li><strong>选型讲权衡</strong>：不要只说「用 vLLM」，要说「原型用 TGI 快速验证，生产切 vLLM 因为 PagedAttention 提升 2-4x 吞吐」</li>
+    <li><strong>部署策略</strong>：必讲 Canary + Shadow，体现你重视安全上线</li>
+    <li><strong>Scale 讲指标</strong>：不能只说 HPA，要讲 GPU-specific 的 scaling signals（队列深度 > 利用率）</li>
+    <li><strong>成本意识</strong>：GPU 是最大成本项，讲 Model Routing（简单请求用小模型）和 Multi-Model GPU Sharing</li>
+  </ol>
+</div>
+
+<h2>📐 容量估算 / Capacity Estimation</h2>
+
+<div class="pattern">
+  <h4>场景：日活 1M 的 ChatBot 服务</h4>
+  <p><strong>假设</strong>：每用户 5 次对话/天，每次平均 500 input + 300 output tokens</p>
+  <ul>
+    <li>总请求：1M × 5 = 5M req/day = ~58 QPS (avg), ~290 QPS (peak 5x)</li>
+    <li>Token 吞吐：290 × 300 = 87K output tokens/s (peak)</li>
+    <li>单 H100 vLLM (Llama-70B FP16)：~3000 output tokens/s</li>
+    <li>→ 需要 87K / 3K ≈ <strong>29 张 H100</strong>（峰值）+ 缓冲 = 35 张</li>
+    <li>成本：35 × $2/hr ≈ <strong>$1,680/天 ≈ $50K/月</strong>（按需价格）</li>
+    <li>优化后（FP8 量化 + Model Routing 50% 小模型）：→ ~$20-25K/月</li>
+  </ul>
+</div>
+
+<h2>🔗 与前两天的关联 / Series Connections</h2>
+
+<table class="compare-table">
+<tr>
+  <th>Day 1 Pattern</th>
+  <th>在 Model Serving 中的体现</th>
+</tr>
+<tr>
+  <td>Multi-Stage Pipeline</td>
+  <td>Embed → Retrieve → Rank → Generate，每段用不同模型/硬件</td>
+</tr>
+<tr>
+  <td>Offline/Online Split</td>
+  <td>模型训练 (offline) vs 推理服务 (online)，Feature Store 桥接</td>
+</tr>
+<tr>
+  <td>Model Routing</td>
+  <td>Gateway 层按 complexity/cost 路由到不同模型实例</td>
+</tr>
+<tr>
+  <td>Multi-Layer Caching</td>
+  <td>KV Cache (GPU 内) + Prompt Cache (Redis) + Response Cache (CDN)</td>
+</tr>
+<tr>
+  <td>Guardrails</td>
+  <td>Health Check 三级 + Graceful Degradation + Auto-rollback</td>
+</tr>
+</table>
+
+<h2>🎤 面试高频问题 / Interview Questions</h2>
+
+<div class="interview">
+  <h4>Q1: vLLM 的 Continuous Batching 和传统 Static Batching 有什么区别？</h4>
+  <p><strong>答</strong>：Static Batching 等所有请求都生成完才处理下一批 → 短请求被长请求拖慢。Continuous Batching 允许请求在任意 iteration 加入/退出 batch → 短请求及时返回，GPU 利用率从 ~30% 提升到 ~80%+。这就像餐厅从「一桌全点完才上菜」变成「做好一道上一道」。</p>
+</div>
+
+<div class="interview">
+  <h4>Q2: 如何设计 Canary 发布的自动回滚机制？</h4>
+  <p><strong>答</strong>：三步：①定义 SLO 指标（P99 延迟 < 2s, 错误率 < 1%, 业务指标不降 > 5%）②用 Istio/Envoy 做流量分割，从 5% 开始逐步放量 ③自动化控制器（Argo Rollouts / Flagger）每 2 分钟检查指标，违反任一 SLO 立即回滚。关键是：<strong>回滚必须是自动的、秒级的</strong>，不能靠人值班。</p>
+</div>
+
+<div class="interview">
+  <h4>Q3: GPU 资源太贵，如何优化推理成本？</h4>
+  <p><strong>答</strong>：四层优化：① <strong>Model Routing</strong> — 简单请求用 7B 模型（便宜 10x），复杂请求才用 70B ② <strong>量化</strong> — FP8/INT4 减少显存占用，同卡服务更多请求 ③ <strong>缓存</strong> — Semantic Cache 避免重复推理（命中率可达 20-40%） ④ <strong>共享</strong> — 低流量模型用 MPS/Time-slicing 共享 GPU。组合使用可降成本 50-70%。</p>
+</div>
+
+<div class="interview">
+  <h4>Q4: Shadow Deployment 和 A/B Test 在什么场景下选哪个？</h4>
+  <p><strong>答</strong>：<strong>Shadow</strong> = 新模型的安全验证阶段，零用户风险但无法衡量真实用户反馈（因为用户看不到新结果）。适合上线前验证延迟/错误/输出质量。<strong>A/B Test</strong> = 已经验证安全后，测量用户行为差异（CTR, 满意度）。正确流程是：Shadow 先 → 确认无 regression → Canary/A/B → 全量。两者是顺序关系，不是替代关系。</p>
+</div>
+
+<h2>💬 思考题 / Think About This</h2>
+
+<div class="warning">
+  <p>🤔 如果你的服务需要同时运行 50 个不同的 fine-tuned 模型（例如每个企业客户一个），但每个模型的请求量都很低（平均 1 QPS），你会怎么设计 serving 架构来既保证延迟又控制成本？</p>
+  <p><em>提示：想想 LoRA adapter 的特性、模型热加载策略、以及 Serverless GPU 的可能性…</em></p>
+</div>
+
+<div class="series-nav">
+  📚 <strong>下一篇预告</strong>：Day 4 — A/B Testing for ML：如何科学地验证模型改进？统计显著性、在线指标设计、实验平台架构。
+</div>
+
+</body>
+</html>

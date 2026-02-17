@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-17 - 金融数据基础 — OHLCV、Adjusted Prices、数据清洗</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; }
+    .code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace; white-space: pre; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .example { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: right; }
+    th { background: #f8f9fa; text-align: center; }
+    .tag { display: inline-block; background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; margin: 2px; }
+  </style>
+</head>
+<body>
+
+<h1>📊 Day 2: 金融数据基础 — OHLCV、Adjusted Prices、数据清洗</h1>
+<p><strong>Financial Data Fundamentals — OHLCV, Adjusted Prices & Data Cleaning</strong></p>
+<p><span class="tag">Phase 1: Foundations</span> <span class="tag">2026-02-17</span></p>
+
+<hr>
+
+<h2>🎯 为什么数据是量化交易的地基？</h2>
+
+<div class="bilingual">
+<div class="zh">
+<p>"Garbage in, garbage out" — 这句话在量化交易中是铁律。你的策略再精妙，如果建立在有问题的数据上，结果就是灾难。Renaissance Technologies 的 Medallion 基金花了大量资源清洗数据，Jim Simons 曾说数据质量是他们最重要的竞争优势之一。</p>
+<p>今天我们从最基础的价格数据开始：理解 OHLCV 的含义、为什么需要调整价格、以及数据清洗中最常见的陷阱。</p>
+</div>
+<div class="en">
+<p>"Garbage in, garbage out" — this is an iron law in quantitative trading. No matter how elegant your strategy, building it on flawed data leads to disaster. Renaissance Technologies' Medallion Fund invested heavily in data cleaning; Jim Simons has said data quality was one of their most important competitive advantages.</p>
+<p>Today we start from the most fundamental price data: understanding OHLCV, why we need adjusted prices, and the most common pitfalls in data cleaning.</p>
+</div>
+</div>
+
+<h2>📈 1. OHLCV — 价格数据的五个维度</h2>
+
+<div class="bilingual">
+<div class="zh">
+<h3>什么是 OHLCV？</h3>
+<p>对于任何一个时间周期（日/时/分），我们记录五个核心数据点：</p>
+<ul>
+  <li><strong>O (Open)</strong> — 开盘价：该周期第一笔成交价格</li>
+  <li><strong>H (High)</strong> — 最高价：该周期内最高成交价格</li>
+  <li><strong>L (Low)</strong> — 最低价：该周期内最低成交价格</li>
+  <li><strong>C (Close)</strong> — 收盘价：该周期最后一笔成交价格</li>
+  <li><strong>V (Volume)</strong> — 成交量：该周期内总成交股数</li>
+</ul>
+<p>收盘价是最重要的——大多数技术指标和策略都基于收盘价计算。但开盘价对 gap 策略很重要，高低价对波动率计算很关键。</p>
+</div>
+<div class="en">
+<h3>What is OHLCV?</h3>
+<p>For any time period (daily/hourly/minute), we record five core data points:</p>
+<ul>
+  <li><strong>O (Open)</strong> — Opening price: first trade of the period</li>
+  <li><strong>H (High)</strong> — Highest trade price during the period</li>
+  <li><strong>L (Low)</strong> — Lowest trade price during the period</li>
+  <li><strong>C (Close)</strong> — Closing price: last trade of the period</li>
+  <li><strong>V (Volume)</strong> — Total shares traded during the period</li>
+</ul>
+<p>The close is the most important — most indicators and strategies are computed from closing prices. But open matters for gap strategies, and high/low are critical for volatility calculations.</p>
+</div>
+</div>
+
+<div class="example">
+<strong>📋 示例：AAPL 日线数据</strong>
+<table>
+<tr><th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th><th>Adj Close</th></tr>
+<tr><td>2024-08-05</td><td>199.09</td><td>213.50</td><td>196.00</td><td>209.27</td><td>119,548,600</td><td>208.54</td></tr>
+<tr><td>2024-08-06</td><td>205.30</td><td>209.99</td><td>201.07</td><td>207.23</td><td>69,714,700</td><td>206.51</td></tr>
+<tr><td>2024-08-07</td><td>206.90</td><td>213.64</td><td>206.39</td><td>209.82</td><td>60,402,800</td><td>209.09</td></tr>
+</table>
+</div>
+
+<h2>⚠️ 2. 为什么 Close ≠ Adjusted Close？</h2>
+
+<div class="bilingual">
+<div class="zh">
+<h3>两个会改变价格的事件</h3>
+<p><strong>① 股票拆分 (Stock Split)</strong></p>
+<p>当公司做 4:1 拆分时，每股价格变为原来的 1/4，但持股数变为 4 倍。如果不调整历史价格，你的图表上会出现一个巨大的"断崖"——看起来股价暴跌了 75%，但实际上什么都没发生。</p>
+
+<p><strong>② 现金分红 (Cash Dividend)</strong></p>
+<p>除息日 (ex-dividend date) 当天，股价会自动下调约等于分红金额。如果 AAPL 派发 $0.25 的股息，除息日股价大约下跌 $0.25。不调整的话，你的收益率计算会低估真实回报。</p>
+
+<h3>调整公式</h3>
+</div>
+<div class="en">
+<h3>Two Events That Change Prices</h3>
+<p><strong>① Stock Splits</strong></p>
+<p>When a company does a 4:1 split, the per-share price becomes 1/4 but share count quadruples. Without adjustment, your chart shows a massive "cliff" — looks like a 75% crash, but nothing actually happened.</p>
+
+<p><strong>② Cash Dividends</strong></p>
+<p>On the ex-dividend date, the stock price automatically drops by roughly the dividend amount. If AAPL pays $0.25 dividend, the price drops ~$0.25. Without adjustment, your return calculations underestimate true returns.</p>
+
+<h3>Adjustment Formulas</h3>
+</div>
+</div>
+
+<div class="formula">
+<strong>拆分调整 / Split Adjustment:</strong><br><br>
+Split Factor = 1 / Split Ratio<br>
+例: 4:1 split → Split Factor = 0.25<br><br>
+Adjusted Price = Raw Price × Split Factor<br><br>
+
+<strong>分红调整 / Dividend Adjustment:</strong><br><br>
+Dividend Factor = 1 - (Dividend / Close_before_ex)<br><br>
+例: Close = $200, Dividend = $0.50<br>
+Dividend Factor = 1 - (0.50 / 200) = 0.9975<br><br>
+
+<strong>综合调整 / Combined:</strong><br><br>
+Adjusted Close = Close × ∏(Split Factors) × ∏(Dividend Factors)<br>
+<em>注意：调整是向后追溯的 (backward-looking)，最新价格 = 原始价格</em>
+</div>
+
+<div class="warning">
+<strong>⚠️ 关键陷阱：调整价格会随时间变化！</strong><br>
+每次公司派发新的股息或拆分，<em>所有</em>历史调整价格都会重新计算。这意味着你上周下载的 Adjusted Close 和今天下载的可能不同。<strong>回测时必须使用 point-in-time 数据，否则会引入 look-ahead bias。</strong>
+</div>
+
+<h2>🧹 3. 数据清洗 — 你必须处理的 7 个问题</h2>
+
+<div class="bilingual">
+<div class="zh">
+<h3>问题 1：缺失数据 (Missing Data)</h3>
+<p>节假日无交易，有些数据源会跳过这些天，有些会填 NaN。处理方法：向前填充 (forward fill)，但注意不要跨越太长的 gap。</p>
+
+<h3>问题 2：异常值 (Outliers)</h3>
+<p>Flash crash、错误报价、数据传输错误都会产生异常值。2010 年 Flash Crash 时，一些股票瞬间跌到 $0.01。用统计方法检测：如果单日收益率超过 ±50%，标记为可疑。</p>
+
+<h3>问题 3：幸存者偏差 (Survivorship Bias)</h3>
+<p>如果你的数据只包含当前在市的股票，忽略了已退市的公司（破产、被收购等），你的回测结果会过度乐观。解决方案：使用包含退市股票的数据库。</p>
+
+<h3>问题 4：复权方式不一致</h3>
+<p>前复权 vs 后复权 vs 不复权 — 不同数据源可能默认不同。统一使用后复权 (backward adjusted) 做回测。</p>
+
+<h3>问题 5：时区与时间戳</h3>
+<p>美股交易时间 9:30-16:00 ET。加密货币 24/7。混合数据时要对齐时区。</p>
+
+<h3>问题 6：公司行为事件 (Corporate Actions)</h3>
+<p>除了拆分和分红，还有：反向拆分、特别分红、spin-off（分拆）。每一种都需要不同的调整逻辑。</p>
+
+<h3>问题 7：数据源差异</h3>
+<p>Yahoo Finance、Bloomberg、Refinitiv 的同一股票同一天的数据可能不完全相同。尤其是成交量和调整价格。</p>
+</div>
+<div class="en">
+<h3>Problem 1: Missing Data</h3>
+<p>Holidays have no trades; some sources skip dates, others fill NaN. Solution: forward-fill, but beware of long gaps.</p>
+
+<h3>Problem 2: Outliers</h3>
+<p>Flash crashes, erroneous quotes, transmission errors all create outliers. During the 2010 Flash Crash, some stocks momentarily traded at $0.01. Statistical detection: flag single-day returns exceeding ±50%.</p>
+
+<h3>Problem 3: Survivorship Bias</h3>
+<p>If your data only includes currently-listed stocks, ignoring delisted companies (bankrupt, acquired, etc.), your backtest results will be over-optimistic. Solution: use a database that includes delisted stocks.</p>
+
+<h3>Problem 4: Inconsistent Adjustments</h3>
+<p>Forward-adjusted vs backward-adjusted vs unadjusted — different sources may default differently. Standardize on backward-adjusted for backtesting.</p>
+
+<h3>Problem 5: Timezone & Timestamps</h3>
+<p>US stocks trade 9:30-16:00 ET. Crypto trades 24/7. When mixing data, align timezones carefully.</p>
+
+<h3>Problem 6: Corporate Actions</h3>
+<p>Beyond splits and dividends: reverse splits, special dividends, spin-offs. Each needs different adjustment logic.</p>
+
+<h3>Problem 7: Data Source Discrepancies</h3>
+<p>Yahoo Finance, Bloomberg, Refinitiv may report different values for the same stock on the same day. Especially volume and adjusted prices.</p>
+</div>
+</div>
+
+<h2>💻 4. Python 实战 — 下载、清洗、调整</h2>
+
+<div class="code">import yfinance as yf
+import pandas as pd
+import numpy as np
+
+# ============================================
+# Step 1: Download OHLCV Data
+# ============================================
+ticker = "AAPL"
+df = yf.download(ticker, start="2020-01-01", end="2026-02-17")
+print(f"Shape: {df.shape}")
+print(df.head())
+
+# ============================================
+# Step 2: Check for Missing Data
+# ============================================
+print(f"\nMissing values:\n{df.isnull().sum()}")
+
+# Check for gaps in trading days
+df.index = pd.to_datetime(df.index)
+trading_days = pd.bdate_range(df.index[0], df.index[-1])
+missing_days = trading_days.difference(df.index)
+print(f"\nMissing trading days: {len(missing_days)}")
+# Note: some are holidays, which is normal
+
+# ============================================
+# Step 3: Detect Outliers
+# ============================================
+df['returns'] = df['Close'].pct_change()
+df['log_returns'] = np.log(df['Close'] / df['Close'].shift(1))
+
+# Flag extreme moves (> 3 standard deviations)
+mean_ret = df['returns'].mean()
+std_ret = df['returns'].std()
+outliers = df[np.abs(df['returns'] - mean_ret) > 3 * std_ret]
+print(f"\nOutlier days (>3σ): {len(outliers)}")
+print(outliers[['Close', 'returns']].head(10))
+
+# ============================================
+# Step 4: Verify Adjusted Prices
+# ============================================
+# The adjustment ratio tells us about splits/dividends
+df['adj_ratio'] = df['Adj Close'] / df['Close']
+print(f"\nAdj ratio range: {df['adj_ratio'].min():.6f} to {df['adj_ratio'].max():.6f}")
+
+# If ratio < 1 for historical data, dividends/splits occurred
+# If ratio = 1 for recent data, that's expected (most recent = unadjusted)
+
+# ============================================
+# Step 5: Calculate Returns Correctly
+# ============================================
+# WRONG: using raw Close
+wrong_returns = df['Close'].pct_change()
+
+# RIGHT: using Adjusted Close (captures dividends)
+right_returns = df['Adj Close'].pct_change()
+
+# Compare cumulative returns
+wrong_cumulative = (1 + wrong_returns).cumprod().iloc[-1] - 1
+right_cumulative = (1 + right_returns).cumprod().iloc[-1] - 1
+print(f"\nCumulative return (raw close):      {wrong_cumulative:.2%}")
+print(f"Cumulative return (adjusted close):  {right_cumulative:.2%}")
+print(f"Difference (missed dividends):       {right_cumulative - wrong_cumulative:.2%}")
+
+# ============================================
+# Step 6: Build a Clean Dataset
+# ============================================
+def clean_ohlcv(df, max_return=0.5):
+    """Clean OHLCV data for backtesting."""
+    clean = df.copy()
+    
+    # 1. Remove rows with any NaN in OHLCV
+    clean = clean.dropna(subset=['Open', 'High', 'Low', 'Close', 'Volume'])
+    
+    # 2. Validate OHLCV relationships
+    # High must be >= Open, Close, Low
+    # Low must be <= Open, Close, High
+    valid = (
+        (clean['High'] >= clean['Low']) &
+        (clean['High'] >= clean['Open']) &
+        (clean['High'] >= clean['Close']) &
+        (clean['Low'] <= clean['Open']) &
+        (clean['Low'] <= clean['Close']) &
+        (clean['Volume'] >= 0)
+    )
+    invalid_count = (~valid).sum()
+    if invalid_count > 0:
+        print(f"Removed {invalid_count} rows with invalid OHLCV relationships")
+    clean = clean[valid]
+    
+    # 3. Flag extreme returns (but don't auto-remove)
+    returns = clean['Adj Close'].pct_change()
+    extreme = np.abs(returns) > max_return
+    if extreme.sum() > 0:
+        print(f"Warning: {extreme.sum()} days with |return| > {max_return:.0%}")
+        print(clean[extreme][['Close', 'Volume']])
+    
+    # 4. Forward-fill minor gaps (max 3 days)
+    clean = clean.asfreq('B')  # Business day frequency
+    clean = clean.ffill(limit=3)
+    
+    return clean
+
+df_clean = clean_ohlcv(df)
+print(f"\nClean dataset: {len(df_clean)} rows")</div>
+
+<h2>📐 5. 关键公式总结</h2>
+
+<div class="formula">
+<strong>简单收益率 / Simple Return:</strong><br>
+R_t = (P_t - P_{t-1}) / P_{t-1} = P_t / P_{t-1} - 1<br><br>
+
+<strong>对数收益率 / Log Return:</strong><br>
+r_t = ln(P_t / P_{t-1}) = ln(P_t) - ln(P_{t-1})<br><br>
+
+<strong>为什么对数收益率更好？</strong><br>
+1. 可加性：r_total = r_1 + r_2 + ... + r_n （简单收益率不可加）<br>
+2. 对称性：+10% 和 -10% 的对数收益率幅度相等<br>
+3. 统计性质更好：近似正态分布<br><br>
+
+<strong>但注意：</strong><br>
+- 截面比较（跨股票）时用简单收益率<br>
+- 时间序列分析（单只股票跨时间）时用对数收益率<br>
+- 组合收益率 = Σ(w_i × R_i) — 只对简单收益率成立！
+</div>
+
+<h2>🔍 6. 数据源对比</h2>
+
+<table>
+<tr><th>数据源</th><th>免费?</th><th>调整价格</th><th>退市股票</th><th>适合</th></tr>
+<tr><td>Yahoo Finance</td><td>✅</td><td>✅ 后复权</td><td>❌ 有限</td><td>学习、原型</td></tr>
+<tr><td>Alpha Vantage</td><td>✅ (限速)</td><td>✅</td><td>❌</td><td>小规模项目</td></tr>
+<tr><td>Polygon.io</td><td>💰 (免费层)</td><td>✅</td><td>✅</td><td>中等规模</td></tr>
+<tr><td>Quandl/Nasdaq</td><td>💰</td><td>✅</td><td>✅</td><td>专业回测</td></tr>
+<tr><td>Bloomberg</td><td>💰💰💰</td><td>✅</td><td>✅</td><td>机构级</td></tr>
+<tr><td>CRSP</td><td>💰💰</td><td>✅ 最权威</td><td>✅ 完整</td><td>学术研究</td></tr>
+</table>
+
+<div class="insight">
+<strong>💡 实战建议</strong><br>
+<p>个人量化起步阶段：Yahoo Finance + yfinance 库足够了。但要意识到其局限性：</p>
+<ul>
+  <li>调整价格可能不完全准确（特别是历史较久的数据）</li>
+  <li>不包含完整的退市股票数据 → 幸存者偏差</li>
+  <li>分钟级数据只保留最近 30 天</li>
+</ul>
+<p>当策略验证阶段结束、准备实盘时，建议升级到 Polygon.io 或 Databento。</p>
+</div>
+
+<h2>🔗 知识网络 Knowledge Graph</h2>
+
+<div class="insight">
+<p><strong>Day 1 (量化交易概览)</strong> → 我们知道了量化交易的全貌<br>
+<strong>Day 2 (金融数据基础)</strong> → 现在理解了数据——量化的原材料<br>
+<strong>Day 3 (收益率计算)</strong> → 接下来深入收益率的数学，这是策略评估的基础</p>
+
+<p>数据是一切的起点。没有干净的数据，再好的模型也无用。Jim Simons、Cliff Asness、Ernest Chan 都反复强调：<strong>在写第一行策略代码之前，先花 80% 的时间确保数据正确。</strong></p>
+</div>
+
+<h2>📖 参考文献 References</h2>
+
+<div class="references">
+<ul>
+  <li>Ernest P. Chan, <em>Quantitative Trading</em>, Wiley, 2nd ed. — Chapter 2: "Finding and Assessing Data"</li>
+  <li>Marcos López de Prado, <em>Advances in Financial Machine Learning</em>, Wiley — Chapter 2: "Financial Data Structures"</li>
+  <li>Stefan Jansen, <em>Machine Learning for Algorithmic Trading</em>, 2nd ed. — Chapter 2: "Market & Fundamental Data"</li>
+  <li>QuantStart, "Understanding Equities Data" — quantstart.com</li>
+  <li>CRSP Data Documentation — crsp.org</li>
+</ul>
+</div>
+
+<h2>💭 思考题 Think About It</h2>
+
+<div class="insight">
+<p><strong>🤔 如果你在回测一个分红股策略（比如 Dogs of the Dow），用原始收盘价和调整收盘价分别计算，结果差距会有多大？为什么这个差距在长期回测中会被放大？</strong></p>
+<p><em>Hint: 想想复利效应。AAPL 从 2015 到 2025 年累计分红约 $25/股。如果当时股价 $30（拆分前），分红占比 >80%。忽略分红意味着忽略了大部分真实收益。</em></p>
+</div>
+
+<p style="text-align: center; color: #888; margin-top: 40px;">📚 Knowledge Agent | Quantitative Trading Series Day 2 | 2026-02-17</p>
+
+</body>
+</html>

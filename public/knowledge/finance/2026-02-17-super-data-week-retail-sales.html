@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-17 - 超级数据周开幕：零售销售 + 一周数据实战指南</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 30px; }
+    h3 { color: #5f6368; }
+    .impact { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .terms { background: #e8f0fe; padding: 15px; border-radius: 8px; }
+    .calendar { background: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .calendar table { width: 100%; border-collapse: collapse; }
+    .calendar th, .calendar td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ffe0b2; }
+    .calendar th { background: #ff9800; color: white; }
+    .warning { background: #fce4ec; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e91e63; }
+    .connection { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    code { background: #f1f3f4; padding: 2px 6px; border-radius: 3px; }
+    .highlight { background: #fff9c4; padding: 2px 4px; }
+  </style>
+</head>
+<body>
+
+<h1>📅 超级数据周开幕：零售销售 + 一周数据实战指南<br>
+<small>Super Data Week Begins: Retail Sales + Your Weekly Data Playbook</small></h1>
+
+<p><em>Day 18 | 2026-02-17 | Phase 1.3: 宏观经济指标</em></p>
+
+<!-- ==================== SECTION 1: 今日市场 ==================== -->
+
+<h2>📊 今日市场快照 / Market Snapshot</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>假期归来，市场表现分化：</p>
+    <ul>
+      <li>道指 49,525 (+0.05%) — 勉强持平</li>
+      <li>S&P 500 6,820 (-0.24%) — 小幅下滑</li>
+      <li>Nasdaq -0.7% — 科技股继续承压</li>
+      <li>10Y 国债收益率 4.03% — <strong>2026 年新低！</strong></li>
+      <li>黄金 $4,960 (-1.7%)</li>
+      <li>原油 $63.75 (+1.4%)</li>
+      <li>BTC $68,100</li>
+    </ul>
+    <p>⚡ 关键信号：10Y 收益率创年内新低 → 市场在为经济放缓定价。这和我们之前学的「收益率曲线」直接相关。</p>
+  </div>
+  <div class="en">
+    <p>Post-holiday markets show divergence:</p>
+    <ul>
+      <li>Dow 49,525 (+0.05%) — flat</li>
+      <li>S&P 500 6,820 (-0.24%) — slight dip</li>
+      <li>Nasdaq -0.7% — tech under pressure</li>
+      <li>10Y Treasury yield 4.03% — <strong>2026 low!</strong></li>
+      <li>Gold $4,960 (-1.7%)</li>
+      <li>WTI Crude $63.75 (+1.4%)</li>
+      <li>BTC $68,100</li>
+    </ul>
+    <p>⚡ Key signal: 10Y at 2026 low → market pricing in economic slowdown. Connects directly to our yield curve lesson (Day 4).</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 2: 核心知识 ==================== -->
+
+<h2>🎓 今日核心：零售销售数据 / Core Lesson: Retail Sales</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>什么是零售销售（Retail Sales）？</h3>
+    <p>零售销售是美国商务部每月发布的数据，衡量<strong>消费者在商店和网上花了多少钱</strong>。</p>
+    
+    <p>为什么重要？因为<strong>消费占美国 GDP 的 ~70%</strong>。消费者不花钱 → GDP 下降 → 经济衰退。所以零售销售是经济健康的「体温计」。</p>
+    
+    <h3>怎么看数据？</h3>
+    <p>和 CPI 一样，关键是看<strong>环比（MoM）</strong>变化：</p>
+    <ul>
+      <li><strong>Headline 零售</strong>：包含一切，但汽车和汽油波动大，容易误导</li>
+      <li><strong>"Ex-Auto" 零售</strong>：剔除汽车，更稳定</li>
+      <li><strong>"Control Group" 控制组</strong>：剔除汽车、汽油、建材、餐饮 — <span class="highlight">这个才是 GDP 计算直接用的数字</span></li>
+    </ul>
+    
+    <h3>类比理解</h3>
+    <p>想象你在看一个家庭的消费习惯：</p>
+    <ul>
+      <li>Headline = 总花费（包括偶尔买车、油价波动）</li>
+      <li>Ex-Auto = 日常消费（不算那辆新车）</li>
+      <li>Control Group = 真正的「生活质量」支出</li>
+    </ul>
+    
+    <h3>与 Walmart 财报的联动</h3>
+    <p>本周四 Walmart 发布 Q4 财报。Walmart 是美国最大的零售商，它的 same-store sales（同店销售增长）是零售销售数据的「微观验证」。</p>
+    <p>如果零售销售数据强 + Walmart guidance 强 → 消费者健康 → 支持 soft landing 叙事。</p>
+  </div>
+  <div class="en">
+    <h3>What Are Retail Sales?</h3>
+    <p>Monthly data from the Commerce Department measuring <strong>how much consumers spend at stores and online</strong>.</p>
+    
+    <p>Why it matters: <strong>consumption is ~70% of U.S. GDP</strong>. Consumers stop spending → GDP drops → recession. Retail sales are the economy's "thermometer."</p>
+    
+    <h3>How to Read the Data</h3>
+    <p>Like CPI, focus on <strong>month-over-month (MoM)</strong> changes:</p>
+    <ul>
+      <li><strong>Headline</strong>: Everything, but auto and gas are volatile</li>
+      <li><strong>"Ex-Auto"</strong>: Excludes vehicles, more stable</li>
+      <li><strong>"Control Group"</strong>: Excludes auto, gas, building materials, food services — <span class="highlight">this feeds directly into GDP calculations</span></li>
+    </ul>
+    
+    <h3>Analogy</h3>
+    <p>Imagine tracking a family's spending:</p>
+    <ul>
+      <li>Headline = total (includes occasional car purchase, gas fluctuations)</li>
+      <li>Ex-Auto = daily spending (ignore the new car)</li>
+      <li>Control Group = true "quality of life" spending</li>
+    </ul>
+    
+    <h3>Walmart Connection</h3>
+    <p>Walmart reports Q4 earnings Thursday. As America's largest retailer, its same-store sales are the "micro verification" of macro retail data.</p>
+    <p>Strong retail + strong Walmart guidance → healthy consumer → supports soft landing narrative.</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 3: 超级数据周日历 ==================== -->
+
+<h2>📅 超级数据周完全日历 / The Super Data Week Calendar</h2>
+
+<div class="calendar">
+  <p>昨天我们预览了这一周。现在数据已经开始落地，让我们把每个事件「串」起来。</p>
+  <table>
+    <tr><th>日期</th><th>事件</th><th>为什么重要</th><th>看什么</th></tr>
+    <tr>
+      <td><strong>周二 2/17</strong><br>(今天)</td>
+      <td>🛒 1月零售销售<br>🏭 Empire State 制造业</td>
+      <td>消费者还在花钱吗？<br>制造业是否在收缩？</td>
+      <td>Control Group MoM<br>指数 > 0 = 扩张</td>
+    </tr>
+    <tr>
+      <td><strong>周三 2/18</strong></td>
+      <td>📝 FOMC 会议纪要<br>(1月会议)</td>
+      <td>Fed 内部怎么讨论降息的？<br>有多少人倾向鸽派？</td>
+      <td>关键词: "some", "several", "most"<br>反映鸽派/鹰派比例</td>
+    </tr>
+    <tr>
+      <td><strong>周四 2/19</strong></td>
+      <td>🏪 Walmart Q4 财报<br>📊 Q4 GDP 修正值<br>📋 初请失业金</td>
+      <td>消费者健康的微观+宏观验证<br>经济增速确认</td>
+      <td>Same-store sales, guidance<br>GDP 上修 or 下修</td>
+    </tr>
+    <tr>
+      <td><strong>周五 2/20</strong></td>
+      <td>🎯 1月 PCE 通胀<br>🏠 成屋销售</td>
+      <td><span class="highlight">Fed 最看重的通胀指标！</span><br>昨天刚学的 PCE vs CPI</td>
+      <td>Core PCE YoY (预期 ~2.5%)<br>MoM (预期 0.3%)</td>
+    </tr>
+  </table>
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>🔗 数据之间的逻辑链</h3>
+    <p>这些数据不是孤立的，它们讲的是同一个故事：</p>
+    <ol>
+      <li><strong>零售销售</strong>（今天）→ 消费者花钱了吗？</li>
+      <li><strong>FOMC 纪要</strong>（明天）→ Fed 觉得经济怎么样？打算怎么做？</li>
+      <li><strong>GDP + Walmart</strong>（周四）→ 整体经济 + 最大零售商，双重验证</li>
+      <li><strong>PCE</strong>（周五）→ 通胀真的在降温吗？（CPI 说是，PCE 怎么说？）</li>
+    </ol>
+    <p>如果全部指向同一方向（消费稳 + 通胀降）→ <strong>6月降息几乎板上钉钉</strong>。<br>
+    如果信号矛盾（消费强 + 通胀反弹）→ <strong>市场会纠结</strong>。</p>
+  </div>
+  <div class="en">
+    <h3>🔗 The Data Logic Chain</h3>
+    <p>These aren't isolated — they tell one story:</p>
+    <ol>
+      <li><strong>Retail Sales</strong> (today) → Are consumers spending?</li>
+      <li><strong>FOMC Minutes</strong> (tomorrow) → What does the Fed think? What will they do?</li>
+      <li><strong>GDP + Walmart</strong> (Thursday) → Macro + micro confirmation</li>
+      <li><strong>PCE</strong> (Friday) → Is inflation really cooling? (CPI said yes — will PCE agree?)</li>
+    </ol>
+    <p>If all point the same way (stable spending + cooling inflation) → <strong>June rate cut nearly locked in</strong>.<br>
+    If signals conflict (strong spending + inflation rebound) → <strong>market confusion</strong>.</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 4: FOMC 纪要阅读指南 ==================== -->
+
+<h2>📝 FOMC 纪要怎么读？/ How to Read FOMC Minutes</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>明天（2/18）下午 2 点发布 FOMC 会议纪要。这是你第一次「实时」跟一个 FOMC 纪要，给你一个速读指南：</p>
+    
+    <h3>密码本：Fed 的「暗语」</h3>
+    <ul>
+      <li><strong>"A few participants"</strong> = 2-3 人（少数派）</li>
+      <li><strong>"Some participants"</strong> = 3-5 人</li>
+      <li><strong>"Several participants"</strong> = 5-7 人</li>
+      <li><strong>"Many participants"</strong> = 7-10 人</li>
+      <li><strong>"Most participants"</strong> = 大多数（>10 人）</li>
+      <li><strong>"Participants generally"</strong> = 几乎所有人</li>
+    </ul>
+    
+    <h3>看什么？</h3>
+    <ol>
+      <li>搜索 <code>"inflation"</code> — 他们对通胀的最新判断</li>
+      <li>搜索 <code>"labor market"</code> — 对就业的看法</li>
+      <li>搜索 <code>"risks"</code> — 他们担心什么？</li>
+      <li>搜索 <code>"appropriate"</code> — 多少人认为「适合」降息？</li>
+    </ol>
+    
+    <p>💡 记住：1月会议有 2 位委员投了反对票（要求降息 50bp）。纪要会揭示他们的论点，以及其他委员怎么回应。</p>
+  </div>
+  <div class="en">
+    <h3>The Decoder Ring: Fed Language</h3>
+    <ul>
+      <li><strong>"A few participants"</strong> = 2-3 (minority)</li>
+      <li><strong>"Some participants"</strong> = 3-5</li>
+      <li><strong>"Several participants"</strong> = 5-7</li>
+      <li><strong>"Many participants"</strong> = 7-10</li>
+      <li><strong>"Most participants"</strong> = majority (>10)</li>
+      <li><strong>"Participants generally"</strong> = nearly all</li>
+    </ul>
+    
+    <h3>What to Look For</h3>
+    <ol>
+      <li>Search <code>"inflation"</code> — latest assessment</li>
+      <li>Search <code>"labor market"</code> — employment view</li>
+      <li>Search <code>"risks"</code> — what worries them?</li>
+      <li>Search <code>"appropriate"</code> — how many think it's time to cut?</li>
+    </ol>
+    
+    <p>💡 Remember: 2 members dissented in January (wanting 50bp cut). Minutes will reveal their arguments and how others responded.</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 5: AI Disruption 蔓延 ==================== -->
+
+<h2>🤖 AI Disruption 蔓延：从 SaaS 到全行业 / AI Disruption Spreads Beyond Software</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>上周五我们讲了 "Anthropic Shock"。三天过去了，情况在<strong>恶化</strong>：</p>
+    <ul>
+      <li>IGV（软件 ETF）年初至今 <strong>-22%</strong></li>
+      <li>恐慌从软件 → 金融服务 → 零售 → 物流蔓延</li>
+      <li>Alibaba 发布 Qwen 3.5 → Google -1.5%（AI 模型竞争加剧）</li>
+      <li>CNBC: 中国 AI 冲击"才刚开始"</li>
+    </ul>
+    
+    <p>这里有个<strong>矛盾</strong>值得深思：</p>
+    <ul>
+      <li>AI capex 超级周期 → 半导体和基础设施受益 ✅</li>
+      <li>AI 产品开始替代人工 → SaaS 商业模式被颠覆 ❌</li>
+      <li>同一个技术，创造价值的同时摧毁价值</li>
+    </ul>
+    
+    <p>投资启示：<strong>不要投"被 AI 增强的公司"，投"让 AI 成为可能的公司"</strong>（基础设施层 > 应用层）。</p>
+  </div>
+  <div class="en">
+    <p>Three days after "Anthropic Shock," things are <strong>getting worse</strong>:</p>
+    <ul>
+      <li>IGV (Software ETF) YTD: <strong>-22%</strong></li>
+      <li>Panic spreading: software → financials → retail → logistics</li>
+      <li>Alibaba's Qwen 3.5 → GOOGL -1.5% (model competition)</li>
+      <li>CNBC: China AI shock "just getting started"</li>
+    </ul>
+    
+    <p>The <strong>paradox</strong> worth pondering:</p>
+    <ul>
+      <li>AI capex supercycle → semis and infra benefit ✅</li>
+      <li>AI products replace humans → SaaS models disrupted ❌</li>
+      <li>Same technology creates AND destroys value</li>
+    </ul>
+    
+    <p>Investment lesson: <strong>Don't invest in "AI-enhanced companies" — invest in "companies that make AI possible"</strong> (infrastructure layer > application layer).</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 6: M&A 浪潮 ==================== -->
+
+<h2>🤝 今日 M&A 浪潮 / Today's M&A Wave</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>我们在 Day 6 学过并购。今天一口气来了三个大 deal：</p>
+    <ul>
+      <li><strong>Hapag-Lloyd 收购 Zim</strong> — $4.2B，ZIM 股价 +35%</li>
+      <li><strong>Danaher 收购 Masimo</strong> — $10B，MASI +37%，DHR -4.8%</li>
+      <li><strong>Netflix vs Paramount 争夺 Warner Bros</strong> — $72B deal + Paramount 搅局</li>
+    </ul>
+    
+    <p>还记得收购溢价的规律吗？</p>
+    <ul>
+      <li>被收购方暴涨 ✅（ZIM +35%, MASI +37%）</li>
+      <li>收购方下跌 ❌（DHR -4.8%，市场担心出价太高）</li>
+    </ul>
+    <p>教科书般的验证！</p>
+    
+    <p>此外，Elliott 建仓 Norwegian Cruise 10%+（NCLH +10%）。这是<strong>激进投资者（Activist Investor）</strong>的经典操作 — 大量买入 → 推动管理层改革 → 解锁价值。</p>
+  </div>
+  <div class="en">
+    <p>We learned about M&A on Day 6. Today brought three big deals:</p>
+    <ul>
+      <li><strong>Hapag-Lloyd acquires Zim</strong> — $4.2B, ZIM +35%</li>
+      <li><strong>Danaher acquires Masimo</strong> — $10B, MASI +37%, DHR -4.8%</li>
+      <li><strong>Netflix vs Paramount for Warner Bros</strong> — $72B deal + Paramount counterbid</li>
+    </ul>
+    
+    <p>Remember the acquisition premium pattern?</p>
+    <ul>
+      <li>Target surges ✅ (ZIM +35%, MASI +37%)</li>
+      <li>Acquirer drops ❌ (DHR -4.8%, market worries about overpaying)</li>
+    </ul>
+    <p>Textbook validation!</p>
+    
+    <p>Also: Elliott builds 10%+ stake in Norwegian Cruise (NCLH +10%). Classic <strong>activist investor</strong> playbook — buy big → push for change → unlock value.</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 7: 知识网络 ==================== -->
+
+<div class="connection">
+  <h3>🕸️ 知识网络：今天连接了哪些旧知识？</h3>
+  <ul>
+    <li>📈 <strong>Day 4 收益率曲线</strong> → 10Y 创年内新低 4.03%，印证经济放缓预期</li>
+    <li>📊 <strong>Day 16 PCE vs CPI</strong> → 昨天学的 PCE，周五就要实战验证</li>
+    <li>📉 <strong>Day 14 CPI 实战</strong> → CPI 说通胀降温，周五 PCE 会不会确认？</li>
+    <li>🤝 <strong>Day 6 M&A 入门</strong> → 今天三个 deal 完美验证收购溢价规律</li>
+    <li>💥 <strong>Day 16 Anthropic Shock</strong> → AI disruption 继续蔓延，IGV -22% YTD</li>
+    <li>📝 <strong>Day 2 FOMC</strong> → 明天纪要发布，第一次实时跟进！</li>
+  </ul>
+</div>
+
+<!-- ==================== SECTION 8: 术语 ==================== -->
+
+<div class="terms">
+  <h3>📚 今日新术语 / New Terms Today</h3>
+  <table style="width:100%">
+    <tr><td><strong>Retail Sales</strong></td><td>零售销售</td><td>衡量消费者支出的月度数据</td></tr>
+    <tr><td><strong>Control Group</strong></td><td>控制组</td><td>剔除波动项后的零售核心，直接用于 GDP 计算</td></tr>
+    <tr><td><strong>Same-Store Sales</strong></td><td>同店销售</td><td>已开 1 年以上门店的销售增长，排除新店效应</td></tr>
+    <tr><td><strong>Activist Investor</strong></td><td>激进投资者</td><td>大量买入股票后推动公司变革的投资者（如 Elliott）</td></tr>
+    <tr><td><strong>Bellwether</strong></td><td>风向标</td><td>代表整体趋势的标志性公司/指标（如 Walmart 之于消费）</td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 9: 思考题 ==================== -->
+
+<div class="follow-up">
+  <h3>💬 本周思考题 / Weekly Thought Question</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p>如果周五 PCE 显示通胀比 CPI 更高（因为 PCE 有替代效应），而同时 GDP 显示经济在放缓，这是一个什么样的宏观环境？</p>
+      <p><em>提示：有一个专门的经济学术语来描述「通胀高 + 增长慢」的组合，它在 1970 年代让全球头疼...</em></p>
+    </div>
+    <div class="en">
+      <p>If Friday's PCE shows higher inflation than CPI (due to substitution effects), while GDP shows the economy slowing — what kind of macro environment is that?</p>
+      <p><em>Hint: There's a specific economic term for "high inflation + slow growth" that tormented the world in the 1970s...</em></p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
