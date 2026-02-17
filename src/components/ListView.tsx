@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Task, CronJob, TaskStatus } from '../types';
 import { resolveAgent, type AgentConfig } from '../config/agents';
+import { AgentIcon } from './AgentIcons';
 
 interface ListViewProps {
   tasks: Task[];
@@ -108,7 +109,7 @@ export default function ListView({
         <div key={agent.id}>
           {/* Agent header */}
           <div className="flex items-center gap-2.5 px-2 mb-2">
-            <span className="text-base">{agent.emoji}</span>
+            <AgentIcon agentId={agent.id} size={20} />
             <h3 className="text-sm font-semibold text-[#3c4043]">{agent.label}</h3>
             <span className="text-xs text-[#70757a]">{agentTasks.length}</span>
           </div>

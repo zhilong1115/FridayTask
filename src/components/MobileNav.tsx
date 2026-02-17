@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { SidebarView } from '../types';
+import { AgentIcon } from './AgentIcons';
 
 interface MobileNavProps {
   view: SidebarView;
@@ -159,24 +160,25 @@ export default function MobileNav({
           <div className="flex flex-wrap gap-1.5">
             {[
               { value: '', label: 'All' },
-              { value: 'friday', label: '✨ Friday' },
-              { value: 'alpha', label: '📈 Alpha' },
-              { value: 'aspen', label: '📊 Aspen' },
-              { value: 'hu', label: '🀄 HU' },
-              { value: 'artist', label: '🍌 Artist' },
-              { value: 'friday-task', label: '📋 Infra' },
-              { value: 'knowledge', label: '📚 Knowledge' },
-              { value: 'social', label: '📱 Social' },
-              { value: 'zhilong', label: '👤 Zhilong' },
+              { value: 'friday', label: 'Friday' },
+              { value: 'alpha', label: 'Alpha' },
+              { value: 'aspen', label: 'Aspen' },
+              { value: 'hu', label: 'HU' },
+              { value: 'artist', label: 'Artist' },
+              { value: 'friday-task', label: 'Infra' },
+              { value: 'knowledge', label: 'Knowledge' },
+              { value: 'social', label: 'Social' },
+              { value: 'zhilong', label: 'Zhilong' },
             ].map(({ value, label }) => (
               <button
                 key={`a-${value}`}
                 onClick={() => onFilterAssignee(filterAssignee === value ? '' : value)}
-                className={`px-3 py-1.5 rounded-2xl text-xs font-medium transition-all
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-2xl text-xs font-medium transition-all
                   ${filterAssignee === value
                     ? 'bg-[#e8f0fe] text-[#1a73e8] ring-1 ring-[#1a73e8]/30'
                     : 'bg-white text-[#70757a] border border-[#dadce0]'}`}
               >
+                {value && <AgentIcon agentId={value} size={14} />}
                 {label}
               </button>
             ))}
