@@ -133,9 +133,7 @@ export default function CalendarView({
       case 'pending':
         return 'bg-[#feefc3] text-[#b06000] border border-dashed border-[#b06000]/30';
       case 'approved':
-        return task.assignee === 'friday'
-          ? 'bg-[#feefc3] text-[#b06000]'
-          : 'bg-[#d2e3fc] text-[#1967d2]';
+        return 'bg-[#d2e3fc] text-[#1967d2]';
       case 'in-progress':
         return 'bg-[#d2e3fc] text-[#1967d2]';
       case 'done':

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Task, TaskFormData, Subtask, TaskStatus, Comment, Artifact, ArtifactType } from '../types';
+import { resolveAgent, getAgentList } from '../config/agents';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -332,10 +333,9 @@ export default function TaskModal({
 
               {/* Meta row */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  task.assignee === 'friday' ? 'bg-[#feefc3] text-[#b06000]' : 'bg-[#d2e3fc] text-[#1967d2]'
-                }`}>
-                  {task.assignee === 'friday' ? '🤖 Friday' : '🧑‍💻 Zhilong'}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
+                  style={{ backgroundColor: resolveAgent(task.project, task.assignee).bgColor, color: resolveAgent(task.project, task.assignee).color }}>
+                  {resolveAgent(task.project, task.assignee).emoji} {resolveAgent(task.project, task.assignee).label}
                 </span>
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${
                   task.priority === 'high' ? 'bg-[#fce8e6] text-[#c5221f] border-[#c5221f]/20' :
@@ -732,11 +732,8 @@ export default function TaskModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <div className="flex gap-2 flex-1">
-                {[
-                  { value: 'zhilong' as const, label: '🧑‍💻 Zhilong', color: '#1a73e8', bg: '#d2e3fc' },
-                  { value: 'friday' as const, label: '🤖 Friday', color: '#b06000', bg: '#feefc3' },
-                ].map(({ value, label, color, bg }) => (
+              <div className="flex gap-2 flex-1 flex-wrap">
+                {getAgentList().map((agent) => ({ value: agent.id, label: `${agent.emoji} ${agent.label}`, color: agent.color, bg: agent.bgColor })).map(({ value, label, color, bg }) => (
                   <button
                     key={value}
                     type="button"
