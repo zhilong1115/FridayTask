@@ -40,10 +40,11 @@ export default function CalendarView({
   const tasksByDate = useMemo(() => {
     const map: Record<string, Task[]> = {};
     tasks.forEach((t) => {
-      if (!t.due_date) return;
+      const dateKey = t.due_date || (t.created_at ? t.created_at.split(' ')[0] : null);
+      if (!dateKey) return;
       if (filterAssignee && resolveAgent(t.project, t.assignee).id !== filterAssignee) return;
       if (filterStatus && t.status !== filterStatus) return;
-      const key = t.due_date;
+      const key = dateKey;
       if (!map[key]) map[key] = [];
       map[key].push(t);
     });

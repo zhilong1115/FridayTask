@@ -165,7 +165,7 @@ export default function MobileNav({
               { value: 'aspen', label: 'Aspen' },
               { value: 'hu', label: 'HU' },
               { value: 'artist', label: 'Artist' },
-              { value: 'friday-task', label: 'Infra' },
+              { value: 'friday-task', label: 'FridayTask' },
               { value: 'knowledge', label: 'Knowledge' },
               { value: 'social', label: 'Social' },
               { value: 'zhilong', label: 'Zhilong' },
