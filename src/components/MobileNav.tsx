@@ -158,9 +158,16 @@ export default function MobileNav({
           {/* Assignee & Status chips */}
           <div className="flex flex-wrap gap-1.5">
             {[
-              { value: '', label: 'All', group: 'assignee' },
-              { value: 'zhilong', label: '🧑‍💻 Zhilong', group: 'assignee' },
-              { value: 'friday', label: '🤖 Friday', group: 'assignee' },
+              { value: '', label: 'All' },
+              { value: 'friday', label: '✨ Friday' },
+              { value: 'alpha', label: '📈 Alpha' },
+              { value: 'aspen', label: '📊 Aspen' },
+              { value: 'hu', label: '🀄 HU' },
+              { value: 'artist', label: '🍌 Artist' },
+              { value: 'friday-task', label: '📋 Infra' },
+              { value: 'knowledge', label: '📚 Knowledge' },
+              { value: 'social', label: '📱 Social' },
+              { value: 'zhilong', label: '👤 Zhilong' },
             ].map(({ value, label }) => (
               <button
                 key={`a-${value}`}

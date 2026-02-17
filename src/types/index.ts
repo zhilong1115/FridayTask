@@ -12,7 +12,7 @@ export interface Subtask {
 export interface Comment {
   id: number;
   task_id: number;
-  author: 'zhilong' | 'friday';
+  author: string;
   content: string;
   notified: number; // 0 or 1
   created_at: string;
@@ -33,7 +33,7 @@ export interface Task {
   id: number;
   title: string;
   description: string;
-  assignee: 'zhilong' | 'friday';
+  assignee: string;
   due_date: string | null;
   start_time: string | null; // e.g., "09:00"
   end_time: string | null;   // e.g., "10:00"
@@ -75,7 +75,7 @@ export type SidebarView = 'calendar' | 'list';
 export interface TaskFormData {
   title: string;
   description: string;
-  assignee: 'zhilong' | 'friday';
+  assignee: string;
   due_date: string;
   start_time: string;
   end_time: string;

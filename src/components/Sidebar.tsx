@@ -1,4 +1,5 @@
 import type { SidebarView } from '../types';
+import { getAgentList } from '../config/agents';
 
 interface SidebarProps {
   view: SidebarView;
@@ -144,26 +145,33 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Agent Filters */}
       <div>
-        <p className="text-[10px] font-semibold text-[#70757a] uppercase tracking-[0.1em] mb-3 px-2">Assignee</p>
-        <div className="flex flex-col gap-1">
-          {[
-            { value: '', label: 'Everyone', dot: 'bg-[#70757a]' },
-            { value: 'zhilong', label: 'Zhilong', dot: 'bg-[#1a73e8]' },
-            { value: 'friday', label: 'Friday', dot: 'bg-[#f9ab00]' },
-          ].map(({ value, label, dot }) => (
+        <p className="text-[10px] font-semibold text-[#70757a] uppercase tracking-[0.1em] mb-3 px-2">Agents</p>
+        <div className="flex flex-col gap-0.5">
+          <button
+            onClick={() => onFilterAssignee('')}
+            className={`w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all
+              ${filterAssignee === ''
+                ? 'bg-[#e8f0fe] text-[#1a73e8] font-medium'
+                : 'text-[#70757a] hover:text-[#3c4043] hover:bg-[#f1f3f4]'
+              }`}
+          >
+            <span className="w-4 text-center text-xs">●</span>
+            All
+          </button>
+          {getAgentList().map((agent) => (
             <button
-              key={value}
-              onClick={() => onFilterAssignee(value)}
-              className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
-                ${filterAssignee === value
+              key={agent.id}
+              onClick={() => onFilterAssignee(agent.id)}
+              className={`w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all
+                ${filterAssignee === agent.id
                   ? 'bg-[#e8f0fe] text-[#1a73e8] font-medium'
                   : 'text-[#70757a] hover:text-[#3c4043] hover:bg-[#f1f3f4]'
                 }`}
             >
-              <span className={`w-2.5 h-2.5 rounded-full ${dot}`} />
-              {label}
+              <span className="w-4 text-center text-xs">{agent.emoji}</span>
+              {agent.label}
             </button>
           ))}
         </div>
