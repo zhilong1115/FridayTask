@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>phase3-skill-design</title>
+  <title>Phase 3: Skill Design</title>
   <style>
     /* Default styles provided by pandoc.
     ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -238,7 +238,7 @@
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">phase3-skill-design</h1>
+<h1 class="title">Phase 3: Skill Design</h1>
 </header>
 <h1 id="phase-3-skill-design-us-stock-trading">Phase 3: Skill Design —
 us-stock-trading</h1>
@@ -758,6 +758,43 @@ excessive losses</li>
 reviewable</li>
 </ul>
 <hr />
+<hr />
+<h2 id="implementation-priority-based-on-phase-1-deep-dive">7.
+Implementation Priority (Based on Phase 1 Deep Dive)</h2>
+<h3 id="sprint-1-week-1-2-foundation">Sprint 1 (Week 1-2):
+Foundation</h3>
+<ol type="1">
+<li>Alpaca paper trading 接入 (<code>executor.py</code> +
+<code>broker_factory.py</code>)</li>
+<li>数据管道 (<code>data_pipeline.py</code> — yfinance + Alpaca)</li>
+<li>基础信号引擎 (<code>signal_engine.py</code> — RSI, MACD,
+Bollinger)</li>
+<li>Portfolio tracker + Telegram reporting</li>
+</ol>
+<h3 id="sprint-2-week-3-4-core-strategies">Sprint 2 (Week 3-4): Core
+Strategies</h3>
+<ol start="5" type="1">
+<li>Earnings Event strategy (<code>earnings_analyzer.py</code> +
+<code>earnings_event.py</code>)</li>
+<li>Congressional/13F Following (<code>filing_parser.py</code> +
+<code>investor_following.py</code> — Quiver API)</li>
+<li>Risk manager 完整实现</li>
+</ol>
+<h3 id="sprint-3-week-5-6-ai-layer">Sprint 3 (Week 5-6): AI Layer</h3>
+<ol start="8" type="1">
+<li>Sentiment pipeline (<code>sentiment_scraper.py</code> — Reddit +
+Twitter)</li>
+<li>LLM earnings transcript analysis</li>
+<li>Multi-agent debate (参考 TradingAgents 架构: analyst→researcher
+debate→trader→risk)</li>
+</ol>
+<h3 id="sprint-4-week-7-8-polish">Sprint 4 (Week 7-8): Polish</h3>
+<ol start="11" type="1">
+<li>Regime detector (HMM + LLM narrative)</li>
+<li>Signal efficacy tracking</li>
+<li>Backtesting suite</li>
+<li>Documentation + ClawHub 发布准备</li>
+</ol>
 <p><em>Phase 3 skill design complete. Ready for implementation.</em></p>
 </body>
 </html>

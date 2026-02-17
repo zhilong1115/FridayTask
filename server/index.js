@@ -129,6 +129,28 @@ app.get('/api/tasks', (req, res) => {
   }
 });
 
+// Get single task by ID
+app.get('/api/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    const subtasks = db.prepare('SELECT * FROM subtasks WHERE task_id = ? ORDER BY sort_order ASC, id ASC').all(id);
+    const commentCount = db.prepare('SELECT COUNT(*) as cnt FROM comments WHERE task_id = ?').get(id);
+    const artifactCount = db.prepare('SELECT COUNT(*) as cnt FROM artifacts WHERE task_id = ?').get(id);
+    res.json({
+      ...task,
+      subtasks,
+      subtask_count: subtasks.length,
+      subtask_completed: subtasks.filter((s) => s.completed === 1).length,
+      comment_count: commentCount.cnt,
+      artifact_count: artifactCount.cnt,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Create task (requires auth)
 app.post('/api/tasks', requireAuth, (req, res) => {
   const { title, description, assignee, due_date, priority, status, start_time, end_time, all_day, project } = req.body;
