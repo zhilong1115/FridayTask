@@ -29,14 +29,14 @@ export default function ListView({
     }
     if (filterStatus) result = result.filter((t) => t.status === filterStatus);
 
-    const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
-    const statusOrder: Record<TaskStatus, number> = { pending: 0, approved: 1, 'in-progress': 2, done: 3, rejected: 4 };
+    const openStatuses = new Set(['pending', 'approved', 'in-progress']);
     result.sort((a, b) => {
-      const po = priorityOrder[a.priority] - priorityOrder[b.priority];
-      if (po !== 0) return po;
-      const so = statusOrder[a.status] - statusOrder[b.status];
-      if (so !== 0) return so;
-      return (a.due_date || '').localeCompare(b.due_date || '');
+      // Open tasks first
+      const aOpen = openStatuses.has(a.status) ? 0 : 1;
+      const bOpen = openStatuses.has(b.status) ? 0 : 1;
+      if (aOpen !== bOpen) return aOpen - bOpen;
+      // Then by updated_at descending
+      return (b.updated_at || '').localeCompare(a.updated_at || '');
     });
 
     // Group by agent
