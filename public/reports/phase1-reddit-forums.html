@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>phase1-reddit-forums</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">phase1-reddit-forums</h1>
+</header>
+<h1 id="phase-1-reddit-trading-communities-research-report">Phase 1:
+Reddit Trading Communities Research Report</h1>
+<p><strong>Date:</strong> 2026-02-17 <strong>Author:</strong> Alpha
+(Quant Research) <strong>Objective:</strong> Survey major Reddit trading
+communities for strategies, tools, signal vs. noise</p>
+<hr />
+<h2 id="rwallstreetbets-14m-members">1. r/wallstreetbets (14M+
+members)</h2>
+<h3 id="character">Character</h3>
+<p>Largest retail trading community. High noise-to-signal ratio but
+culturally significant as a sentiment indicator. Meme-heavy,
+YOLO-oriented, but occasionally surfaces legitimate asymmetric
+plays.</p>
+<h3 id="most-discussed-strategies">Most Discussed Strategies</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 28%" />
+<col style="width: 48%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Description</th>
+<th>Estimated Success Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>YOLO OTM Calls</strong></td>
+<td>Short-dated, far OTM calls on momentum stocks</td>
+<td>~5-10% (survivorship bias dominates)</td>
+</tr>
+<tr>
+<td><strong>Meme Stock Momentum</strong></td>
+<td>Riding social sentiment waves (GME, AMC era)</td>
+<td>Highly variable; early movers profit, latecomers lose</td>
+</tr>
+<tr>
+<td><strong>Annual Stock Picks</strong></td>
+<td>Crowd-sourced top-10 picks for the year</td>
+<td><strong>76% avg return in 2025</strong> (RDDT, RKLB, PLTR, HOOD
+dominated)</td>
+</tr>
+<tr>
+<td><strong>Earnings Plays</strong></td>
+<td>Directional bets around earnings via options</td>
+<td>~40-50% (binary outcomes)</td>
+</tr>
+<tr>
+<td><strong>LEAPS on Conviction</strong></td>
+<td>Long-dated calls on high-conviction names</td>
+<td>Better than short-dated; ~50-60%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="top-picks-performance-verified">2025 Top Picks Performance
+(Verified)</h3>
+<p>WSB crowd-sourced picks for 2025 returned <strong>+76%
+average</strong> (equal-weighted): - RKLB: +209%, HOOD: +205%, PLTR:
++158%, AMD: +78%, GOOGL: +65% - RDDT: +36%, TSLA: +27%, WMT: +24%, META:
++11%, MSTR: -47%</p>
+<p><strong>Key Insight:</strong> WSB crowd wisdom on annual picks
+actually beat S&amp;P 500 significantly. This is worth tracking as a
+signal — the consensus “top mentioned” tickers have alpha, likely
+because they represent retail conviction in momentum names.</p>
+<h3 id="top-picks-for-monitoring">2026 Top Picks (for monitoring)</h3>
+<p>ASTS, RKLB, GOOGL, AMZN, NBIS, RDDT, MU, IREN, TSLA, PLTR</p>
+<h3 id="toolsplatforms">Tools/Platforms</h3>
+<ul>
+<li>Robinhood (dominant), Webull, Schwab/TD Ameritrade</li>
+<li>Unusual Whales, Finviz, TradingView for screening</li>
+</ul>
+<h3 id="what-works-vs.-noise">What Works vs. Noise</h3>
+<ul>
+<li>✅ <strong>Works:</strong> Crowd-sourced annual picks as momentum
+signal; sentiment extremes as contrarian indicators; early
+identification of retail flow themes</li>
+<li>❌ <strong>Noise:</strong> Individual YOLO posts, “DD” on penny
+stocks, short squeeze hype after the move already happened, loss porn
+(entertaining but not actionable)</li>
+</ul>
+<h3 id="quant-takeaway">Quant Takeaway</h3>
+<p><strong>WSB as a sentiment data source is genuinely
+valuable.</strong> Ticker mention frequency, sentiment polarity, and
+volume of discussion can be quantified. Academic research (e.g., Cookson
+et al.) confirms WSB sentiment has short-term predictive power for
+returns and volume.</p>
+<hr />
+<h2 id="rstocks-6m-members">2. r/stocks (6M+ members)</h2>
+<h3 id="character-1">Character</h3>
+<p>More measured than WSB. Focus on fundamental analysis, earnings
+discussions, sector rotations. Better signal-to-noise for medium-term
+investing.</p>
+<h3 id="most-discussed-strategies-1">Most Discussed Strategies</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 32%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Description</th>
+<th>Success Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Buy &amp; Hold Quality</strong></td>
+<td>FAANG/Mag7 + quality growth</td>
+<td>Works in bull markets; dominant advice</td>
+</tr>
+<tr>
+<td><strong>Earnings-Based DD</strong></td>
+<td>Deep dives on financials, competitive moats</td>
+<td>Higher quality than WSB DD; moderate hit rate</td>
+</tr>
+<tr>
+<td><strong>Sector Rotation</strong></td>
+<td>Rotating into sectors based on economic cycle</td>
+<td>Discussed but rarely executed well by retail</td>
+</tr>
+<tr>
+<td><strong>Dividend Growth</strong></td>
+<td>SCHD, VIG, dividend aristocrats</td>
+<td>Consistent but underperforms growth in bull runs</td>
+</tr>
+<tr>
+<td><strong>Contrarian Value</strong></td>
+<td>Buying beaten-down stocks with catalysts</td>
+<td>Hit-or-miss; works when thesis is sound</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-tools">Common Tools</h3>
+<ul>
+<li>Finviz, Seeking Alpha, Yahoo Finance, MacroTrends</li>
+<li>SEC EDGAR filings, earnings call transcripts</li>
+<li>TradingView for charting</li>
+</ul>
+<h3 id="notable-patterns">Notable Patterns</h3>
+<ul>
+<li><strong>Mag7 Concentration:</strong> Community heavily overweight
+big tech; contrarian plays rarely gain traction</li>
+<li><strong>Recency Bias:</strong> Whatever performed last quarter gets
+the most bullish posts</li>
+<li><strong>Earnings Season Cycle:</strong> Quality of discussion peaks
+during earnings season</li>
+</ul>
+<h3 id="what-works-vs.-noise-1">What Works vs. Noise</h3>
+<ul>
+<li>✅ <strong>Works:</strong> Consensus “boring” picks (broad market
+ETFs) consistently validated; earnings analysis threads sometimes catch
+catalysts early</li>
+<li>❌ <strong>Noise:</strong> “Is X stock a buy?” low-effort posts;
+panic selling threads during corrections; overly bullish sentiment at
+tops</li>
+</ul>
+<hr />
+<h2 id="rinvesting-2.5m-members">3. r/investing (2.5M+ members)</h2>
+<h3 id="character-2">Character</h3>
+<p>Conservative, long-term oriented. Heavy Boglehead influence. Best for
+portfolio construction principles, worst for alpha generation.</p>
+<h3 id="most-discussed-strategies-2">Most Discussed Strategies</h3>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 34%" />
+<col style="width: 39%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Description</th>
+<th>Consensus View</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Boglehead 3-Fund</strong></td>
+<td>VTI + VXUS + BND</td>
+<td>Gold standard; most recommended</td>
+</tr>
+<tr>
+<td><strong>100% VTI/VOO</strong></td>
+<td>All US equities, no bonds</td>
+<td>Popular among younger investors</td>
+</tr>
+<tr>
+<td><strong>70/30 ETF/Stock Split</strong></td>
+<td>Core ETFs + satellite individual picks</td>
+<td>Common middle ground</td>
+</tr>
+<tr>
+<td><strong>Age-in-Bonds Rule</strong></td>
+<td>(110 - age)% equities, rest bonds</td>
+<td>Traditional; debated in low-rate eras</td>
+</tr>
+<tr>
+<td><strong>Stay Fully Invested</strong></td>
+<td>Time in market &gt; timing the market</td>
+<td>Near-universal agreement</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-tools-1">Common Tools</h3>
+<ul>
+<li>Vanguard, Fidelity, Schwab (preferred brokerages)</li>
+<li>Portfolio Visualizer for backtesting allocations</li>
+<li>Morningstar for fund analysis</li>
+</ul>
+<h3 id="notable-patterns-1">Notable Patterns</h3>
+<ul>
+<li><strong>Anti-trading bias:</strong> Active trading is discouraged;
+“just buy VTI” is the default</li>
+<li><strong>Strong consensus:</strong> Community converges on passive
+indexing; dissenters are downvoted</li>
+<li><strong>Tax optimization focus:</strong> Roth vs. Traditional,
+tax-loss harvesting, asset location widely discussed</li>
+</ul>
+<h3 id="what-works-vs.-noise-2">What Works vs. Noise</h3>
+<ul>
+<li>✅ <strong>Works:</strong> Passive indexing genuinely outperforms
+most active retail traders; tax optimization advice is solid</li>
+<li>❌ <strong>Noise:</strong> Overly dogmatic passive-only stance
+misses tactical opportunities; bond allocation advice often
+outdated</li>
+</ul>
+<h3 id="quant-takeaway-1">Quant Takeaway</h3>
+<p>Not useful for alpha signals. Useful as a baseline — any strategy we
+develop should beat VTI buy-and-hold net of fees/taxes to be worth
+pursuing.</p>
+<hr />
+<h2 id="ralgotrading-400k-members">4. r/algotrading (400K+ members)</h2>
+<h3 id="character-3">Character</h3>
+<p>Most technically sophisticated community. Mix of hobbyists, students,
+and some professionals. Discussions on strategy development,
+backtesting, and infrastructure.</p>
+<h3 id="most-discussed-strategies-3">Most Discussed Strategies</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 29%" />
+<col style="width: 47%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Description</th>
+<th>Community Assessment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mean Reversion</strong></td>
+<td>Statistical arbitrage, pairs trading, Bollinger bands</td>
+<td>Most discussed; moderate success in equities</td>
+</tr>
+<tr>
+<td><strong>Momentum/Trend Following</strong></td>
+<td>Moving average crossovers, breakouts</td>
+<td>Works on longer timeframes; overfit on short</td>
+</tr>
+<tr>
+<td><strong>Market Making</strong></td>
+<td>Spread capture, inventory management</td>
+<td>Discussed but requires infrastructure retail can’t access</td>
+</tr>
+<tr>
+<td><strong>ML/AI-Based</strong></td>
+<td>Random forests, LSTMs, transformers for prediction</td>
+<td>Heavily discussed; most fail due to overfitting</td>
+</tr>
+<tr>
+<td><strong>Volatility Strategies</strong></td>
+<td>VIX mean reversion, vol surface arbitrage</td>
+<td>Niche but discussed positively</td>
+</tr>
+<tr>
+<td><strong>Sentiment-Based</strong></td>
+<td>NLP on news/social media for signals</td>
+<td>Growing area; mixed results reported</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-tools-platforms">Common Tools &amp; Platforms</h3>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 30%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Use Case</th>
+<th>Community Rating</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>QuantConnect</strong></td>
+<td>Full-stack backtesting + live trading</td>
+<td>⭐⭐⭐⭐⭐ Most recommended</td>
+</tr>
+<tr>
+<td><strong>Backtrader</strong></td>
+<td>Python backtesting (no longer maintained)</td>
+<td>⭐⭐⭐ Legacy, still used</td>
+</tr>
+<tr>
+<td><strong>Zipline/Zipline-Reloaded</strong></td>
+<td>Python backtesting</td>
+<td>⭐⭐⭐ Quantopian successor</td>
+</tr>
+<tr>
+<td><strong>VectorBT</strong></td>
+<td>Fast vectorized backtesting</td>
+<td>⭐⭐⭐⭐ Rising popularity</td>
+</tr>
+<tr>
+<td><strong>NinjaTrader</strong></td>
+<td>C#-based, futures focus</td>
+<td>⭐⭐⭐⭐ For futures traders</td>
+</tr>
+<tr>
+<td><strong>IBKR API</strong></td>
+<td>Live trading execution</td>
+<td>⭐⭐⭐⭐ Standard for retail algo</td>
+</tr>
+<tr>
+<td><strong>Alpaca</strong></td>
+<td>Commission-free API trading</td>
+<td>⭐⭐⭐⭐ Popular for beginners</td>
+</tr>
+<tr>
+<td><strong>Python (pandas, numpy, scipy)</strong></td>
+<td>Data analysis backbone</td>
+<td>Universal</td>
+</tr>
+</tbody>
+</table>
+<h3 id="notable-recurring-insights">Notable Recurring Insights</h3>
+<ol type="1">
+<li><strong>“If your backtest looks too good, it’s wrong”</strong> —
+Overfitting is the #1 failure mode</li>
+<li><strong>Transaction costs kill most strategies</strong> — Especially
+HFT-adjacent ideas</li>
+<li><strong>Walk-forward validation is essential</strong> —
+In-sample/out-of-sample discipline</li>
+<li><strong>Simple strategies &gt; complex ones</strong> — Community
+consensus that simple momentum or mean reversion beats ML black
+boxes</li>
+<li><strong>Data quality matters more than model complexity</strong> —
+Garbage in, garbage out</li>
+<li><strong>Most “profitable” strategies shared publicly are already
+arbitraged away</strong></li>
+</ol>
+<h3 id="what-works-vs.-noise-3">What Works vs. Noise</h3>
+<ul>
+<li>✅ <strong>Works:</strong> Mean reversion on liquid equities;
+momentum on longer timeframes (weekly/monthly); volatility selling
+strategies; systematic rebalancing</li>
+<li>❌ <strong>Noise:</strong> “I built an AI that predicts the market”
+posts (almost always overfit); HFT dreams (impossible for retail);
+strategies that only work on BTC/crypto</li>
+</ul>
+<h3 id="quant-takeaway-2">Quant Takeaway</h3>
+<p><strong>Most valuable community for us.</strong> Key frameworks:
+QuantConnect for backtesting, IBKR for execution, focus on simple robust
+strategies with proper walk-forward validation. Mean reversion and
+momentum remain the two pillars that retail algo traders can
+realistically implement.</p>
+<hr />
+<h2 id="roptions-1m-members">5. r/options (1M+ members)</h2>
+<h3 id="character-4">Character</h3>
+<p>Options-focused education and strategy discussion. Mix of beginners
+and experienced traders. Strong “thetagang” (options selling)
+contingent.</p>
+<h3 id="most-discussed-strategies-4">Most Discussed Strategies</h3>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 27%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Description</th>
+<th>Community Success Rating</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Selling Puts (CSP)</strong></td>
+<td>Cash-secured puts on stocks you want to own</td>
+<td>⭐⭐⭐⭐⭐ Most consistently recommended</td>
+</tr>
+<tr>
+<td><strong>Covered Calls</strong></td>
+<td>Selling calls against long stock positions</td>
+<td>⭐⭐⭐⭐ Steady income, caps upside</td>
+</tr>
+<tr>
+<td><strong>The Wheel</strong></td>
+<td>CSP → assignment → CC → called away → repeat</td>
+<td>⭐⭐⭐⭐ Popular systematic approach</td>
+</tr>
+<tr>
+<td><strong>LEAPS</strong></td>
+<td>Long-dated calls (1-2yr) as stock replacement</td>
+<td>⭐⭐⭐⭐ Most profitable per community poll</td>
+</tr>
+<tr>
+<td><strong>Iron Condors</strong></td>
+<td>Selling both put and call spreads</td>
+<td>⭐⭐⭐ Works in low-vol; blown up in high-vol</td>
+</tr>
+<tr>
+<td><strong>Calendar Spreads/Straddles</strong></td>
+<td>Exploiting term structure of volatility</td>
+<td>⭐⭐⭐⭐ “Next level” per experienced traders</td>
+</tr>
+<tr>
+<td><strong>Debit Spreads</strong></td>
+<td>Defined risk directional plays</td>
+<td>⭐⭐⭐ Good risk/reward in trending markets</td>
+</tr>
+<tr>
+<td><strong>0DTE SPX</strong></td>
+<td>Same-day expiry SPX options</td>
+<td>Growing trend; very high risk</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-insights-from-community">Key Insights from Community</h3>
+<ul>
+<li><strong>“Selling premium &gt; buying premium”</strong> — Consistent
+theme; theta decay works in sellers’ favor</li>
+<li><strong>LEAPS cited as “most profitable”</strong> strategy, selling
+puts as “most sustainable”</li>
+<li><strong>IV crush around earnings</strong> is well-understood;
+experienced traders sell into earnings</li>
+<li><strong>Position sizing discipline</strong> separates winners from
+losers more than strategy choice</li>
+<li><strong>The Wheel on quality stocks</strong> (AAPL, MSFT, AMD) is
+the most recommended beginner strategy</li>
+</ul>
+<h3 id="common-tools-2">Common Tools</h3>
+<ul>
+<li>Thinkorswim (TD/Schwab) — preferred options platform</li>
+<li>TastyTrade/Tastylive — educational content + platform</li>
+<li>OptionStrat, Optionstrat.com — visualization</li>
+<li>Barchart, CBOE — options flow data</li>
+<li>Greeks calculators, IV percentile tools</li>
+</ul>
+<h3 id="what-works-vs.-noise-4">What Works vs. Noise</h3>
+<ul>
+<li>✅ <strong>Works:</strong> Selling premium systematically (the
+wheel, CSPs); LEAPS on high-conviction names; calendar spreads for
+volatility plays; defined-risk spreads</li>
+<li>❌ <strong>Noise:</strong> Weekly OTM options gambling; “guaranteed
+income” strategies (risk of ruin); complex 4-leg strategies for
+beginners; 0DTE strategies without proper risk management</li>
+</ul>
+<hr />
+<h2 id="cross-community-synthesis">Cross-Community Synthesis</h2>
+<h3 id="strategies-worth-investigating-further">Strategies Worth
+Investigating Further</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 22%" />
+<col style="width: 43%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Strategy</th>
+<th>Source Communities</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🔴 High</td>
+<td><strong>WSB Sentiment as Quantitative Signal</strong></td>
+<td>WSB, algotrading</td>
+<td>76% return on crowd picks; ticker mention frequency is
+quantifiable</td>
+</tr>
+<tr>
+<td>🔴 High</td>
+<td><strong>Systematic Options Selling (Wheel/CSP)</strong></td>
+<td>options, thetagang</td>
+<td>Consistent positive expectancy; can be systematized</td>
+</tr>
+<tr>
+<td>🔴 High</td>
+<td><strong>Mean Reversion on Liquid Equities</strong></td>
+<td>algotrading</td>
+<td>Most validated retail algo strategy</td>
+</tr>
+<tr>
+<td>🟡 Medium</td>
+<td><strong>Momentum Factor (Monthly Rebalance)</strong></td>
+<td>algotrading, stocks</td>
+<td>Well-documented academic factor; simple to implement</td>
+</tr>
+<tr>
+<td>🟡 Medium</td>
+<td><strong>LEAPS as Leveraged Conviction</strong></td>
+<td>options</td>
+<td>Capital-efficient exposure; 6-24mo horizon</td>
+</tr>
+<tr>
+<td>🟡 Medium</td>
+<td><strong>Earnings Volatility Selling</strong></td>
+<td>options</td>
+<td>Systematic IV crush capture</td>
+</tr>
+<tr>
+<td>🟢 Low</td>
+<td><strong>WSB Annual Picks Tracking</strong></td>
+<td>WSB</td>
+<td>Simple; monitor 2026 picks (ASTS, RKLB, GOOGL, etc.)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-tools-ecosystem-for-our-stack">Common Tools Ecosystem
+(for our stack)</h3>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 39%" />
+<col style="width: 39%" />
+</colgroup>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Recommended</th>
+<th>Alternative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Backtesting</strong></td>
+<td>QuantConnect</td>
+<td>VectorBT, custom Python</td>
+</tr>
+<tr>
+<td><strong>Data</strong></td>
+<td>Polygon.io, Alpha Vantage</td>
+<td>Yahoo Finance (free), IBKR data</td>
+</tr>
+<tr>
+<td><strong>Execution</strong></td>
+<td>IBKR API</td>
+<td>Alpaca (simpler)</td>
+</tr>
+<tr>
+<td><strong>Charting</strong></td>
+<td>TradingView</td>
+<td>Thinkorswim</td>
+</tr>
+<tr>
+<td><strong>Sentiment</strong></td>
+<td>Custom NLP on Reddit API</td>
+<td>Unusual Whales, Quiver Quant</td>
+</tr>
+<tr>
+<td><strong>Options Analytics</strong></td>
+<td>Thinkorswim, OptionStrat</td>
+<td>Barchart</td>
+</tr>
+<tr>
+<td><strong>Screening</strong></td>
+<td>Finviz</td>
+<td>TradingView screener</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-meta-insights">Key Meta-Insights</h3>
+<ol type="1">
+<li><p><strong>Retail alpha exists but is narrow:</strong> Concentrated
+in sentiment/momentum, options selling, and mean reversion. HFT and stat
+arb are out of reach.</p></li>
+<li><p><strong>Survivorship bias is extreme:</strong> Reddit only shows
+winners. The “what works” posts are from the 5% who survived. Strategies
+must be validated independently.</p></li>
+<li><p><strong>Simplicity wins:</strong> Across all communities, the
+most consistently profitable traders use simple, well-understood
+strategies with strict risk management — not complex models.</p></li>
+<li><p><strong>WSB as a data source, not a strategy source:</strong> The
+crowd’s stock picks have genuine alpha, but individual WSB “strategies”
+(YOLO OTM options) are negative EV. Use WSB for sentiment data, not
+trade ideas.</p></li>
+<li><p><strong>Options selling is the closest thing to “free
+money”</strong> — but tail risk is real. Must be combined with proper
+position sizing and hedging.</p></li>
+<li><p><strong>Backtesting discipline separates hobbyists from
+profitable traders:</strong> Walk-forward validation, realistic
+transaction costs, and out-of-sample testing are
+non-negotiable.</p></li>
+</ol>
+<hr />
+<h2 id="next-steps-for-phase-2">Next Steps for Phase 2</h2>
+<ol type="1">
+<li><strong>Build Reddit sentiment scraper</strong> — Track WSB/stocks
+ticker mentions, sentiment scores, volume anomalies</li>
+<li><strong>Backtest WSB crowd picks strategy</strong> — Validate the
+2024/2025 performance with proper methodology</li>
+<li><strong>Prototype systematic wheel strategy</strong> — On S&amp;P
+500 components, backtest with real options data</li>
+<li><strong>Evaluate QuantConnect vs. custom Python</strong> — For our
+backtesting infrastructure</li>
+<li><strong>Research academic papers</strong> — On social media
+sentiment as trading signals (Cookson et al., Bartov et al.)</li>
+</ol>
+<hr />
+<p><em>Report generated from web research across Reddit trading
+communities. All strategy assessments reflect community consensus, not
+verified performance data. Independent backtesting required before
+implementation.</em></p>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>FINAL-REPORT</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">FINAL-REPORT</h1>
+</header>
+<h1 id="final-report-us-stock-quant-trading-research">FINAL REPORT: US
+Stock Quant Trading Research</h1>
+<h1 id="美股量化交易研究最终报告">美股量化交易研究最终报告</h1>
+<p><em>Date: 2026-02-17 | Author: Alpha | For: Zhilong</em></p>
+<hr />
+<h2 id="executive-summary">Executive Summary</h2>
+<p>Over Phase 1, we surveyed <strong>5 Reddit communities</strong>,
+<strong>5 notable investors</strong>, <strong>3 social media
+platforms</strong> (FinTwit, 小红书, Moltbook), <strong>7 open-source
+frameworks</strong>, <strong>6 AI trading research papers</strong>,
+<strong>4 broker APIs</strong>, and <strong>6 data sources</strong> to
+build a comprehensive understanding of the US stock quant trading
+landscape.</p>
+<p><strong>Bottom line</strong>: There is a genuine, implementable edge
+for an AI trading agent. The edge is NOT speed (lost to HFT) or capital
+(lost to institutions). The edge is <strong>contextual reasoning at
+scale</strong> — parsing earnings calls, synthesizing sentiment across
+platforms, and combining multiple weak signals into strong conviction.
+This is exactly what an LLM-powered agent excels at.</p>
+<hr />
+<h2 id="what-we-found">What We Found</h2>
+<h3 id="retail-alpha-exists-but-is-narrow">1. Retail Alpha Exists but Is
+Narrow</h3>
+<ul>
+<li>Concentrated in: sentiment/momentum, options selling, event-driven,
+and factor investing</li>
+<li>HFT and pure stat arb are out of reach for retail</li>
+<li>Simple strategies with good risk management beat complex models</li>
+</ul>
+<h3 id="llms-are-a-genuine-edge">2. LLMs Are a Genuine Edge</h3>
+<ul>
+<li>Earnings call tone analysis, Fed statement parsing, narrative
+detection — these are NEW capabilities</li>
+<li>Academic research validates LLM-based trading agents (TradingAgents,
+FinGPT, Alpha-GPT)</li>
+<li>But: reasoning ability ≠ trading ability. Domain adaptation and risk
+management matter more than raw intelligence.</li>
+</ul>
+<h3 id="sentiment-data-has-real-alpha">3. Sentiment Data Has Real
+Alpha</h3>
+<ul>
+<li>WSB crowd-sourced annual picks returned <strong>+76% in
+2025</strong> (vs ~25% S&amp;P 500)</li>
+<li>Ticker mention frequency and sentiment polarity have short-term
+predictive power (academically validated)</li>
+<li>Cross-platform sentiment divergence (FinTwit vs 小红书) is an
+unexplored signal</li>
+</ul>
+<h3 id="notable-investors-provide-parseable-signals">4. Notable
+Investors Provide Parseable Signals</h3>
+<ul>
+<li>ARK publishes daily trades (real-time, free)</li>
+<li>Congressional trading data available via QuiverQuant</li>
+<li>13F filings from Buffett, Burry, etc. are quarterly but
+high-conviction signals</li>
+<li>Convergence across investors is the strongest signal</li>
+</ul>
+<h3 id="the-tools-are-mature">5. The Tools Are Mature</h3>
+<ul>
+<li>Alpaca: free, API-first, perfect for development</li>
+<li>IBKR: institutional-grade for production</li>
+<li>VectorBT: fast backtesting</li>
+<li>All can be orchestrated via an OpenClaw skill</li>
+</ul>
+<hr />
+<h2 id="recommended-strategies-ranked">Recommended Strategies
+(Ranked)</h2>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 40%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Strategy</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🥇</td>
+<td><strong>Earnings Event-Driven</strong></td>
+<td>AI agent’s unique edge (transcript analysis); bounded risk; rich
+data</td>
+</tr>
+<tr>
+<td>🥈</td>
+<td><strong>Sentiment-Driven Momentum</strong></td>
+<td>Quantifiable, real-time, academically validated</td>
+</tr>
+<tr>
+<td>🥉</td>
+<td><strong>Systematic Options Selling (Wheel)</strong></td>
+<td>Positive expected value; systematizable; steady income</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Notable Investor Following</strong></td>
+<td>Simple to implement; high signal quality; low effort</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Momentum Factor</strong></td>
+<td>Well-documented academic factor; simple monthly rebalance</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Mean Reversion</strong></td>
+<td>Works on liquid equities; natural stop-loss levels</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="proposed-architecture">Proposed Architecture</h2>
+<p><strong>Multi-module AI trading agent</strong> as an OpenClaw
+skill:</p>
+<pre><code>Data Pipeline → Signal Engine → Conviction Synthesizer → Risk Manager → Executor
+     ↓              ↓                    ↓                    ↓            ↓
+  yfinance      Technical          Regime-aware          Hard limits    Alpaca
+  Polygon.io    Sentiment          weighted              Soft limits    IBKR
+  Reddit API    Event              combination           Circuit        Order mgmt
+  SEC EDGAR     Flow                                     breakers
+  News APIs     Fundamental</code></pre>
+<ul>
+<li><strong>6 strategy modules</strong>: earnings, sentiment, wheel,
+investor-following, momentum, mean-reversion</li>
+<li><strong>Comprehensive risk management</strong>: position limits,
+drawdown halts, sector limits, circuit breakers</li>
+<li><strong>Dual broker</strong>: Alpaca (paper/dev) → IBKR
+(production)</li>
+<li><strong>Full monitoring</strong>: daily P&amp;L to Telegram, weekly
+reports, signal efficacy tracking</li>
+</ul>
+<p><strong>Estimated cost</strong>: $0-60/month (data subscriptions)</p>
+<hr />
+<h2 id="implementation-roadmap">Implementation Roadmap</h2>
+<h3 id="phase-a-foundation-weeks-1-2">Phase A: Foundation (Weeks
+1-2)</h3>
+<ul>
+<li><label><input type="checkbox" />Set up Alpaca paper trading
+account</label></li>
+<li><label><input type="checkbox" />Build data pipeline (yfinance +
+Alpaca data)</label></li>
+<li><label><input type="checkbox" />Implement basic signal engine (RSI,
+momentum, Bollinger)</label></li>
+<li><label><input type="checkbox" />Create risk manager with hard
+limits</label></li>
+<li><label><input type="checkbox" />Build Telegram notification
+system</label></li>
+<li><strong>Deliverable</strong>: Working paper trading bot with
+technical signals</li>
+</ul>
+<h3 id="phase-b-ai-signals-weeks-3-4">Phase B: AI Signals (Weeks
+3-4)</h3>
+<ul>
+<li><label><input type="checkbox" />Build Reddit sentiment scraper (WSB
++ r/stocks)</label></li>
+<li><label><input type="checkbox" />Implement earnings call transcript
+analyzer (LLM-powered)</label></li>
+<li><label><input type="checkbox" />Create 13F / ARK / Congressional
+trade parser</label></li>
+<li><label><input type="checkbox" />Build regime detector (HMM on
+S&amp;P 500 + VIX)</label></li>
+<li><strong>Deliverable</strong>: AI-powered signal layer on top of
+quant signals</li>
+</ul>
+<h3 id="phase-c-strategy-modules-weeks-5-6">Phase C: Strategy Modules
+(Weeks 5-6)</h3>
+<ul>
+<li><label><input type="checkbox" />Implement earnings event-driven
+strategy</label></li>
+<li><label><input type="checkbox" />Implement sentiment momentum
+strategy</label></li>
+<li><label><input type="checkbox" />Implement investor following
+strategy</label></li>
+<li><label><input type="checkbox" />Implement momentum factor
+strategy</label></li>
+<li><label><input type="checkbox" />Backtest all strategies (VectorBT,
+walk-forward validation)</label></li>
+<li><strong>Deliverable</strong>: 4+ backtested strategies with
+documented performance</li>
+</ul>
+<h3 id="phase-d-paper-trading-weeks-7-8">Phase D: Paper Trading (Weeks
+7-8)</h3>
+<ul>
+<li><label><input type="checkbox" />Paper trade all strategies
+simultaneously</label></li>
+<li><label><input type="checkbox" />Monitor signal efficacy and strategy
+attribution</label></li>
+<li><label><input type="checkbox" />Tune parameters based on paper
+results</label></li>
+<li><label><input type="checkbox" />Build OpenClaw skill
+packaging</label></li>
+<li><strong>Deliverable</strong>: 30+ days of paper trading results</li>
+</ul>
+<h3 id="phase-e-live-trading-week-9">Phase E: Live Trading (Week
+9+)</h3>
+<ul>
+<li><label><input type="checkbox" />Start with $5K-$10K</label></li>
+<li><label><input type="checkbox" />Alpaca live initially; IBKR once
+validated</label></li>
+<li><label><input type="checkbox" />Gradual allocation increase based on
+performance</label></li>
+<li><label><input type="checkbox" />Continuous monitoring and
+adaptation</label></li>
+<li><strong>Deliverable</strong>: Live trading with real P&amp;L</li>
+</ul>
+<hr />
+<h2 id="risk-considerations">Risk Considerations</h2>
+<h3 id="market-risks">Market Risks</h3>
+<ul>
+<li><strong>Regime change</strong>: Strategies that work in bull markets
+may fail in bear markets → regime detection mitigates</li>
+<li><strong>Black swan events</strong>: Circuit breakers and drawdown
+limits protect capital</li>
+<li><strong>Crowding</strong>: Popular retail strategies lose edge →
+continuous signal efficacy monitoring</li>
+</ul>
+<h3 id="technical-risks">Technical Risks</h3>
+<ul>
+<li><strong>LLM hallucination</strong>: Financial reasoning errors →
+verification layers, human oversight</li>
+<li><strong>API failures</strong>: Broker/data API outages → fallback
+sources, graceful degradation</li>
+<li><strong>Overfitting</strong>: Backtested results ≠ live results →
+walk-forward validation, paper trading</li>
+</ul>
+<h3 id="operational-risks">Operational Risks</h3>
+<ul>
+<li><strong>PDT rule</strong>: Need $25K+ for frequent day trading (or
+use swing trading)</li>
+<li><strong>Tax complexity</strong>: Short-term gains taxed as ordinary
+income → consider tax-loss harvesting</li>
+<li><strong>Regulatory</strong>: No special registration needed for
+personal algo trading</li>
+</ul>
+<h3 id="mitigation">Mitigation</h3>
+<ul>
+<li><strong>Paper first, always</strong>: Minimum 30 days paper before
+any live capital</li>
+<li><strong>Small start</strong>: $5K-$10K maximum initial
+allocation</li>
+<li><strong>Hard limits</strong>: Non-overridable risk controls (15% max
+drawdown halts everything)</li>
+<li><strong>Human in the loop</strong>: All live trades require
+confirmation initially</li>
+<li><strong>Continuous monitoring</strong>: Daily reports, drawdown
+alerts, signal efficacy tracking</li>
+</ul>
+<hr />
+<h2 id="final-recommendation">Final Recommendation</h2>
+<p><strong>Build it.</strong> The research conclusively shows that an
+LLM-powered trading agent has a defensible edge in areas where
+contextual reasoning matters — earnings analysis, sentiment synthesis,
+and multi-signal conviction. The tools are mature, the data is
+available, and the architecture is clear.</p>
+<p>Start with the earnings event-driven strategy (highest edge, most
+AI-native) and sentiment momentum (most data available, academically
+validated). Add investor following for easy wins. Paper trade for 30
+days minimum before committing real capital.</p>
+<p>The goal is not to beat Renaissance Technologies. The goal is to beat
+buying and holding VTI — systematically, with managed risk, and with an
+edge that grows as the AI agent learns what works.</p>
+<hr />
+<p><em>Research project complete. All findings documented in:</em> -
+<code>us-stock-quant-trading.md</code> — Foundation research -
+<code>phase1-reddit-forums.md</code> — Reddit community analysis -
+<code>phase1-notable-investors.md</code> — Investor signal analysis -
+<code>phase1-social-media.md</code> — Social media research -
+<code>phase1-tools-projects.md</code> — Tools &amp; frameworks -
+<code>phase2-synthesis.md</code> — Strategy ranking, signal taxonomy,
+architecture - <code>phase3-skill-design.md</code> — Skill design &amp;
+implementation plan - <code>FINAL-REPORT.md</code> — This executive
+summary</p>
+<p><em>— Alpha, 2026-02-17</em></p>
+</body>
+</html>

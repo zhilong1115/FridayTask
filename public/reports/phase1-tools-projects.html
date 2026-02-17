@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>phase1-tools-projects</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">phase1-tools-projects</h1>
+</header>
+<h1 id="phase-1-tools-projects-ai-trading-agent-research">Phase 1:
+Tools, Projects &amp; AI Trading Agent Research</h1>
+<p><em>Date: 2026-02-16</em></p>
+<hr />
+<h2 id="clawdhub-existing-skills">1. ClawdHub Existing Skills</h2>
+<h3 id="trading-skills">Trading Skills</h3>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 30%" />
+<col style="width: 23%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Version</th>
+<th>Score</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ibkr-trader</strong></td>
+<td>v1.0.0</td>
+<td>2.01</td>
+<td>IBKR Trading — directly relevant for broker integration</td>
+</tr>
+<tr>
+<td><strong>predictme</strong></td>
+<td>v1.2.0</td>
+<td>2.05</td>
+<td>AI Trading Agent — worth investigating</td>
+</tr>
+<tr>
+<td><strong>trading-coach</strong></td>
+<td>v1.0.0</td>
+<td>3.46</td>
+<td>Trading Coach</td>
+</tr>
+<tr>
+<td><strong>trading</strong></td>
+<td>v1.0.0</td>
+<td>3.42</td>
+<td>Generic trading skill</td>
+</tr>
+<tr>
+<td><strong>apex-trading</strong></td>
+<td>v1.0.3</td>
+<td>3.39</td>
+<td>Trading &amp; Analysis</td>
+</tr>
+<tr>
+<td><strong>day-trading-skill</strong></td>
+<td>v1.2.0</td>
+<td>3.36</td>
+<td>Day Trading Investor Pro</td>
+</tr>
+<tr>
+<td><strong>kalshi-trading</strong></td>
+<td>v1.0.0</td>
+<td>3.24</td>
+<td>Prediction market trading</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stock-analysis-skills">Stock Analysis Skills</h3>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 30%" />
+<col style="width: 23%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Version</th>
+<th>Score</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>stock-analysis</strong></td>
+<td>v6.2.0</td>
+<td>3.58</td>
+<td>Most mature stock analysis skill</td>
+</tr>
+<tr>
+<td><strong>us-stock-analysis</strong></td>
+<td>v0.1.1</td>
+<td>3.40</td>
+<td>US-focused</td>
+</tr>
+<tr>
+<td><strong>stock-copilot-pro</strong></td>
+<td>v0.2.4</td>
+<td>3.15</td>
+<td>AI copilot for stocks</td>
+</tr>
+<tr>
+<td><strong>stocks</strong></td>
+<td>v4.1.6</td>
+<td>2.06</td>
+<td>Financial data pull</td>
+</tr>
+</tbody>
+</table>
+<h3 id="other-relevant">Other Relevant</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>backtest-expert</strong> v0.1.0</td>
+<td>Backtesting (score 0.56 — likely early/low quality)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Takeaway</strong>: Existing skills are mostly wrappers
+for data fetching and basic analysis. No comprehensive quant trading
+agent exists. The <code>ibkr-trader</code> and <code>predictme</code>
+skills are worth inspecting for patterns.</p>
+<hr />
+<h2 id="open-source-trading-frameworks">2. Open-Source Trading
+Frameworks</h2>
+<h3 id="quantconnect-lean-engine">2.1 QuantConnect / Lean Engine</h3>
+<ul>
+<li><strong>What</strong>: Open-source algorithmic trading engine (C#
+with Python bindings)</li>
+<li><strong>Maturity</strong>: Very high — production-grade, powers
+QuantConnect cloud platform</li>
+<li><strong>Community</strong>: 9k+ GitHub stars, large community,
+active development</li>
+<li><strong>Key Features</strong>: Multi-asset (equities, options,
+futures, crypto), cloud backtesting, live trading, data library</li>
+<li><strong>Limitations</strong>: C# core (Python is secondary),
+cloud-dependent for full features, steep learning curve</li>
+<li><strong>Integration</strong>: Could use Lean locally for
+backtesting; complex to embed as a skill</li>
+</ul>
+<h3 id="backtrader">2.2 Backtrader</h3>
+<ul>
+<li><strong>What</strong>: Python backtesting library for trading
+strategies</li>
+<li><strong>Maturity</strong>: Mature but maintenance has slowed</li>
+<li><strong>Community</strong>: 13k+ GitHub stars</li>
+<li><strong>Key Features</strong>: Event-driven, supports multiple data
+feeds, live trading via IB, extensive indicator library</li>
+<li><strong>Limitations</strong>: Development largely stalled since
+~2021, single-threaded, slow for large datasets</li>
+<li><strong>Integration</strong>: Good for prototyping strategies; can
+be used as backtesting engine within our skill</li>
+</ul>
+<h3 id="zipline-zipline-reloaded">2.3 Zipline / Zipline-Reloaded</h3>
+<ul>
+<li><strong>What</strong>: Pythonic algorithmic trading library
+(originally by Quantopian)</li>
+<li><strong>Maturity</strong>: Original abandoned;
+<code>zipline-reloaded</code> maintained by community</li>
+<li><strong>Community</strong>: 17k+ stars (original), ~1k
+(reloaded)</li>
+<li><strong>Key Features</strong>: Pipeline API for factor models,
+minute-level backtesting, Quantopian ecosystem</li>
+<li><strong>Limitations</strong>: US equities only, no live trading
+built-in, data ingestion can be painful</li>
+<li><strong>Integration</strong>: Pipeline API is excellent for
+factor-based strategies</li>
+</ul>
+<h3 id="vectorbt">2.4 VectorBT</h3>
+<ul>
+<li><strong>What</strong>: Vectorized backtesting library using
+NumPy/Pandas</li>
+<li><strong>Maturity</strong>: Active development, modern design</li>
+<li><strong>Community</strong>: 4k+ GitHub stars</li>
+<li><strong>Key Features</strong>: Extremely fast backtesting
+(vectorized), portfolio optimization, rich visualization, parameter
+optimization</li>
+<li><strong>Limitations</strong>: Less intuitive for event-driven
+strategies, Pro version paywalled</li>
+<li><strong>Integration</strong>: <strong>Best candidate for fast
+backtesting</strong> — vectorized approach ideal for an AI agent
+iterating on strategies</li>
+</ul>
+<h3 id="freqtrade">2.5 Freqtrade</h3>
+<ul>
+<li><strong>What</strong>: Python crypto trading bot framework</li>
+<li><strong>Maturity</strong>: Very mature, active development</li>
+<li><strong>Community</strong>: 30k+ GitHub stars, very active
+Discord</li>
+<li><strong>Key Features</strong>: Strategy development, backtesting,
+paper trading, live trading, web UI, hyperopt</li>
+<li><strong>Limitations</strong>: <strong>Crypto-focused</strong> — no
+native stock support</li>
+<li><strong>Integration</strong>: Architecture patterns worth studying
+but not directly usable for US stocks</li>
+</ul>
+<h3 id="jesse">2.6 Jesse</h3>
+<ul>
+<li><strong>What</strong>: Python crypto trading framework</li>
+<li><strong>Maturity</strong>: Good, active development</li>
+<li><strong>Key Features</strong>: Clean strategy API, backtesting, live
+trading</li>
+<li><strong>Limitations</strong>: Crypto only</li>
+<li><strong>Integration</strong>: Limited for our use case</li>
+</ul>
+<h3 id="hummingbot">2.7 Hummingbot</h3>
+<ul>
+<li><strong>What</strong>: Open-source market-making / algo trading
+bot</li>
+<li><strong>Community</strong>: 8k+ GitHub stars</li>
+<li><strong>Limitations</strong>: Primarily crypto/DEX focused</li>
+<li><strong>Integration</strong>: Market-making strategies could be
+adapted conceptually</li>
+</ul>
+<hr />
+<h2 id="aillm-trading-agents-github-projects">3. AI/LLM Trading Agents
+(GitHub Projects)</h2>
+<h3 id="tradingagents-tauricresearch">3.1 TradingAgents
+(TauricResearch)</h3>
+<ul>
+<li><strong>URL</strong>: github.com/TauricResearch/TradingAgents</li>
+<li><strong>What</strong>: Multi-agent LLM trading framework mirroring
+real trading firms</li>
+<li><strong>Architecture</strong>: Specialized agents — fundamental
+analyst, sentiment analyst, technical analyst, trader, risk manager,
+fund manager</li>
+<li><strong>Key Features</strong>: Debate-driven decision making,
+multi-agent collaboration, news/sentiment integration</li>
+<li><strong>Maturity</strong>: Research project (arxiv paper
+2412.20138), not production-ready</li>
+<li><strong>Integration</strong>: <strong>Excellent architectural
+reference</strong> for our multi-agent design</li>
+</ul>
+<h3 id="finrl-ai4finance-foundation">3.2 FinRL
+(AI4Finance-Foundation)</h3>
+<ul>
+<li><strong>URL</strong>: github.com/AI4Finance-Foundation/FinRL</li>
+<li><strong>What</strong>: Deep Reinforcement Learning framework for
+financial trading</li>
+<li><strong>Community</strong>: 10k+ GitHub stars</li>
+<li><strong>Key Features</strong>: DRL algorithms for portfolio
+allocation, market environments (gym-compatible), multi-asset</li>
+<li><strong>Maturity</strong>: Academic project, well-maintained</li>
+<li><strong>Limitations</strong>: RL approach (not LLM), requires
+significant training data/compute</li>
+<li><strong>Integration</strong>: RL-based strategy generation could
+complement LLM reasoning</li>
+</ul>
+<h3 id="fingpt-ai4finance-foundation">3.3 FinGPT
+(AI4Finance-Foundation)</h3>
+<ul>
+<li><strong>URL</strong>: github.com/AI4Finance-Foundation/FinGPT</li>
+<li><strong>What</strong>: Open-source financial LLMs</li>
+<li><strong>Community</strong>: 14k+ GitHub stars</li>
+<li><strong>Key Features</strong>: Fine-tuned LLMs for financial tasks
+(sentiment, NER, Q&amp;A), data pipelines for financial data</li>
+<li><strong>Maturity</strong>: Active research project</li>
+<li><strong>Limitations</strong>: Models need fine-tuning, not a trading
+system per se</li>
+<li><strong>Integration</strong>: Could use FinGPT models for sentiment
+analysis within our agent</li>
+</ul>
+<h3 id="finrobot-ai4finance-foundation">3.4 FinRobot
+(AI4Finance-Foundation)</h3>
+<ul>
+<li><strong>URL</strong>: github.com/AI4Finance-Foundation/FinRobot</li>
+<li><strong>What</strong>: AI Agent platform for financial analysis
+using LLMs</li>
+<li><strong>Key Features</strong>: Multi-model approach (LLMs + RL +
+quant analytics), investment research automation</li>
+<li><strong>Maturity</strong>: Newer, building on FinGPT/FinRL</li>
+<li><strong>Integration</strong>: Worth studying for agent architecture
+patterns</li>
+</ul>
+<h3 id="finmem">3.5 FinMem</h3>
+<ul>
+<li><strong>URL</strong>:
+github.com/pipiku915/FinMem-LLM-StockTrading</li>
+<li><strong>What</strong>: LLM trading agent with layered memory and
+character design</li>
+<li><strong>Key Features</strong>: Memory architecture for trading
+context, character-based agent design</li>
+<li><strong>Integration</strong>: Memory/context management patterns
+useful for our agent</li>
+</ul>
+<h3 id="stockagent">3.6 StockAgent</h3>
+<ul>
+<li><strong>URL</strong>: github.com/MingyuJ666/Stockagent</li>
+<li><strong>What</strong>: Multi-agent system simulating investor
+trading behavior</li>
+<li><strong>Key Features</strong>: Simulates investor decision-making
+with LLMs in real market conditions</li>
+<li><strong>Integration</strong>: Behavioral simulation patterns</li>
+</ul>
+<hr />
+<h2 id="broker-apis">4. Broker APIs</h2>
+<h3 id="alpaca">4.1 Alpaca</h3>
+<ul>
+<li><strong>Type</strong>: Commission-free, API-first broker</li>
+<li><strong>API</strong>: REST + WebSocket, excellent Python SDK
+(<code>alpaca-py</code>)</li>
+<li><strong>Key Features</strong>:
+<ul>
+<li>Free stock &amp; crypto trading (commission-free)</li>
+<li>Paper trading environment</li>
+<li>Real-time market data (free tier available)</li>
+<li>Fractional shares</li>
+<li>Simple OAuth, API key auth</li>
+</ul></li>
+<li><strong>Limitations</strong>:
+<ul>
+<li>US stocks only (no international)</li>
+<li>Options support added recently (limited)</li>
+<li>Smaller broker (less established)</li>
+<li>Payment for order flow</li>
+</ul></li>
+<li><strong>Best For</strong>: <strong>Starting point</strong> — easiest
+API, free, great for development/paper trading</li>
+<li><strong>Integration</strong>: Simple REST API, perfect for an AI
+agent skill</li>
+</ul>
+<h3 id="interactive-brokers-ibkr">4.2 Interactive Brokers (IBKR)</h3>
+<ul>
+<li><strong>Type</strong>: Full-service institutional broker</li>
+<li><strong>API</strong>: TWS API, Client Portal API, REST (newer)</li>
+<li><strong>Key Features</strong>:
+<ul>
+<li>Global markets (stocks, options, futures, forex, bonds)</li>
+<li>Professional-grade execution</li>
+<li>Competitive pricing</li>
+<li>Most asset classes available</li>
+<li><code>ib_insync</code> Python library (excellent async wrapper)</li>
+</ul></li>
+<li><strong>Limitations</strong>:
+<ul>
+<li>Complex API setup (TWS gateway must run)</li>
+<li>Steep learning curve</li>
+<li>Rate limits on data</li>
+<li>Monthly inactivity fees (waived with $100k+)</li>
+</ul></li>
+<li><strong>Best For</strong>: <strong>Production trading</strong> —
+most comprehensive, institutional-grade</li>
+<li><strong>Integration</strong>: Use <code>ib_insync</code> for Python
+integration; ClawdHub already has <code>ibkr-trader</code> skill</li>
+</ul>
+<h3 id="schwab-formerly-td-ameritrade">4.3 Schwab (formerly TD
+Ameritrade)</h3>
+<ul>
+<li><strong>Type</strong>: Major retail broker</li>
+<li><strong>API</strong>: Schwab Developer API (migrated from TDA)</li>
+<li><strong>Key Features</strong>:
+<ul>
+<li>Commission-free stock/ETF trading</li>
+<li>Options trading</li>
+<li>Large established broker</li>
+</ul></li>
+<li><strong>Limitations</strong>:
+<ul>
+<li>API migration from TDA has been rocky (2023-2024)</li>
+<li>Less developer-friendly than Alpaca</li>
+<li>OAuth flow is complex</li>
+<li>Community libraries less mature post-migration</li>
+</ul></li>
+<li><strong>Best For</strong>: Users already on Schwab platform</li>
+<li><strong>Integration</strong>: Lower priority due to migration
+instability</li>
+</ul>
+<h3
+id="recommendation-start-with-alpaca-devpaper-plan-for-ibkr-production">Recommendation:
+<strong>Start with Alpaca (dev/paper), plan for IBKR
+(production)</strong></h3>
+<hr />
+<h2 id="data-sources">5. Data Sources</h2>
+<h3 id="yahoo-finance-yfinance">5.1 Yahoo Finance (yfinance)</h3>
+<ul>
+<li><strong>Cost</strong>: Free (unofficial API)</li>
+<li><strong>Data</strong>: Daily/intraday OHLCV, fundamentals, options
+chains, financials</li>
+<li><strong>Pros</strong>: Free, comprehensive, easy
+(<code>yfinance</code> Python package)</li>
+<li><strong>Cons</strong>: Unofficial (can break), rate limits, no
+real-time, unreliable for production</li>
+<li><strong>Best For</strong>: Prototyping, historical analysis</li>
+</ul>
+<h3 id="polygon.io">5.2 Polygon.io</h3>
+<ul>
+<li><strong>Cost</strong>: Free tier (5 API calls/min, delayed), paid
+from $29/mo (unlimited, real-time)</li>
+<li><strong>Data</strong>: Stocks, options, forex, crypto — tick-level
+to daily</li>
+<li><strong>Pros</strong>: High quality, real-time WebSocket, excellent
+API design, options data</li>
+<li><strong>Cons</strong>: Paid for real-time, free tier very
+limited</li>
+<li><strong>Best For</strong>: <strong>Production data source</strong> —
+best balance of quality/price</li>
+</ul>
+<h3 id="alpha-vantage">5.3 Alpha Vantage</h3>
+<ul>
+<li><strong>Cost</strong>: Free tier (25 calls/day), paid from
+$49.99/mo</li>
+<li><strong>Data</strong>: Stocks, forex, crypto, economic indicators,
+technical indicators</li>
+<li><strong>Pros</strong>: Free tier, built-in technical indicators,
+fundamental data</li>
+<li><strong>Cons</strong>: Severe free-tier rate limits, data quality
+issues reported, slow</li>
+<li><strong>Best For</strong>: Supplementary fundamental/economic
+data</li>
+</ul>
+<h3 id="tiingo">5.4 Tiingo</h3>
+<ul>
+<li><strong>Cost</strong>: Free tier (500 calls/hr), paid from
+$10/mo</li>
+<li><strong>Data</strong>: EOD stock prices, IEX real-time, news,
+crypto, fundamentals</li>
+<li><strong>Pros</strong>: Good free tier, reliable, clean data, news
+API</li>
+<li><strong>Cons</strong>: Limited intraday on free tier, smaller
+coverage than Polygon</li>
+<li><strong>Best For</strong>: Good budget option, especially for news
+data</li>
+</ul>
+<h3 id="eodhd">5.5 EODHD</h3>
+<ul>
+<li><strong>Cost</strong>: From $19.99/mo (free tier very limited)</li>
+<li><strong>Data</strong>: Global stocks, ETFs, mutual funds, bonds,
+fundamentals, macro</li>
+<li><strong>Pros</strong>: Global coverage, good fundamental data,
+affordable</li>
+<li><strong>Cons</strong>: Less real-time capability, smaller
+community</li>
+<li><strong>Best For</strong>: Global/fundamental data</li>
+</ul>
+<h3 id="alpaca-market-data">5.6 Alpaca Market Data</h3>
+<ul>
+<li><strong>Cost</strong>: Free with Alpaca account (IEX), paid for SIP
+($9/mo)</li>
+<li><strong>Data</strong>: Real-time quotes, bars, trades via
+WebSocket</li>
+<li><strong>Pros</strong>: Bundled with broker, simple integration</li>
+<li><strong>Cons</strong>: IEX-only on free tier</li>
+<li><strong>Best For</strong>: When already using Alpaca for
+trading</li>
+</ul>
+<h3 id="data-strategy-recommendation">Data Strategy Recommendation:</h3>
+<ol type="1">
+<li><strong>Development</strong>: yfinance (free historical) + Alpaca
+data (free real-time IEX)</li>
+<li><strong>Production</strong>: Polygon.io (comprehensive) + Alpaca
+(execution data)</li>
+<li><strong>Supplementary</strong>: Tiingo (news), Alpha Vantage
+(economic indicators)</li>
+</ol>
+<hr />
+<h2 id="ai-trading-research-papers-2024-2025">6. AI Trading Research
+Papers (2024-2025)</h2>
+<h3
+id="tradingagents-multi-agents-llm-financial-trading-framework-dec-2024">6.1
+“TradingAgents: Multi-Agents LLM Financial Trading Framework” (Dec
+2024)</h3>
+<ul>
+<li><strong>Authors</strong>: Xiao, Sun, Luo, Wang (arXiv
+2412.20138)</li>
+<li><strong>Key Idea</strong>: Multi-agent system mirroring real trading
+firms with specialized roles</li>
+<li><strong>Agents</strong>: Fundamental analyst, sentiment analyst,
+technical analyst, trader, risk manager</li>
+<li><strong>Approach</strong>: Debate-driven decision making among
+agents</li>
+<li><strong>Relevance</strong>: ⭐⭐⭐⭐⭐ — Directly applicable
+architecture</li>
+</ul>
+<h3
+id="large-language-model-agent-in-financial-trading-a-survey-jul-2024">6.2
+“Large Language Model Agent in Financial Trading: A Survey” (Jul
+2024)</h3>
+<ul>
+<li><strong>Authors</strong>: Li et al. (arXiv 2408.06361)</li>
+<li><strong>Key Idea</strong>: Comprehensive survey of LLM-based trading
+agents</li>
+<li><strong>Categories</strong>: News-driven, reasoning-driven, and
+reflection-based agents</li>
+<li><strong>Relevance</strong>: ⭐⭐⭐⭐⭐ — Essential reading for
+understanding the landscape</li>
+</ul>
+<h3 id="can-large-language-models-trade-apr-2025">6.3 “Can Large
+Language Models Trade?” (Apr 2025)</h3>
+<ul>
+<li><strong>Key Idea</strong>: Simulated stock market where LLMs act as
+heterogeneous competing traders</li>
+<li><strong>Finding</strong>: Tests whether LLM agents reproduce known
+financial theories</li>
+<li><strong>Relevance</strong>: ⭐⭐⭐⭐ — Validates LLM trading agent
+approach</li>
+</ul>
+<h3
+id="tradetrap-are-llm-based-trading-agents-truly-reliable-dec-2025">6.4
+“TradeTrap: Are LLM-based Trading Agents Truly Reliable?” (Dec
+2025)</h3>
+<ul>
+<li><strong>Key Idea</strong>: Tests reliability and faithfulness of LLM
+trading agents</li>
+<li><strong>Relevance</strong>: ⭐⭐⭐⭐ — Important for understanding
+failure modes and building safeguards</li>
+</ul>
+<h3
+id="tradinggroup-multi-agent-trading-with-self-reflection-and-data-synthesis-aug-2025">6.5
+“TradingGroup: Multi-Agent Trading with Self-Reflection and
+Data-Synthesis” (Aug 2025)</h3>
+<ul>
+<li><strong>Key Idea</strong>: Self-reflection mechanisms and synthetic
+data for trading agents</li>
+<li><strong>Relevance</strong>: ⭐⭐⭐⭐ — Self-reflection pattern
+directly applicable</li>
+</ul>
+<h3 id="llm-agents-do-not-replicate-human-market-traders-feb-2025">6.6
+“LLM Agents Do Not Replicate Human Market Traders” (Feb 2025)</h3>
+<ul>
+<li><strong>Key Idea</strong>: LLM agents behave differently from human
+traders</li>
+<li><strong>Relevance</strong>: ⭐⭐⭐ — Important caveat for agent
+design</li>
+</ul>
+<hr />
+<h2 id="synthesis-recommendations">7. Synthesis &amp;
+Recommendations</h2>
+<h3 id="architecture-decision">Architecture Decision</h3>
+<p>Build a <strong>multi-agent AI trading system</strong> combining: 1.
+<strong>LLM reasoning</strong> (Claude via OpenClaw) for analysis,
+strategy generation, risk assessment 2. <strong>Quantitative
+backtesting</strong> (VectorBT) for fast strategy validation 3.
+<strong>Structured data pipeline</strong> (yfinance + Polygon.io) for
+market data 4. <strong>Broker integration</strong> (Alpaca for dev, IBKR
+for production)</p>
+<h3 id="recommended-stack">Recommended Stack</h3>
+<table>
+<colgroup>
+<col style="width: 44%" />
+<col style="width: 24%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr>
+<th>Component</th>
+<th>Tool</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backtesting</td>
+<td><strong>VectorBT</strong></td>
+<td>Fast vectorized backtesting, parameter optimization</td>
+</tr>
+<tr>
+<td>Historical Data</td>
+<td><strong>yfinance</strong> + <strong>Polygon.io</strong></td>
+<td>Free dev + quality production</td>
+</tr>
+<tr>
+<td>Real-time Data</td>
+<td><strong>Alpaca WebSocket</strong></td>
+<td>Bundled with broker</td>
+</tr>
+<tr>
+<td>Broker (Dev)</td>
+<td><strong>Alpaca</strong></td>
+<td>Free, simple API, paper trading</td>
+</tr>
+<tr>
+<td>Broker (Prod)</td>
+<td><strong>IBKR</strong> via <code>ib_insync</code></td>
+<td>Comprehensive, institutional-grade</td>
+</tr>
+<tr>
+<td>Sentiment/News</td>
+<td><strong>Tiingo News API</strong> + LLM</td>
+<td>News feed + Claude analysis</td>
+</tr>
+<tr>
+<td>Agent Framework</td>
+<td><strong>Custom multi-agent</strong> (inspired by TradingAgents
+paper)</td>
+<td>Specialized analyst agents</td>
+</tr>
+<tr>
+<td>Technical Analysis</td>
+<td><strong>ta-lib</strong> or <strong>pandas-ta</strong></td>
+<td>Standard indicators</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-risks-to-address">Key Risks to Address</h3>
+<ol type="1">
+<li><strong>LLM hallucination</strong> in financial reasoning — need
+verification layers</li>
+<li><strong>Overfitting</strong> in backtesting — walk-forward
+validation essential</li>
+<li><strong>Execution slippage</strong> — paper trading ≠ real
+trading</li>
+<li><strong>Regulatory</strong> — automated trading has compliance
+requirements</li>
+<li><strong>API reliability</strong> — need fallback data sources</li>
+</ol>
+<h3 id="next-steps">Next Steps</h3>
+<ol type="1">
+<li>Set up development environment (Python, key libraries)</li>
+<li>Build data pipeline (yfinance for historical, Alpaca for
+real-time)</li>
+<li>Create backtesting framework (VectorBT-based)</li>
+<li>Design multi-agent architecture (analyst → trader → risk
+manager)</li>
+<li>Implement paper trading with Alpaca</li>
+<li>Build ClawdHub skill for the complete system</li>
+</ol>
+</body>
+</html>

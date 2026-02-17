@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>phase3-skill-design</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">phase3-skill-design</h1>
+</header>
+<h1 id="phase-3-skill-design-us-stock-trading">Phase 3: Skill Design —
+us-stock-trading</h1>
+<p><em>Date: 2026-02-17 | Author: Alpha</em></p>
+<hr />
+<h2 id="skill.md-draft">1. SKILL.md Draft</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> us-stock-trading</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.1.0</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">description</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  AI-powered US stock trading agent. Combines quantitative signals (technical, </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  sentiment, event-driven) with LLM reasoning for trade decisions. Supports </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  paper trading (Alpaca) and live trading (IBKR). Includes risk management, </span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  portfolio monitoring, and automated reporting.</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">author</span><span class="kw">:</span><span class="at"> Alpha / Zhilong</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">tags</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">trading</span><span class="kw">,</span><span class="at"> stocks</span><span class="kw">,</span><span class="at"> quantitative</span><span class="kw">,</span><span class="at"> ai-agent</span><span class="kw">,</span><span class="at"> options</span><span class="kw">]</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">triggers</span><span class="kw">:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;trade stocks&quot;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;stock trading&quot;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;market analysis&quot;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;portfolio&quot;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;earnings analysis&quot;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;check positions&quot;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">commands</span><span class="kw">:</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> scan</span><span class="co">          # Run signal scan across universe</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> analyze</span><span class="co">       # Deep-dive analysis on a specific ticker</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> trade</span><span class="co">         # Execute a trade (with confirmation)</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> portfolio</span><span class="co">     # Show current positions and P&amp;L</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> earnings</span><span class="co">      # Analyze upcoming/recent earnings</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> signals</span><span class="co">       # Show active signals across all modules</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> backtest</span><span class="co">      # Run backtest on a strategy</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> report</span><span class="co">        # Generate daily/weekly report</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> whale-watch</span><span class="co">   # Check latest 13F/ARK/Congressional trades</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> risk</span><span class="co">          # Risk dashboard</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> config</span><span class="co">        # View/modify configuration</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu">schedule</span><span class="kw">:</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;0 6 * * 1-5&quot;</span><span class="co">    # Pre-market scan (6 AM PT)</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">action</span><span class="kw">:</span><span class="at"> scan</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;0 13 * * 1-5&quot;</span><span class="co">   # Post-close report (1 PM PT = 4 PM ET)</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">action</span><span class="kw">:</span><span class="at"> report</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;0 9 * * 6&quot;</span><span class="co">      # Weekly review (Saturday morning)</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">action</span><span class="kw">:</span><span class="at"> report --weekly</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<hr />
+<h2 id="key-scripts-purposes">2. Key Scripts &amp; Purposes</h2>
+<pre><code>us-stock-trading/
+├── SKILL.md                  # Skill manifest
+├── config.yaml               # User configuration
+├── scripts/
+│   ├── core/
+│   │   ├── data_pipeline.py      # Fetch &amp; cache market data (yfinance, Alpaca, Polygon)
+│   │   ├── signal_engine.py      # Compute all signals, output signal matrix
+│   │   ├── conviction.py         # Weighted signal synthesis → trade conviction scores
+│   │   ├── risk_manager.py       # Position sizing, limits, stop-loss logic
+│   │   └── executor.py           # Broker abstraction (Alpaca/IBKR), order management
+│   │
+│   ├── strategies/
+│   │   ├── earnings_event.py     # Earnings-driven: transcript analysis, IV crush, surprise
+│   │   ├── sentiment_momentum.py # Reddit/FinTwit sentiment → momentum trades
+│   │   ├── wheel_options.py      # Systematic CSP → CC wheel on quality stocks
+│   │   ├── investor_following.py # 13F/ARK/Congressional trade following
+│   │   ├── mean_reversion.py     # Bollinger/RSI mean reversion on liquid names
+│   │   └── momentum_factor.py    # Monthly momentum factor rebalancing
+│   │
+│   ├── analysis/
+│   │   ├── earnings_analyzer.py  # LLM earnings call transcript analysis
+│   │   ├── sentiment_scraper.py  # Reddit/Twitter sentiment scoring
+│   │   ├── filing_parser.py      # 13F, Form 4, congressional filings
+│   │   ├── regime_detector.py    # HMM/LLM market regime classification
+│   │   └── news_analyzer.py      # News sentiment with LLM context
+│   │
+│   ├── monitoring/
+│   │   ├── portfolio_tracker.py  # Real-time P&amp;L, exposure tracking
+│   │   ├── alert_system.py       # Drawdown, signal, event alerts → Telegram
+│   │   ├── signal_efficacy.py    # Track which signals are working
+│   │   └── report_generator.py   # Daily/weekly/monthly reports
+│   │
+│   └── utils/
+│       ├── broker_factory.py     # Alpaca/IBKR factory pattern
+│       ├── calendar.py           # Earnings, Fed, economic event calendar
+│       └── universe.py           # Stock universe management (S&amp;P 500, custom)
+│
+├── data/
+│   ├── cache/                    # Cached market data
+│   ├── signals/                  # Signal history for efficacy tracking
+│   └── trades/                   # Trade log
+│
+└── tests/
+    ├── test_signals.py
+    ├── test_risk.py
+    └── test_backtest.py</code></pre>
+<h3 id="script-purposes">Script Purposes</h3>
+<table>
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr>
+<th>Script</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data_pipeline.py</code></td>
+<td>Unified data fetcher. Abstracts yfinance/Alpaca/Polygon behind
+single interface. Handles caching, rate limiting, data quality
+checks.</td>
+</tr>
+<tr>
+<td><code>signal_engine.py</code></td>
+<td>Computes all technical, sentiment, event, flow signals for the stock
+universe. Outputs a signal matrix (ticker × signal_type → score).</td>
+</tr>
+<tr>
+<td><code>conviction.py</code></td>
+<td>Takes signal matrix + regime state → weighted conviction score per
+ticker. Regime-adaptive weights.</td>
+</tr>
+<tr>
+<td><code>risk_manager.py</code></td>
+<td>Enforces all risk rules (position size, drawdown, correlation,
+sector limits). Approves/rejects/sizes trades.</td>
+</tr>
+<tr>
+<td><code>executor.py</code></td>
+<td>Broker-agnostic order execution. Supports market, limit, stop
+orders. Handles fill tracking and slippage logging.</td>
+</tr>
+<tr>
+<td><code>earnings_event.py</code></td>
+<td>Pre-earnings: analyze IV, whisper numbers, transcript tone of prior
+quarter. Post-earnings: parse transcript, score surprise.</td>
+</tr>
+<tr>
+<td><code>sentiment_momentum.py</code></td>
+<td>Aggregate Reddit + Twitter sentiment. Compute sentiment momentum
+(rate of change). Generate long/short signals on extremes.</td>
+</tr>
+<tr>
+<td><code>wheel_options.py</code></td>
+<td>Select quality stocks for wheel. Sell CSPs at support levels. If
+assigned, sell CCs at resistance. Manage assignments.</td>
+</tr>
+<tr>
+<td><code>investor_following.py</code></td>
+<td>Parse ARK daily trades, 13F filings, congressional disclosures.
+Score conviction based on who’s buying and position size.</td>
+</tr>
+<tr>
+<td><code>regime_detector.py</code></td>
+<td>HMM on S&amp;P 500 returns + VIX → classify bull/bear/sideways +
+low-vol/high-vol. Also LLM-based narrative regime.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="configuration-schema">3. Configuration Schema</h2>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># config.yaml</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">broker</span><span class="kw">:</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> paper</span><span class="co">              # paper | live</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">primary</span><span class="kw">:</span><span class="at"> alpaca</span><span class="co">           # alpaca | ibkr</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">alpaca</span><span class="kw">:</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">api_key</span><span class="kw">:</span><span class="at"> ${ALPACA_API_KEY}</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">secret_key</span><span class="kw">:</span><span class="at"> ${ALPACA_SECRET_KEY}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">base_url</span><span class="kw">:</span><span class="at"> https://paper-api.alpaca.markets</span><span class="co">  # paper URL</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ibkr</span><span class="kw">:</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">host</span><span class="kw">:</span><span class="at"> </span><span class="fl">127.0.0.1</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">7497</span><span class="co">              # 7497=paper, 7496=live</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">client_id</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span><span class="kw">:</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">primary</span><span class="kw">:</span><span class="at"> yfinance</span><span class="co">         # yfinance | polygon | alpaca</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">polygon_api_key</span><span class="kw">:</span><span class="at"> ${POLYGON_API_KEY}</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cache_dir</span><span class="kw">:</span><span class="at"> ./data/cache</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cache_ttl_hours</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="fu">universe</span><span class="kw">:</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">type</span><span class="kw">:</span><span class="at"> sp500</span><span class="co">               # sp500 | custom | etf</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">custom_tickers</span><span class="kw">:</span><span class="at"> </span><span class="kw">[]</span><span class="co">        # Override list</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">exclude</span><span class="kw">:</span><span class="at"> </span><span class="kw">[]</span><span class="co">               # Tickers to exclude</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">min_market_cap</span><span class="kw">:</span><span class="at"> </span><span class="fl">1e9</span><span class="co">       # $1B minimum</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">min_avg_volume</span><span class="kw">:</span><span class="at"> </span><span class="dv">500000</span><span class="co">    # Shares/day</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="fu">strategies</span><span class="kw">:</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">enabled</span><span class="kw">:</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> earnings_event</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> sentiment_momentum</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> investor_following</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> momentum_factor</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="co">    # - wheel_options       # Requires options approval</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co">    # - mean_reversion      # Enable after validation</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">earnings_event</span><span class="kw">:</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">lookback_quarters</span><span class="kw">:</span><span class="at"> </span><span class="dv">4</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">min_iv_percentile</span><span class="kw">:</span><span class="at"> </span><span class="dv">50</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">position_type</span><span class="kw">:</span><span class="at"> equity</span><span class="co">   # equity | options</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="at">    </span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">sentiment_momentum</span><span class="kw">:</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">reddit_subs</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">wallstreetbets</span><span class="kw">,</span><span class="at"> stocks</span><span class="kw">]</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">twitter_accounts</span><span class="kw">:</span><span class="at"> </span><span class="kw">[]</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">lookback_days</span><span class="kw">:</span><span class="at"> </span><span class="dv">7</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">extreme_threshold</span><span class="kw">:</span><span class="at"> </span><span class="fl">2.0</span><span class="co">  # Std devs from mean</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="at">    </span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">investor_following</span><span class="kw">:</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">watch_list</span><span class="kw">:</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> ark_daily</span><span class="co">            # ARK daily trades</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> buffett_13f</span><span class="co">          # Berkshire 13F</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> burry_13f</span><span class="co">            # Scion 13F (contrarian)</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> congress</span><span class="co">             # Congressional trades</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">min_conviction</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.6</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a><span class="at">    </span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">momentum_factor</span><span class="kw">:</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">lookback_months</span><span class="kw">:</span><span class="at"> </span><span class="dv">12</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">skip_months</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span><span class="co">           # Skip most recent month</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">rebalance_frequency</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">top_n</span><span class="kw">:</span><span class="at"> </span><span class="dv">20</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="fu">risk</span><span class="kw">:</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">max_position_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">5.0</span><span class="co">      # Max 5% per position</span></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">max_portfolio_risk_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">2.0</span><span class="co"> # Max 2% risk per trade</span></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">stop_loss_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">8.0</span><span class="co">          # Trailing stop</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">daily_drawdown_limit_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">3.0</span></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">total_drawdown_limit_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">15.0</span></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">max_open_positions</span><span class="kw">:</span><span class="at"> </span><span class="dv">15</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">max_sector_positions</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">min_cash_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">20.0</span></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">max_options_notional_pct</span><span class="kw">:</span><span class="at"> </span><span class="fl">20.0</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="fu">notifications</span><span class="kw">:</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">telegram</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">daily_report</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">trade_alerts</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">drawdown_alerts</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a><span class="fu">schedule</span><span class="kw">:</span></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pre_market_scan</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;06:00&quot;</span><span class="co">   # PT</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">post_close_report</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;13:30&quot;</span><span class="co"> # PT</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">weekly_review</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;SAT 09:00&quot;</span><span class="co"> # PT</span></span></code></pre></div>
+<hr />
+<h2 id="strategy-module-details">4. Strategy Module Details</h2>
+<h3 id="earnings-event-driven-earnings_event.py">4.1 Earnings
+Event-Driven (<code>earnings_event.py</code>)</h3>
+<p><strong>How it works:</strong> 1. Maintain earnings calendar (next 2
+weeks) 2. Pre-earnings (T-5 to T-1): - Fetch prior quarter transcript →
+LLM tone analysis - Check options IV percentile → high IV = sell
+premium, low IV = buy direction - Analyze whisper numbers vs consensus -
+Score: bull/bear/neutral with confidence 3. Post-earnings (T+0): - Parse
+new transcript in real-time - Compare guidance language to prior quarter
+- Detect tone shifts, hedging, evasion - Generate trade signal within 1
+hour of release 4. Position: Long equity on positive surprise + positive
+tone; short via puts on negative</p>
+<h3 id="sentiment-momentum-sentiment_momentum.py">4.2 Sentiment Momentum
+(<code>sentiment_momentum.py</code>)</h3>
+<p><strong>How it works:</strong> 1. Scrape WSB/r/stocks every 4 hours →
+ticker mention count + sentiment score 2. Compute 7-day sentiment
+momentum (rate of change) 3. Extreme bullish sentiment (&gt;2σ) →
+contrarian short signal 4. Extreme bearish sentiment (&lt; -2σ) →
+contrarian long signal 5. Rising sentiment + rising price → momentum
+confirmation → long 6. Cross-reference with options unusual activity for
+confirmation</p>
+<h3 id="systematic-wheel-wheel_options.py">4.3 Systematic Wheel
+(<code>wheel_options.py</code>)</h3>
+<p><strong>How it works:</strong> 1. Universe: Top 50 S&amp;P 500 by
+quality score (high ROE, low debt, stable earnings) 2. Screen for
+elevated IV percentile (&gt;50th) 3. Sell cash-secured put at ~0.30
+delta, 30-45 DTE 4. If assigned: hold stock, sell covered call at ~0.30
+delta 5. If called away: restart cycle 6. Risk: Max 3 wheel positions,
+max 20% of portfolio in options notional</p>
+<h3 id="investor-following-investor_following.py">4.4 Investor Following
+(<code>investor_following.py</code>)</h3>
+<p><strong>How it works:</strong> 1. <strong>ARK Daily</strong>: Parse
+cathiesark.com daily trade email → buy/sell signals 2. <strong>13F
+Quarterly</strong>: On filing dates (Feb 14, May 15, Aug 14, Nov 14),
+parse new filings for Buffett, Burry, etc. 3.
+<strong>Congressional</strong>: Monitor QuiverQuant for new
+Pelosi/top-trader filings 4. <strong>Scoring</strong>: Convergence =
+higher conviction (e.g., Buffett + ARK both buying = strong signal) 5.
+Position within 1-2 days of signal, size based on conviction</p>
+<h3 id="mean-reversion-mean_reversion.py">4.5 Mean Reversion
+(<code>mean_reversion.py</code>)</h3>
+<p><strong>How it works:</strong> 1. Screen S&amp;P 500 for stocks
+&gt;2σ below 20-day moving average 2. Confirm with RSI &lt; 30 and
+volume spike 3. Fundamental check: no negative catalyst (earnings miss,
+downgrade) 4. Enter long with limit order at lower Bollinger band 5.
+Target: 20-day MA; Stop: -8% from entry 6. Hold max 10 trading days</p>
+<h3 id="momentum-factor-momentum_factor.py">4.6 Momentum Factor
+(<code>momentum_factor.py</code>)</h3>
+<p><strong>How it works:</strong> 1. Monthly: compute 12-1 month price
+momentum for universe 2. Rank all stocks; go long top 20, avoid bottom
+20 3. Equal-weight or inverse-volatility weight 4. Rebalance monthly on
+first trading day 5. Regime filter: reduce exposure in bear regime
+(HMM)</p>
+<hr />
+<h2 id="risk-controls-guardrails">5. Risk Controls &amp; Guardrails</h2>
+<h3 id="hard-limits-non-overridable">Hard Limits (Non-Overridable)</h3>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 21%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Control</th>
+<th>Limit</th>
+<th>Action on Breach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily drawdown</td>
+<td>-3%</td>
+<td>Halt all trading for the day</td>
+</tr>
+<tr>
+<td>Total drawdown</td>
+<td>-15%</td>
+<td>Halt all trading, notify Zhilong, require manual restart</td>
+</tr>
+<tr>
+<td>Max position</td>
+<td>5% of portfolio</td>
+<td>Reject order</td>
+</tr>
+<tr>
+<td>Max open positions</td>
+<td>15</td>
+<td>Reject new orders</td>
+</tr>
+<tr>
+<td>Min cash</td>
+<td>20%</td>
+<td>Reject buy orders</td>
+</tr>
+<tr>
+<td>Max options notional</td>
+<td>20%</td>
+<td>Reject options orders</td>
+</tr>
+<tr>
+<td>Max sector exposure</td>
+<td>3 positions per sector</td>
+<td>Reject same-sector orders</td>
+</tr>
+</tbody>
+</table>
+<h3 id="soft-limits-warning-confirmation">Soft Limits (Warning +
+Confirmation)</h3>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Threshold</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single trade risk</td>
+<td>&gt;1.5% of portfolio</td>
+<td>Warn + require confirmation</td>
+</tr>
+<tr>
+<td>Correlated positions</td>
+<td>&gt;0.7 correlation</td>
+<td>Warn</td>
+</tr>
+<tr>
+<td>Low liquidity</td>
+<td>&lt;100K avg daily volume</td>
+<td>Warn</td>
+</tr>
+<tr>
+<td>After-hours trading</td>
+<td>Any</td>
+<td>Warn + wider stops</td>
+</tr>
+<tr>
+<td>Earnings within 2 days</td>
+<td>Any position</td>
+<td>Warn about event risk</td>
+</tr>
+</tbody>
+</table>
+<h3 id="circuit-breakers">Circuit Breakers</h3>
+<ul>
+<li><strong>VIX &gt; 35</strong>: Reduce all position sizes by 50%, no
+new positions</li>
+<li><strong>3 consecutive losing trades</strong>: Pause strategy module
+for 24 hours, review</li>
+<li><strong>Signal efficacy &lt; 45% hit rate (30-day)</strong>: Disable
+signal, notify for review</li>
+<li><strong>Broker API errors</strong>: 3 failures → halt trading,
+alert</li>
+</ul>
+<h3 id="audit-trail">Audit Trail</h3>
+<ul>
+<li>Every trade logged with: timestamp, signal source, conviction score,
+risk check results, execution details, P&amp;L</li>
+<li>Weekly signal efficacy report</li>
+<li>Monthly strategy attribution report</li>
+</ul>
+<hr />
+<h2 id="user-guide">6. User Guide</h2>
+<h3 id="getting-started">Getting Started</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Install the skill</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">openclaw</span> skill install us-stock-trading</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Configure API keys</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ex">openclaw</span> config set ALPACA_API_KEY=your_key</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="ex">openclaw</span> config set ALPACA_SECRET_KEY=your_secret</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Start in paper mode (default)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="ex">alpha</span> trade config <span class="at">--mode</span> paper</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Run your first scan</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="ex">alpha</span> scan</span></code></pre></div>
+<h3 id="daily-workflow">Daily Workflow</h3>
+<pre><code>6:00 AM PT  → Auto pre-market scan (signals + earnings calendar)
+             → Telegram notification with trade ideas
+9:30 AM     → Market opens; pending orders execute
+Throughout  → Monitoring: stops, alerts, signal updates
+1:00 PM PT  → Market closes; auto daily report
+             → P&amp;L summary → Telegram</code></pre>
+<h3 id="key-commands">Key Commands</h3>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 29%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Command</th>
+<th>Example</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scan</code></td>
+<td>“alpha scan”</td>
+<td>Run all signal modules, show actionable ideas</td>
+</tr>
+<tr>
+<td><code>analyze AAPL</code></td>
+<td>“analyze Apple”</td>
+<td>Deep-dive: technicals, sentiment, fundamentals, LLM thesis</td>
+</tr>
+<tr>
+<td><code>trade</code></td>
+<td>“buy 100 shares AAPL”</td>
+<td>Execute with risk checks and confirmation</td>
+</tr>
+<tr>
+<td><code>portfolio</code></td>
+<td>“show portfolio”</td>
+<td>Current positions, P&amp;L, exposure</td>
+</tr>
+<tr>
+<td><code>earnings</code></td>
+<td>“upcoming earnings”</td>
+<td>Next week’s earnings with analysis</td>
+</tr>
+<tr>
+<td><code>signals</code></td>
+<td>“active signals”</td>
+<td>All current signals across modules</td>
+</tr>
+<tr>
+<td><code>whale-watch</code></td>
+<td>“what are whales buying”</td>
+<td>Latest 13F/ARK/Congressional trades</td>
+</tr>
+<tr>
+<td><code>risk</code></td>
+<td>“risk dashboard”</td>
+<td>Current risk metrics, limit utilization</td>
+</tr>
+<tr>
+<td><code>report</code></td>
+<td>“weekly report”</td>
+<td>Performance, attribution, signal efficacy</td>
+</tr>
+<tr>
+<td><code>backtest</code></td>
+<td>“backtest momentum 2024”</td>
+<td>Historical strategy performance</td>
+</tr>
+</tbody>
+</table>
+<h3 id="going-live">Going Live</h3>
+<ol type="1">
+<li>Paper trade for minimum 30 days</li>
+<li>Review signal efficacy and strategy performance</li>
+<li>Start with $5K-$10K maximum</li>
+<li>Set <code>config --mode live --broker alpaca</code> (or ibkr)</li>
+<li>Monitor daily for first 2 weeks</li>
+<li>Gradually increase allocation as confidence builds</li>
+</ol>
+<h3 id="safety-features">Safety Features</h3>
+<ul>
+<li><strong>Paper mode by default</strong> — must explicitly enable live
+trading</li>
+<li><strong>Trade confirmation</strong> — every live trade requires
+explicit confirmation</li>
+<li><strong>Daily P&amp;L alerts</strong> — know immediately if
+something goes wrong</li>
+<li><strong>Automatic halt</strong> — circuit breakers stop trading on
+excessive losses</li>
+<li><strong>Full audit trail</strong> — every decision logged and
+reviewable</li>
+</ul>
+<hr />
+<p><em>Phase 3 skill design complete. Ready for implementation.</em></p>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>phase1-data-collection</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">phase1-data-collection</h1>
+</header>
+<h1 id="phase-1-data-collection-us-stock-trading-skill-research">Phase
+1: Data Collection — US Stock Trading Skill Research</h1>
+<p><em>Date: 2026-02-17</em></p>
+<h2 id="open-source-trading-frameworks-infrastructure-layer">1.
+Open-Source Trading Frameworks (Infrastructure Layer)</h2>
+<h3 id="tier-1-production-grade">Tier 1 — Production-Grade</h3>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 17%" />
+<col style="width: 25%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Project</th>
+<th>Stars</th>
+<th>Language</th>
+<th>Key Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NautilusTrader</strong></td>
+<td>18.7k</td>
+<td>Python/Rust</td>
+<td>High-perf event-driven, backtesting + live trading, multi-asset</td>
+</tr>
+<tr>
+<td><strong>QuantConnect/Lean</strong></td>
+<td>~12k</td>
+<td>Python/C#</td>
+<td>Cloud-based, multi-asset, huge community, paper + live</td>
+</tr>
+<tr>
+<td><strong>Zipline-Reloaded</strong></td>
+<td>~1k (fork of 17k)</td>
+<td>Python</td>
+<td>Quantopian successor, good for research/backtesting</td>
+</tr>
+<tr>
+<td><strong>VectorBT</strong></td>
+<td>~4k</td>
+<td>Python</td>
+<td>Ultra-fast vectorized backtesting, great visualization</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-2-specialized">Tier 2 — Specialized</h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Focus</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PyBroker</strong></td>
+<td>ML + Trading</td>
+<td>Algo trading with ML built-in</td>
+</tr>
+<tr>
+<td><strong>PyAlgoTrade</strong></td>
+<td>Backtesting</td>
+<td>Simple, mature, event-driven</td>
+</tr>
+<tr>
+<td><strong>Roboquant.py</strong></td>
+<td>Modern Python</td>
+<td>Clean API, newer project</td>
+</tr>
+<tr>
+<td><strong>OpenAlgo</strong></td>
+<td>Indian brokers</td>
+<td>24+ broker integrations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-3-curated-lists-meta-resources">Tier 3 — Curated Lists
+(Meta-Resources)</h3>
+<ul>
+<li><strong>awesome-quant</strong> (wilsonfreitas) —
+最全的量化金融资源列表</li>
+<li><strong>awesome-systematic-trading</strong> (wangzhe3224) —
+系统化交易专题</li>
+<li><strong>best-of-algorithmic-trading</strong> (merovinh) —
+每周更新排名</li>
+</ul>
+<h2 id="aillm-trading-agents-intelligence-layer">2. AI/LLM Trading
+Agents (Intelligence Layer)</h2>
+<h3 id="tradingagents-tauricresearch-最值得关注">🔥 TradingAgents
+(TauricResearch) — 最值得关注</h3>
+<ul>
+<li><strong>架构</strong>: Multi-agent LLM
+framework，模拟真实交易公司</li>
+<li><strong>7个角色</strong>: Fundamentals Analyst, Sentiment Analyst,
+News Analyst, Technical Analyst, Researcher (bull+bear debate), Trader,
+Risk Manager</li>
+<li><strong>支持</strong>: GPT-5.x, Gemini 3.x, Claude 4.x, Grok
+4.x</li>
+<li><strong>特色</strong>: Bull/Bear researcher debate → Trader decision
+→ Risk approval → Execute</li>
+<li><strong>评价</strong>: 架构设计最接近我们想做的 skill</li>
+</ul>
+<h3 id="fingpt-ai4finance-foundation">FinGPT (AI4Finance
+Foundation)</h3>
+<ul>
+<li>开源金融大模型项目</li>
+<li>RLHF 学习个人偏好（风险偏好、投资习惯）</li>
+<li>提供 sentiment analysis、robo-advisor、stock trading pipelines</li>
+<li>HuggingFace 上有训练好的模型</li>
+</ul>
+<h3 id="finrl-ai4finance-foundation">FinRL (AI4Finance Foundation)</h3>
+<ul>
+<li>深度强化学习做股票交易</li>
+<li>PPO, A2C, DDPG, SAC 等 RL 算法</li>
+<li>完整的 backtest 框架</li>
+<li>学术论文支撑，但实际 live trading 效果存疑</li>
+</ul>
+<h3 id="finmem">FinMem</h3>
+<ul>
+<li>LLM Trading Agent with Layered Memory</li>
+<li>分层记忆设计（类似人类短/中/长期记忆）</li>
+<li>对我们的 skill 设计有启发</li>
+</ul>
+<h3 id="llm-enhanced-trading-ronitt272">LLM-Enhanced-Trading
+(Ronitt272)</h3>
+<ul>
+<li>FinGPT + 实时新闻/社交媒体情感分析</li>
+<li>Sentiment-driven trading system</li>
+</ul>
+<h2 id="execution-platforms-broker-layer">3. Execution Platforms (Broker
+Layer)</h2>
+<h3 id="alpaca-markets-首选">Alpaca Markets — 首选</h3>
+<ul>
+<li>✅ 免佣金，支持股票 + ETF + 加密</li>
+<li>✅ API-first 设计，专为 algo trading</li>
+<li>✅ Paper trading 环境（无风险测试）</li>
+<li>✅ Python SDK (<code>alpaca-py</code>)</li>
+<li>✅ 实时 + 历史市场数据</li>
+<li>❌ 仅美股市场</li>
+</ul>
+<h3 id="interactive-brokers-ibkr">Interactive Brokers (IBKR)</h3>
+<ul>
+<li>更全面（全球市场、期权、期货）</li>
+<li>API 较复杂</li>
+<li>适合进阶阶段</li>
+</ul>
+<h2 id="alternative-data-sources">4. Alternative Data Sources</h2>
+<h3 id="congressional-trading">Congressional Trading</h3>
+<ul>
+<li><strong>Pelosi Tracker</strong> (pelositracker.app) — Pelosi
+交易追踪</li>
+<li><strong>Quiver Quantitative</strong> — Congressional trades API,
+insider trading, lobbying data</li>
+<li><strong>Unusual Whales</strong> — Options flow, dark pools,
+congressional trades</li>
+<li><strong>QuantConnect integration</strong> — Quiver data 直接接入
+Lean 引擎</li>
+</ul>
+<h3 id="celebrity-investors">Celebrity Investors</h3>
+<ul>
+<li><strong>Cathie Wood/ARK</strong>: cathiesark.com（每日更新交易）,
+hedgefollow.com, stockcircle.com</li>
+<li><strong>Michael Burry/Scion</strong>: $1.38B AUM, 只持 3 只股票（Q3
+2025）, fintel.io, whalewisdom.com</li>
+<li><strong>13F filings</strong>: 所有 &gt;$100M AUM
+基金每季度必须披露</li>
+</ul>
+<h3 id="data-platforms">Data Platforms</h3>
+<ul>
+<li><strong>stockcircle.com</strong> — 投资者持仓追踪</li>
+<li><strong>hedgefollow.com</strong> — 13F 交易热力图</li>
+<li><strong>dataroma.com</strong> — Superinvestor 持仓汇总</li>
+<li><strong>gurufocus.com</strong> — 投资大师组合分析</li>
+</ul>
+<h2 id="reddit社区-intelligence">5. Reddit/社区 Intelligence</h2>
+<h3 id="ralgotrading-关键洞察">r/algotrading 关键洞察</h3>
+<ol type="1">
+<li><strong>盈利策略确实存在</strong>，但成功率低，需要持续迭代</li>
+<li><strong>Retail 优势</strong>: 可以交易机构看不上的小流动性标的（“too
+thin for anyone but retail”）</li>
+<li><strong>最受认可的策略类型</strong>:
+<ul>
+<li>Mean reversion（均值回归）: 65-75% win rate, PF 2.5-3.5</li>
+<li>Momentum（动量）: 3周-3月 horizon 效果最好</li>
+<li>Event-driven（事件驱动）: 13F filings, earnings, FOMC</li>
+</ul></li>
+<li><strong>ML/AI 的真实评价</strong>:
+<ul>
+<li>“You don’t need petabytes of data, just well-defined goals”</li>
+<li>“Think outside the box — use alternative datasets”</li>
+<li>“Overloading a model with signals reduces clarity”</li>
+<li>LLM 最大价值 = 降低门槛 + 加速迭代，不是自动印钱</li>
+</ul></li>
+<li><strong>2年 AI trading bot 经验总结</strong> (Reddit post 2 days
+ago):
+<ul>
+<li>不要让 AI 全权交易</li>
+<li>输入要精简，不是越多越好</li>
+<li>必须跨市场环境测试（chop vs trend, low vs high vol）</li>
+<li>AI 能在结构化条件下产生 edge（~30% 竞赛收益）</li>
+<li>真正的问题：能否让 AI 适应市场环境而不是过拟合</li>
+</ul></li>
+</ol>
+<h2 id="strategy-categories-for-skill-design">6. Strategy Categories for
+Skill Design</h2>
+<h3 id="a.-sentiment-driven-llm-优势最大">A. Sentiment-Driven (LLM
+优势最大)</h3>
+<ul>
+<li>新闻 + 社交媒体情感分析</li>
+<li>Earnings call 语调分析</li>
+<li>Fed 声明解读</li>
+<li><strong>工具</strong>: FinGPT, LLM APIs</li>
+</ul>
+<h3 id="b.-smart-money-following">B. Smart Money Following</h3>
+<ul>
+<li>Congressional trades (45-day延迟，但有统计 edge)</li>
+<li>13F filings (季度，机构持仓)</li>
+<li>ARK daily trades (次日公布)</li>
+<li>Insider trading (SEC Form 4)</li>
+</ul>
+<h3 id="c.-technicalquantitative">C. Technical/Quantitative</h3>
+<ul>
+<li>Mean reversion (RSI, Bollinger Bands)</li>
+<li>Momentum (ROC, MACD crossover)</li>
+<li>Pairs trading (cointegration)</li>
+<li>Regime detection (HMM)</li>
+</ul>
+<h3 id="d.-event-driven">D. Event-Driven</h3>
+<ul>
+<li>Earnings surprise + post-earnings drift</li>
+<li>FOMC meetings</li>
+<li>M&amp;A announcements</li>
+<li>Sector rotation</li>
+</ul>
+<h2 id="key-architecture-insights-for-skill-design">7. Key Architecture
+Insights for Skill Design</h2>
+<p>从 TradingAgents 框架学到的最佳实践： 1. <strong>Multi-agent
+分工</strong> — 不同 agent 负责不同分析维度 2. <strong>Bull/Bear
+debate</strong> — 强制考虑双方观点，减少 confirmation bias 3.
+<strong>Risk manager 审批</strong> — 所有交易必须通过风控层 4.
+<strong>Structured output</strong> — Agent 输出标准化的 JSON signal 5.
+<strong>Memory/context management</strong> — 分层记忆（FinMem 思路）</p>
+<h2 id="tradingagents-实验结果论文数据">8. TradingAgents
+实验结果（论文数据）</h2>
+<p><strong>测试期</strong>: 2024年6月-11月, 标的: AAPL, GOOGL, AMZN</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 13%" />
+<col style="width: 15%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 13%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>AAPL CR%</th>
+<th>AAPL SR</th>
+<th>GOOGL CR%</th>
+<th>GOOGL SR</th>
+<th>AMZN CR%</th>
+<th>AMZN SR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buy &amp; Hold</td>
+<td>-5.23</td>
+<td>-1.29</td>
+<td>7.78</td>
+<td>1.35</td>
+<td>17.1</td>
+<td>3.53</td>
+</tr>
+<tr>
+<td>MACD</td>
+<td>-1.49</td>
+<td>-0.81</td>
+<td>6.20</td>
+<td>2.31</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>KDJ&amp;RSI</td>
+<td>2.05</td>
+<td>1.64</td>
+<td>0.40</td>
+<td>0.02</td>
+<td>-0.77</td>
+<td>-2.25</td>
+</tr>
+<tr>
+<td>SMA</td>
+<td>-3.20</td>
+<td>-1.72</td>
+<td>6.23</td>
+<td>2.12</td>
+<td>11.01</td>
+<td>2.22</td>
+</tr>
+<tr>
+<td><strong>TradingAgents</strong></td>
+<td><strong>26.62</strong></td>
+<td><strong>8.21</strong></td>
+<td><strong>24.36</strong></td>
+<td><strong>6.39</strong></td>
+<td><strong>23.21</strong></td>
+<td><strong>5.60</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键发现:</strong> - TradingAgents 在所有标的上大幅超越
+baseline - AAPL: +26.62% vs B&amp;H -5.23%（相差 31.85%） - Sharpe Ratio
+极高（6-8），但需注意只有5个月回测期 - MDD 很低（0.91-2.11%），风控有效
+- <strong>局限</strong>: 只测了3只大盘股，5个月数据，可能过拟合</p>
+<h2 id="congressional-trading-数据">9. Congressional Trading 数据</h2>
+<p><strong>核心发现 (Unusual Whales 2024 报告):</strong> -
+311个国会议员披露投资组合，其中 <strong>100个(32%) 跑赢 S&amp;P
+500</strong> - 共和党平均 17.3%, 民主党 14.4%, S&amp;P 500 16.6% -
+<strong>国会领导层</strong> (speaker, whip 等) 上任后超额收益
+<strong>+47个百分点/年</strong> (CEPR研究) - Top 5 performers
+2024年收益翻倍 - <strong>策略可行性</strong>: 交易披露有
+45天延迟，但领导层 alpha 如此大，即使延迟仍有 edge -
+<strong>数据源</strong>: Quiver Quantitative API, Unusual Whales API,
+Pelosi Tracker</p>
+<h2 id="clawhub-现有-skills">10. ClawHub 现有 Skills</h2>
+<ul>
+<li><strong>Stock Market Pro</strong> (kys42): Yahoo Finance
+驱动，报价/基本面/图表/技术指标</li>
+<li>ClawHub 有 5700+ skills 但 <strong>零真正的量化交易
+skill</strong>（只有数据查看类）</li>
+<li>⚠️ 安全提醒: ClawHub 发现 341 个恶意 skills（crypto/polymarket
+类），小心甄别</li>
+</ul>
+<h2 id="next-steps-phase-2">Next Steps (Phase 2)</h2>
+<ol type="1">
+<li><strong>深入分析 TradingAgents 代码</strong> —
+最接近我们想要的架构</li>
+<li><strong>搭建 Alpaca paper trading</strong> — 免费测试环境</li>
+<li><strong>设计 Skill 架构</strong>:
+<ul>
+<li>Data ingestion layer (market data + alternative data)</li>
+<li>Analysis agents (sentiment, technical, fundamental)</li>
+<li>Decision engine (signal aggregation + position sizing)</li>
+<li>Execution layer (Alpaca API)</li>
+<li>Risk management (stop-loss, position limits)</li>
+</ul></li>
+<li><strong>选择 2-3 个策略做 backtest</strong>:
+<ul>
+<li>Congressional trades following (Quiver API)</li>
+<li>Mean reversion on oversold large-caps</li>
+<li>Earnings sentiment (LLM-driven)</li>
+</ul></li>
+</ol>
+</body>
+</html>

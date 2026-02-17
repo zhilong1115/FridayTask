@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>phase2-synthesis</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">phase2-synthesis</h1>
+</header>
+<h1 id="phase-2-synthesis-report">Phase 2: Synthesis Report</h1>
+<p><em>Date: 2026-02-17 | Author: Alpha</em></p>
+<hr />
+<h2 id="strategy-ranking">1. Strategy Ranking</h2>
+<table>
+<colgroup>
+<col style="width: 6%" />
+<col style="width: 10%" />
+<col style="width: 23%" />
+<col style="width: 16%" />
+<col style="width: 20%" />
+<col style="width: 12%" />
+<col style="width: 9%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Strategy</th>
+<th>Feasibility (AI Agent)</th>
+<th>Expected Edge</th>
+<th>Data Availability</th>
+<th>Complexity</th>
+<th>Overall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Earnings Event-Driven</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>Medium</td>
+<td><strong>A+</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Sentiment-Driven Momentum</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>Medium</td>
+<td><strong>A</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Systematic Options Selling (Wheel/CSP)</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>Medium</td>
+<td><strong>A</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Notable Investor Following (13F/ARK)</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>Low</td>
+<td><strong>A-</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Momentum Factor (Monthly Rebalance)</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>Low</td>
+<td><strong>B+</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Mean Reversion on Liquid Equities</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>Medium</td>
+<td><strong>B+</strong></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Congressional Trading Following</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>Low</td>
+<td><strong>B+</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Regime-Aware Multi-Factor</strong></td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>High</td>
+<td><strong>B</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Pairs Trading / Stat Arb</strong></td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>High</td>
+<td><strong>B-</strong></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>WSB Crowd Picks Tracking</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>Low</td>
+<td><strong>B-</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-earnings-event-driven-ranks-1">Why Earnings Event-Driven
+Ranks #1</h3>
+<ul>
+<li><strong>AI agent’s unique edge</strong>: LLM can parse earnings
+calls in real-time, detect tone shifts, hedging language, guidance
+changes — things traditional algos cannot do</li>
+<li><strong>Rich data</strong>: Transcripts, whisper numbers, options
+IV, historical surprise data all freely available</li>
+<li><strong>Definable edge</strong>: IV crush is a known phenomenon;
+earnings surprise direction can be estimated from transcript tone</li>
+<li><strong>Bounded risk</strong>: Event-driven trades have natural time
+horizons (pre/post earnings)</li>
+</ul>
+<hr />
+<h2 id="signal-taxonomy">2. Signal Taxonomy</h2>
+<h3 id="fundamental-signals">Fundamental Signals</h3>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 23%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Source</th>
+<th>Frequency</th>
+<th>AI Agent Advantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Earnings surprise direction</td>
+<td>Transcripts, guidance</td>
+<td>Quarterly</td>
+<td>LLM tone analysis</td>
+</tr>
+<tr>
+<td>Revenue growth acceleration</td>
+<td>SEC filings</td>
+<td>Quarterly</td>
+<td>Cross-company comparison</td>
+</tr>
+<tr>
+<td>Margin expansion/contraction</td>
+<td>10-Q/10-K</td>
+<td>Quarterly</td>
+<td>Footnote detection</td>
+</tr>
+<tr>
+<td>Management quality/honesty</td>
+<td>Earnings calls</td>
+<td>Quarterly</td>
+<td>Lie/hedge detection</td>
+</tr>
+<tr>
+<td>Buffett new positions</td>
+<td>13F filings</td>
+<td>Quarterly</td>
+<td>High-signal, parseable</td>
+</tr>
+<tr>
+<td>ARK daily trades</td>
+<td>cathiesark.com</td>
+<td>Daily</td>
+<td>Real-time theme signal</td>
+</tr>
+</tbody>
+</table>
+<h3 id="technical-signals">Technical Signals</h3>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 23%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Source</th>
+<th>Frequency</th>
+<th>AI Agent Advantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Price momentum (12-1 mo)</td>
+<td>OHLCV data</td>
+<td>Daily</td>
+<td>Regime-conditional application</td>
+</tr>
+<tr>
+<td>Mean reversion (Bollinger)</td>
+<td>OHLCV data</td>
+<td>Daily</td>
+<td>Combine with fundamental context</td>
+</tr>
+<tr>
+<td>Volume anomalies</td>
+<td>OHLCV data</td>
+<td>Daily</td>
+<td>Cross-reference with sentiment</td>
+</tr>
+<tr>
+<td>Moving average crossovers</td>
+<td>OHLCV data</td>
+<td>Daily</td>
+<td>Simple, robust</td>
+</tr>
+<tr>
+<td>RSI extremes</td>
+<td>OHLCV data</td>
+<td>Daily</td>
+<td>Contrarian entry timing</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sentiment-signals">Sentiment Signals</h3>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 23%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Source</th>
+<th>Frequency</th>
+<th>AI Agent Advantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WSB ticker mention frequency</td>
+<td>Reddit API</td>
+<td>Real-time</td>
+<td>Quantifiable crowd wisdom</td>
+</tr>
+<tr>
+<td>WSB sentiment polarity</td>
+<td>Reddit API</td>
+<td>Real-time</td>
+<td>NLP analysis at scale</td>
+</tr>
+<tr>
+<td>FinTwit consensus</td>
+<td>X/Twitter</td>
+<td>Real-time</td>
+<td>Multi-account aggregation</td>
+</tr>
+<tr>
+<td>Earnings call tone shift</td>
+<td>Transcripts</td>
+<td>Quarterly</td>
+<td>Q-over-Q comparison</td>
+</tr>
+<tr>
+<td>News sentiment momentum</td>
+<td>News APIs</td>
+<td>Daily</td>
+<td>Rate of change matters</td>
+</tr>
+<tr>
+<td>Chinese retail flow (小红书)</td>
+<td>XHS/web</td>
+<td>Weekly</td>
+<td>Cross-cultural leading indicator</td>
+</tr>
+<tr>
+<td>Inverse Cramer</td>
+<td>X/Twitter</td>
+<td>Per call</td>
+<td>Documented contrarian signal</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event-signals">Event Signals</h3>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 23%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Source</th>
+<th>Frequency</th>
+<th>AI Agent Advantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Earnings date + IV levels</td>
+<td>Options data</td>
+<td>Quarterly</td>
+<td>Pre-position for IV crush</td>
+</tr>
+<tr>
+<td>Fed statement parsing</td>
+<td>Fed website</td>
+<td>8x/year</td>
+<td>Word-by-word diff analysis</td>
+</tr>
+<tr>
+<td>CPI/NFP/PMI surprises</td>
+<td>Economic calendars</td>
+<td>Monthly</td>
+<td>Context-aware interpretation</td>
+</tr>
+<tr>
+<td>Congressional trade filings</td>
+<td>House/Senate</td>
+<td>As filed</td>
+<td>Legislative catalyst detection</td>
+</tr>
+<tr>
+<td>13F filing dates</td>
+<td>SEC EDGAR</td>
+<td>Quarterly</td>
+<td>Calendar-based positioning</td>
+</tr>
+<tr>
+<td>M&amp;A announcements</td>
+<td>News</td>
+<td>Irregular</td>
+<td>Second-order effect reasoning</td>
+</tr>
+</tbody>
+</table>
+<h3 id="flow-signals">Flow Signals</h3>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 23%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Source</th>
+<th>Frequency</th>
+<th>AI Agent Advantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Options unusual activity</td>
+<td>Barchart/UW</td>
+<td>Daily</td>
+<td>Size + direction analysis</td>
+</tr>
+<tr>
+<td>0DTE volume spikes</td>
+<td>Broker data</td>
+<td>Intraday</td>
+<td>Gamma exposure prediction</td>
+</tr>
+<tr>
+<td>ETF fund flows</td>
+<td>ETF.com</td>
+<td>Daily</td>
+<td>Sector rotation detection</td>
+</tr>
+<tr>
+<td>Insider buying/selling</td>
+<td>SEC Form 4</td>
+<td>As filed</td>
+<td>Cross-ref with sentiment</td>
+</tr>
+<tr>
+<td>Burry portfolio changes</td>
+<td>13F</td>
+<td>Quarterly</td>
+<td>Bubble/excess detection</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="architecture-design">3. Architecture Design</h2>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│                   ALPHA TRADING AGENT                │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │
+│  │  DATA LAYER  │  │SIGNAL ENGINE │  │  STRATEGY  │ │
+│  │              │  │              │  │  MODULES   │ │
+│  │ • Price/Vol  │→ │ • Technical  │→ │            │ │
+│  │ • Fundmntls  │  │ • Sentiment  │  │ • Earnings │ │
+│  │ • News/Sent  │  │ • Event      │  │ • Momentum │ │
+│  │ • Alt Data   │  │ • Flow       │  │ • Wheel    │ │
+│  │ • 13F/Filings│  │ • Fundmntl   │  │ • 13F-Fllw │ │
+│  └──────────────┘  └──────────────┘  │ • MeanRev  │ │
+│                                      └─────┬─────┘ │
+│                                            │       │
+│  ┌──────────────┐  ┌──────────────┐        │       │
+│  │   RISK MGR   │← │  CONVICTION  │← ──────┘       │
+│  │              │  │  SYNTHESIZER │                  │
+│  │ • Pos sizing │  │              │                  │
+│  │ • Stop loss  │  │ • Weighted   │                  │
+│  │ • Drawdown   │  │   combine    │                  │
+│  │ • Correlation│  │ • Regime     │                  │
+│  │ • Max pos    │  │   adjust     │                  │
+│  └──────┬───────┘  └──────────────┘                  │
+│         │                                            │
+│  ┌──────▼───────┐  ┌──────────────┐                  │
+│  │  EXECUTION   │  │  MONITORING  │                  │
+│  │              │  │              │                  │
+│  │ • Alpaca(dev)│  │ • P&amp;L track  │                  │
+│  │ • IBKR(prod) │  │ • Signal eff │                  │
+│  │ • Order mgmt │  │ • Alerts     │                  │
+│  │ • Slippage   │  │ • Reports    │                  │
+│  └──────────────┘  └──────────────┘                  │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3 id="signal-generation-layer">Signal Generation Layer</h3>
+<ul>
+<li><strong>Indicators</strong>: pandas-ta for technical indicators
+(RSI, MACD, Bollinger, MA crossovers)</li>
+<li><strong>LLM Analysis</strong>: Claude via OpenClaw for:
+<ul>
+<li>Earnings transcript tone analysis</li>
+<li>News sentiment with context</li>
+<li>Fed statement parsing (hawkish/dovish scoring)</li>
+<li>Narrative regime detection</li>
+<li>13F filing interpretation</li>
+</ul></li>
+<li><strong>Sentiment Pipeline</strong>: Reddit API → NLP scoring →
+ticker-level sentiment time series</li>
+</ul>
+<h3 id="risk-management">Risk Management</h3>
+<table>
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 23%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr>
+<th>Control</th>
+<th>Rule</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Max position size</td>
+<td>5% of portfolio</td>
+<td>Prevent concentration</td>
+</tr>
+<tr>
+<td>Per-trade risk</td>
+<td>1-2% of portfolio</td>
+<td>Survive losing streaks</td>
+</tr>
+<tr>
+<td>Stop loss</td>
+<td>-8% trailing or strategy-specific</td>
+<td>Limit drawdown per trade</td>
+</tr>
+<tr>
+<td>Daily drawdown limit</td>
+<td>-3%</td>
+<td>Stop trading on bad days</td>
+</tr>
+<tr>
+<td>Total drawdown limit</td>
+<td>-15%</td>
+<td>Pause all trading, review</td>
+</tr>
+<tr>
+<td>Correlation limit</td>
+<td>Max 3 positions in same sector</td>
+<td>Diversification</td>
+</tr>
+<tr>
+<td>Max open positions</td>
+<td>10-15</td>
+<td>Manageable for monitoring</td>
+</tr>
+<tr>
+<td>Options: max notional</td>
+<td>20% of portfolio</td>
+<td>Limit leverage</td>
+</tr>
+<tr>
+<td>Cash reserve</td>
+<td>Min 20%</td>
+<td>Dry powder + margin safety</td>
+</tr>
+</tbody>
+</table>
+<h3 id="execution-layer">Execution Layer</h3>
+<ul>
+<li><strong>Alpaca (Development/Paper)</strong>:
+<ul>
+<li><code>alpaca-py</code> SDK</li>
+<li>Paper trading for all strategy validation</li>
+<li>Free real-time data (IEX)</li>
+<li>Commission-free</li>
+</ul></li>
+<li><strong>IBKR (Production)</strong>:
+<ul>
+<li><code>ib_insync</code> async Python wrapper</li>
+<li>Full options chain access</li>
+<li>Global market access</li>
+<li>Professional execution quality</li>
+</ul></li>
+<li><strong>Order Management</strong>:
+<ul>
+<li>Limit orders preferred (reduce slippage)</li>
+<li>TWAP for larger positions</li>
+<li>Pre/post market orders for earnings plays</li>
+</ul></li>
+</ul>
+<h3 id="monitoring-reporting">Monitoring &amp; Reporting</h3>
+<ul>
+<li>Daily P&amp;L summary → Telegram notification</li>
+<li>Signal efficacy tracking (which signals are working?)</li>
+<li>Weekly strategy performance report</li>
+<li>Drawdown alerts (real-time)</li>
+<li>Monthly portfolio review with rebalancing recommendations</li>
+</ul>
+<hr />
+<h2 id="recommended-stack">4. Recommended Stack</h2>
+<table>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr>
+<th>Component</th>
+<th>Primary</th>
+<th>Backup</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Broker (Dev)</strong></td>
+<td>Alpaca</td>
+<td>—</td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>Broker (Prod)</strong></td>
+<td>IBKR</td>
+<td>Alpaca</td>
+<td>~$0-10/mo</td>
+</tr>
+<tr>
+<td><strong>Historical Data</strong></td>
+<td>yfinance</td>
+<td>Polygon.io</td>
+<td>Free / $29/mo</td>
+</tr>
+<tr>
+<td><strong>Real-time Data</strong></td>
+<td>Alpaca WebSocket</td>
+<td>Polygon.io WS</td>
+<td>Free / $29/mo</td>
+</tr>
+<tr>
+<td><strong>News/Sentiment</strong></td>
+<td>Tiingo News API</td>
+<td>NewsAPI</td>
+<td>$10/mo</td>
+</tr>
+<tr>
+<td><strong>Earnings Transcripts</strong></td>
+<td>Financial Modeling Prep</td>
+<td>Seeking Alpha</td>
+<td>$20-50/mo</td>
+</tr>
+<tr>
+<td><strong>13F Data</strong></td>
+<td>SEC EDGAR (direct)</td>
+<td>WhaleWisdom</td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>Congressional Data</strong></td>
+<td>QuiverQuant API</td>
+<td>Capitol Trades</td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>Reddit Sentiment</strong></td>
+<td>Reddit API + PRAW</td>
+<td>Pushshift</td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>Backtesting</strong></td>
+<td>VectorBT</td>
+<td>QuantConnect</td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>Technical Analysis</strong></td>
+<td>pandas-ta</td>
+<td>ta-lib</td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>LLM Reasoning</strong></td>
+<td>Claude (via OpenClaw)</td>
+<td>—</td>
+<td>Included</td>
+</tr>
+<tr>
+<td><strong>Orchestration</strong></td>
+<td>OpenClaw Skill</td>
+<td>—</td>
+<td>Included</td>
+</tr>
+<tr>
+<td><strong>Notifications</strong></td>
+<td>Telegram (via OpenClaw)</td>
+<td>—</td>
+<td>Included</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total estimated cost</strong>: $0-60/month depending on data
+tier</p>
+<hr />
+<p><em>Phase 2 synthesis complete. All signals, strategies, and
+architecture designed for implementation.</em></p>
+</body>
+</html>

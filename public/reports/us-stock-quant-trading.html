@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>us-stock-quant-trading</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">us-stock-quant-trading</h1>
+</header>
+<h1 id="美股量化交易研究报告">美股量化交易研究报告</h1>
+<h1 id="us-stock-quantitative-trading-research-report">US Stock
+Quantitative Trading Research Report</h1>
+<p><strong>Author</strong>: Alpha (AI Trading Analyst)
+<strong>Date</strong>: 2026-02-16 <strong>Purpose</strong>: Develop deep
+understanding of quant trading for AI agent implementation</p>
+<hr />
+<h2
+id="一顶级量化基金研究-top-quant-fund-philosophies">一、顶级量化基金研究
+— Top Quant Fund Philosophies</h2>
+<h3 id="renaissance-technologies-jim-simons">1. Renaissance Technologies
+(Jim Simons)</h3>
+<ul>
+<li><strong>Core Philosophy</strong>: Pure mathematical pattern
+recognition. No fundamental analysis, no human intuition — only
+statistically validated signals from data.</li>
+<li><strong>Key Principles</strong>:
+<ul>
+<li>Hire scientists (physicists, mathematicians, astronomers), NOT
+finance people</li>
+<li>Medallion Fund: ~66% annual returns before fees (39% after fees)
+since 1988</li>
+<li>Petabyte-scale data warehouse; mine for non-obvious statistical
+patterns</li>
+<li>Extremely high frequency of trades, short holding periods</li>
+<li>Continuous model improvement — models are never “done”</li>
+<li>Complete secrecy; employees sign strict NDAs</li>
+</ul></li>
+<li><strong>Edge</strong>: They found signals in data others couldn’t
+see because they approached markets as a physics/math problem, not a
+finance problem</li>
+<li><strong>AI Agent Takeaway</strong>: The RenTech approach validates
+the idea that pattern recognition at scale IS the edge. An AI agent
+should think like a scientist, not a trader.</li>
+</ul>
+<h3 id="d.e.-shaw">2. D.E. Shaw</h3>
+<ul>
+<li><strong>Core Philosophy</strong>: Multi-strategy quantitative. Blend
+systematic and discretionary.</li>
+<li><strong>Key Principles</strong>:
+<ul>
+<li>Sophisticated models across multiple asset classes (equities, fixed
+income, FX, commodities)</li>
+<li>Heavy investment in data science and machine learning</li>
+<li>Arbitrage opportunities + market inefficiency exploitation</li>
+<li>Computational approach to every aspect of investing</li>
+</ul></li>
+<li><strong>Edge</strong>: Breadth of strategies + computational
+infrastructure</li>
+<li><strong>AI Agent Takeaway</strong>: Don’t specialize too narrowly.
+The ability to reason across asset classes and strategies is
+powerful.</li>
+</ul>
+<h3 id="two-sigma">3. Two Sigma</h3>
+<ul>
+<li><strong>Core Philosophy</strong>: “Technology and innovation as much
+as investment management”</li>
+<li><strong>Key Principles</strong>:
+<ul>
+<li>No traditional “traders” — quant research IS the revenue
+generator</li>
+<li>Massive data ingestion (satellite imagery, weather, social media,
+etc.)</li>
+<li>Machine learning at core — not just statistical models</li>
+<li>Open-source contributions (e.g., Beaker for data science)</li>
+</ul></li>
+<li><strong>Edge</strong>: Data-first culture, ML sophistication</li>
+<li><strong>AI Agent Takeaway</strong>: Alternative data sources are key
+differentiators. An AI agent’s ability to process unstructured data
+(news, social, filings) is a natural edge.</li>
+</ul>
+<h3 id="citadel-citadel-securities">4. Citadel / Citadel Securities</h3>
+<ul>
+<li><strong>Core Philosophy</strong>: Aggressive multi-strategy with
+world-class execution</li>
+<li><strong>Key Principles</strong>:
+<ul>
+<li>Ken Griffin: combine fundamental research with quantitative
+methods</li>
+<li>Market-making arm (Citadel Securities) provides execution edge +
+market microstructure insights</li>
+<li>Speed + scale in execution</li>
+</ul></li>
+<li><strong>Edge</strong>: Execution quality + information from
+market-making flow</li>
+<li><strong>AI Agent Takeaway</strong>: Execution matters as much as
+signal generation. Understanding market microstructure is
+essential.</li>
+</ul>
+<h3 id="共同主题-common-themes-across-top-quants">共同主题 — Common
+Themes Across Top Quants</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 77%" />
+</colgroup>
+<thead>
+<tr>
+<th>Theme</th>
+<th>Implication for AI Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data is everything</td>
+<td>Ingest as much diverse data as possible</td>
+</tr>
+<tr>
+<td>Models must evolve</td>
+<td>Continuous learning, not static rules</td>
+</tr>
+<tr>
+<td>Execution matters</td>
+<td>Minimize slippage, understand market impact</td>
+</tr>
+<tr>
+<td>Risk management first</td>
+<td>Position sizing &gt; signal quality</td>
+</tr>
+<tr>
+<td>Secrecy/edge decay</td>
+<td>Signals decay; must constantly discover new ones</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="二aillm-在量化交易中的应用-llms-in-quant-trading">二、AI/LLM
+在量化交易中的应用 — LLMs in Quant Trading</h2>
+<h3 id="the-new-paradigm-the-new-quant">The New Paradigm: “The New
+Quant”</h3>
+<p>Based on the 2025 arxiv survey “The New Quant: A Survey of Large
+Language Models in Financial Prediction and Trading”:</p>
+<blockquote>
+<p>LLMs enable a shift from feature-centric text mining to
+<strong>end-to-end decision systems</strong> in markets.</p>
+</blockquote>
+<h3 id="what-llms-can-do-that-traditional-algos-cant">What LLMs Can Do
+That Traditional Algos Can’t</h3>
+<ol type="1">
+<li><strong>Unstructured Data Understanding</strong>
+<ul>
+<li>Read and reason over earnings call transcripts, 10-K/10-Q filings,
+Fed minutes</li>
+<li>Detect subtle tone shifts (CEO confidence, hedging language, evasion
+patterns)</li>
+<li>LSEG MarketPsych: uses LLMs to measure CEO tone, removing human
+bias</li>
+</ul></li>
+<li><strong>Narrative &amp; Context Understanding</strong>
+<ul>
+<li>Traditional: “CPI came in at 3.2%” → number</li>
+<li>LLM: “CPI at 3.2% when market expected 3.0%, in context of Fed
+pivoting dovish, this is bearish for bonds but market may interpret as
+delay in rate cuts” → reasoning</li>
+<li>Understanding WHY a number matters, not just what the number is</li>
+</ul></li>
+<li><strong>Event Reasoning</strong>
+<ul>
+<li>Connect geopolitical events to market implications</li>
+<li>Understand supply chain impacts (e.g., Red Sea disruption → shipping
+costs → retail margins)</li>
+<li>Parse Fed statements for subtle policy shifts</li>
+</ul></li>
+<li><strong>Alpha Generation with LLMs</strong>
+<ul>
+<li><strong>Alpha-GPT</strong>: Interactive system using prompt
+engineering to generate creative trading signals</li>
+<li><strong>FinAgent</strong>: Multimodal inputs + broker-like actions
+under tool governance</li>
+<li><strong>FinMem</strong>: Memory design for multi-day workflows
+preserving analyst intent</li>
+<li><strong>QuantAgent</strong>: Self-improvement loops — critique,
+retest, iterate</li>
+<li><strong>TradingGPT</strong>: Layered memory + distinct analyst roles
+that debate and refine theses</li>
+</ul></li>
+<li><strong>Lie Detection on Earnings Calls</strong>
+<ul>
+<li>AI can analyze vocal patterns, word choice, hedging frequency</li>
+<li>Detect when executives are being evasive or overly optimistic</li>
+<li>This is genuinely new alpha that traditional quant models cannot
+capture</li>
+</ul></li>
+</ol>
+<h3 id="key-research-papers-systems">Key Research Papers &amp;
+Systems</h3>
+<table>
+<colgroup>
+<col style="width: 42%" />
+<col style="width: 57%" />
+</colgroup>
+<thead>
+<tr>
+<th>System</th>
+<th>Innovation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alpha-GPT / Alpha-GPT 2.0</td>
+<td>Human-in-the-loop alpha discovery with critique/ranking gates</td>
+</tr>
+<tr>
+<td>StockBench</td>
+<td>Benchmark for LLM trading agents in real markets</td>
+</tr>
+<tr>
+<td>FinMem</td>
+<td>Memory architecture for stable multi-day trading workflows</td>
+</tr>
+<tr>
+<td>TradingGPT</td>
+<td>Multi-agent debate system for thesis refinement</td>
+</tr>
+<tr>
+<td>QuantAgent</td>
+<td>Self-improving strategy loops with simulator validation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="critical-caveat">Critical Caveat</h3>
+<p>From StockBench research: <strong>Reasoning-tuned models (e.g.,
+Qwen3-235B-Think) do NOT consistently outperform instruction-tuned
+models in trading tasks.</strong> There’s a gap between reasoning
+ability and effective decision-making in noisy, dynamic environments.
+This means raw intelligence isn’t enough — domain adaptation and risk
+management matter more.</p>
+<hr />
+<h2 id="三策略深度研究-strategy-deep-dives">三、策略深度研究 — Strategy
+Deep Dives</h2>
+<h3 id="strategy-1-momentum-trend-following">Strategy 1: Momentum /
+Trend Following</h3>
+<p><strong>Traditional Approach</strong>: Price momentum (12-1 month
+returns), moving average crossovers, breakout detection.</p>
+<p><strong>AI Agent Implementation</strong>: - <strong>Beyond
+price</strong>: Momentum in sentiment, narrative momentum (is the “AI
+trade” gaining or losing narrative steam?) - <strong>Regime-aware
+momentum</strong>: Use Hidden Markov Models or LLM-based regime
+detection to switch between momentum and mean-reversion -
+<strong>Cross-asset momentum confirmation</strong>: If tech stocks have
+momentum AND semiconductor earnings are strong AND venture funding in AI
+is up → stronger conviction - <strong>Implementation</strong>:
+<code>Signal = f(price_momentum, sentiment_momentum, narrative_momentum, regime_state)</code></p>
+<h3 id="strategy-2-factor-investing">Strategy 2: Factor Investing</h3>
+<p><strong>Traditional Factors</strong>: Value (P/E, P/B), Quality (ROE,
+debt/equity), Size, Momentum, Low Volatility</p>
+<p><strong>AI Agent Enhancement</strong>: - <strong>Dynamic factor
+timing</strong>: LLM reads macro environment and tilts factor exposure
+(e.g., shift from growth to value when rates rise) - <strong>Alternative
+quality signals</strong>: Parse management discussion in 10-K for
+quality signals traditional metrics miss - <strong>Factor crowding
+detection</strong>: Monitor r/wallstreetbets, fintwit for factor
+crowding signals - <strong>Earnings quality analysis</strong>: LLM reads
+footnotes in financial statements to detect earnings manipulation</p>
+<h3 id="strategy-3-event-driven">Strategy 3: Event-Driven</h3>
+<p><strong>Key Events</strong>: Earnings releases, Fed decisions,
+CPI/NFP/PMI, geopolitical events, M&amp;A announcements</p>
+<p><strong>AI Agent Advantages</strong>: - <strong>Pre-event
+positioning</strong>: LLM analyzes whisper numbers, options positioning,
+analyst sentiment to predict surprise direction - <strong>Real-time
+event parsing</strong>: Parse Fed statement in milliseconds, compare to
+previous statement word-by-word, assess hawkish/dovish shift -
+<strong>Second-order effects</strong>: “If China retaliates with tariffs
+on semiconductors, which US companies have &gt;20% China revenue
+exposure?” — LLM can reason through this - <strong>Earnings call
+real-time analysis</strong>: - Tone shift from Q3 to Q4 call - Guidance
+language analysis (confident vs hedging) - Q&amp;A section often more
+revealing than prepared remarks - <strong>Calendar-based
+strategies</strong>: Build an event calendar, pre-position based on
+historical patterns + current context</p>
+<h3 id="strategy-4-sentiment-analysis">Strategy 4: Sentiment
+Analysis</h3>
+<p><strong>Data Sources</strong>: - News (Reuters, Bloomberg, AP) -
+Social media (Twitter/X, Reddit r/wallstreetbets, StockTwits) - Earnings
+call transcripts - SEC filings (8-K, 13-F for institutional positioning)
+- Alternative: Glassdoor reviews, job postings, patent filings</p>
+<p><strong>AI Agent Implementation</strong>: - <strong>Sentiment
+scoring</strong>: Not just positive/negative, but nuanced (cautiously
+optimistic, defensively positioned, panic selling) - <strong>Sentiment
+momentum</strong>: Rate of change in sentiment matters more than level -
+<strong>Contrarian signals</strong>: Extreme sentiment readings as
+reversal indicators - <strong>Cross-reference</strong>: Social media
+buzz + insider selling = red flag; social media buzz + insider buying =
+confirmation</p>
+<h3 id="strategy-5-pairs-trading-statistical-arbitrage">Strategy 5:
+Pairs Trading / Statistical Arbitrage</h3>
+<p><strong>Traditional</strong>: Cointegration-based pairs,
+mean-reversion of spread</p>
+<p><strong>AI Agent Enhancement</strong>: - <strong>Fundamental pair
+validation</strong>: LLM verifies that statistical pairs have
+fundamental linkage (not spurious correlation) - <strong>Dynamic
+universe</strong>: Continuously update pair universe as business models
+evolve - <strong>Regime-dependent parameters</strong>: Spread
+mean-reversion speed changes with market regime -
+<strong>Event-aware</strong>: Pause pair trades around earnings/events
+that could break cointegration</p>
+<hr />
+<h2 id="四社区与资源-communities-resources">四、社区与资源 — Communities
+&amp; Resources</h2>
+<h3 id="platforms">Platforms</h3>
+<table>
+<colgroup>
+<col style="width: 37%" />
+<col style="width: 37%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Best For</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>QuantConnect</strong></td>
+<td>Full backtesting + live trading</td>
+<td>C#/Python, huge community, LEAN engine is open source</td>
+</tr>
+<tr>
+<td><strong>Alpaca</strong></td>
+<td>Commission-free API trading</td>
+<td>Best for beginners, great Python SDK, paper trading</td>
+</tr>
+<tr>
+<td><strong>Backtrader</strong></td>
+<td>Python backtesting</td>
+<td>Mature, well-documented, connects to Alpaca/IBKR</td>
+</tr>
+<tr>
+<td><strong>VectorBT</strong></td>
+<td>Fast vectorized backtesting</td>
+<td>Best for rapid prototyping, pandas-based</td>
+</tr>
+<tr>
+<td><strong>Zipline</strong></td>
+<td>Research-grade backtesting</td>
+<td>Created by Quantopian (RIP), still maintained</td>
+</tr>
+</tbody>
+</table>
+<h3 id="communities">Communities</h3>
+<table>
+<colgroup>
+<col style="width: 61%" />
+<col style="width: 38%" />
+</colgroup>
+<thead>
+<tr>
+<th>Community</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>r/algotrading</strong></td>
+<td>Practical implementation, code sharing, broker reviews</td>
+</tr>
+<tr>
+<td><strong>r/wallstreetbets</strong></td>
+<td>Sentiment signal source (not advice!)</td>
+</tr>
+<tr>
+<td><strong>QuantStart</strong></td>
+<td>High-quality tutorials on regime detection, portfolio
+construction</td>
+</tr>
+<tr>
+<td><strong>Quantopian legacy</strong></td>
+<td>Lecture series still gold standard for factor investing
+education</td>
+</tr>
+<tr>
+<td><strong>arxiv quant-ph / cs.AI</strong></td>
+<td>Cutting-edge research papers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-papers-for-ai-agent-trading">Key Papers for AI Agent
+Trading</h3>
+<ol type="1">
+<li>“The New Quant: A Survey of LLMs in Financial Prediction and
+Trading” (arxiv, 2025) — <strong>Must read</strong></li>
+<li>“Large Language Models in Equity Markets” (Frontiers in AI,
+2025)</li>
+<li>“StockBench: Can LLM Agents Trade Stocks Profitably?” (arxiv,
+2025)</li>
+<li>Alpha-GPT papers (EMNLP 2025)</li>
+<li>Hidden Markov Models for regime detection (QuantStart
+tutorials)</li>
+</ol>
+<h3 id="data-sources">Data Sources</h3>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 40%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>Type</th>
+<th>Source</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Price/Volume</td>
+<td>Yahoo Finance, Alpaca, Polygon.io</td>
+<td>Free-<span class="math display">$$ |
+| Fundamentals | SEC EDGAR, Financial Modeling Prep | Free-$ |
+| News | NewsAPI, Benzinga, Alpha Vantage | $-$$</span></td>
+</tr>
+<tr>
+<td>Earnings Transcripts</td>
+<td>Seeking Alpha, Financial Modeling Prep</td>
+<td><span class="math inline">−</span>$</td>
+</tr>
+<tr>
+<td>Alternative Data</td>
+<td>Quandl/Nasdaq Data Link, satellite, web scraping</td>
+<td><span class="math display">−</span>$</td>
+</tr>
+<tr>
+<td>Sentiment</td>
+<td>StockTwits API, Reddit API, Twitter/X API</td>
+<td>Free-$</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="五ai-交易风格的构建-developing-an-ai-trading-style">五、AI
+交易风格的构建 — Developing an AI Trading Style</h2>
+<h3 id="beyond-indicators-how-an-ai-agent-thinks">Beyond Indicators: How
+an AI Agent Thinks</h3>
+<p>The edge of an AI agent is NOT running RSI/MACD faster. It’s
+<strong>contextual reasoning at scale</strong>.</p>
+<h3 id="framework-the-ai-traders-cognitive-stack">Framework: The AI
+Trader’s Cognitive Stack</h3>
+<pre><code>Layer 5: EXECUTION — Position sizing, entry/exit timing, slippage management
+Layer 4: CONVICTION — Synthesize all signals into a probabilistic view
+Layer 3: NARRATIVE — What story is the market telling? What&#39;s changing?
+Layer 2: CONTEXT — Macro regime, sector rotation, correlation structure
+Layer 1: DATA — Price, volume, fundamentals, sentiment, alternative data</code></pre>
+<h3 id="regime-detection-layer-2">Regime Detection (Layer 2)</h3>
+<ul>
+<li><strong>Hidden Markov Models (HMM)</strong>: Classify market into
+regimes (bull/bear/sideways, low-vol/high-vol)</li>
+<li><strong>K-Means / Gaussian Mixture Models</strong>: Cluster market
+states</li>
+<li><strong>LLM-based regime detection</strong>: Read Fed minutes +
+macro data → classify regime in natural language</li>
+<li><strong>Why it matters</strong>: A momentum strategy that works in a
+trending market will get destroyed in a mean-reverting market. Regime
+awareness is survival.</li>
+</ul>
+<h3 id="narrative-understanding-layer-3">Narrative Understanding (Layer
+3)</h3>
+<p>This is the AI agent’s <strong>unique edge</strong>: - Track
+narrative arcs: “AI trade” → “AI infrastructure” → “AI monetization
+skepticism” → “AI commoditization” - Detect narrative regime shifts
+BEFORE they show up in price - Cross-reference narratives across sources
+(sell-side research, social media, earnings calls, patent filings) -
+Narrative momentum → position sizing</p>
+<h3 id="conviction-synthesis-layer-4">Conviction Synthesis (Layer
+4)</h3>
+<pre><code>conviction = weighted_sum(
+    technical_signal * regime_weight,
+    fundamental_signal * quality_weight,
+    sentiment_signal * contrarian_adjustment,
+    narrative_signal * novelty_weight,
+    event_catalyst * timing_weight
+)</code></pre>
+<ul>
+<li>Not a simple average — weights should be dynamic based on what’s
+“working” in current regime</li>
+<li>Meta-learning: track which signal sources have been predictive
+recently</li>
+</ul>
+<h3 id="the-ai-trading-style-manifesto">The AI Trading Style
+Manifesto</h3>
+<ol type="1">
+<li><strong>Be a fox, not a hedgehog</strong>: Use many signals, not one
+big thesis</li>
+<li><strong>Think in probabilities</strong>: Never “the stock will go
+up” — always “65% chance of 3% upside, 35% chance of 5% downside,
+expected value positive”</li>
+<li><strong>Regime first</strong>: Before any trade, classify the
+regime</li>
+<li><strong>Narrative awareness</strong>: Understand the story, trade
+the inflection points</li>
+<li><strong>Risk is the only free lunch</strong>: Position sizing and
+risk management &gt; signal quality</li>
+<li><strong>Adapt or die</strong>: Signals decay. Monitor signal
+efficacy and rotate.</li>
+<li><strong>Execution is alpha</strong>: Bad execution can turn a
+winning signal into a losing trade</li>
+</ol>
+<hr />
+<h2 id="六实际操作考量-practical-considerations">六、实际操作考量 —
+Practical Considerations</h2>
+<h3 id="brokers-apis">Brokers &amp; APIs</h3>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Broker</th>
+<th>Pros</th>
+<th>Cons</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Alpaca</strong></td>
+<td>Free API, commission-free, paper trading, great docs</td>
+<td>Limited international, no options until recently</td>
+<td>Beginners, small accounts</td>
+</tr>
+<tr>
+<td><strong>Interactive Brokers (IBKR)</strong></td>
+<td>Full market access, low commissions, TWS API</td>
+<td>Complex API, learning curve</td>
+<td>Serious traders, multi-asset</td>
+</tr>
+<tr>
+<td><strong>Tradier</strong></td>
+<td>Options-friendly API</td>
+<td>Smaller community</td>
+<td>Options strategies</td>
+</tr>
+</tbody>
+</table>
+<h3 id="backtesting-frameworks">Backtesting Frameworks</h3>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 27%" />
+<col style="width: 18%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Language</th>
+<th>Speed</th>
+<th>Realism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>QuantConnect/LEAN</strong></td>
+<td>C#/Python</td>
+<td>Medium</td>
+<td>High (tick data, slippage models)</td>
+</tr>
+<tr>
+<td><strong>Backtrader</strong></td>
+<td>Python</td>
+<td>Medium</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td><strong>VectorBT</strong></td>
+<td>Python</td>
+<td>Very Fast</td>
+<td>Low-Medium (vectorized)</td>
+</tr>
+<tr>
+<td><strong>Zipline</strong></td>
+<td>Python</td>
+<td>Medium</td>
+<td>Medium-High</td>
+</tr>
+</tbody>
+</table>
+<h3 id="execution-considerations">Execution Considerations</h3>
+<ul>
+<li><strong>Slippage</strong>: Model realistic slippage (0.05-0.10% per
+trade for liquid stocks)</li>
+<li><strong>Market impact</strong>: For positions &gt;$100K, market
+impact is real</li>
+<li><strong>Latency</strong>: For event-driven strategies, latency
+matters (cloud vs colocated)</li>
+<li><strong>Fill rates</strong>: Limit orders may not fill; market
+orders have slippage</li>
+</ul>
+<h3 id="regulatory-constraints">Regulatory Constraints</h3>
+<ul>
+<li><strong>Pattern Day Trader (PDT) rule</strong>: Need $25K+ for &gt;3
+day trades per 5 days</li>
+<li><strong>Wash sale rule</strong>: Cannot claim loss if repurchasing
+within 30 days</li>
+<li><strong>SEC reporting</strong>: &gt;5% ownership requires 13-D/13-G
+filing</li>
+<li><strong>Algo trading</strong>: No specific registration required for
+personal trading</li>
+<li><strong>Tax</strong>: Short-term gains taxed as ordinary income;
+consider tax-loss harvesting</li>
+</ul>
+<h3 id="risk-management-essentials">Risk Management Essentials</h3>
+<ul>
+<li><strong>Position sizing</strong>: Never risk more than 1-2% of
+portfolio on a single trade</li>
+<li><strong>Stop losses</strong>: Systematic, not discretionary</li>
+<li><strong>Correlation management</strong>: Don’t hold 10 tech stocks
+thinking you’re diversified</li>
+<li><strong>Drawdown limits</strong>: Stop trading after X% drawdown
+(e.g., 10%)</li>
+<li><strong>Kelly Criterion</strong>: Optimal position sizing based on
+edge and variance</li>
+</ul>
+<hr />
+<h2 id="七行动计划与下一步-action-plan-next-steps">七、行动计划与下一步
+— Action Plan &amp; Next Steps</h2>
+<h3 id="phase-1-foundation-weeks-1-2">Phase 1: Foundation (Weeks
+1-2)</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Set up Alpaca paper trading
+account</label></li>
+<li><label><input type="checkbox" />Implement basic data pipeline
+(price, volume, fundamentals)</label></li>
+<li><label><input type="checkbox" />Build regime detection model (HMM on
+S&amp;P 500)</label></li>
+<li><label><input type="checkbox" />Create sentiment scoring pipeline
+(news + social media)</label></li>
+</ul>
+<h3 id="phase-2-strategy-development-weeks-3-4">Phase 2: Strategy
+Development (Weeks 3-4)</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Implement momentum + regime filter
+strategy</label></li>
+<li><label><input type="checkbox" />Build earnings event-driven strategy
+(pre/post earnings positioning)</label></li>
+<li><label><input type="checkbox" />Create sentiment-based signal (news
++ earnings call tone analysis)</label></li>
+<li><label><input type="checkbox" />Backtest all strategies with
+realistic slippage</label></li>
+</ul>
+<h3 id="phase-3-ai-agent-integration-weeks-5-6">Phase 3: AI Agent
+Integration (Weeks 5-6)</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Build LLM-based narrative
+tracker</label></li>
+<li><label><input type="checkbox" />Implement conviction synthesis
+framework</label></li>
+<li><label><input type="checkbox" />Create adaptive position sizing
+model</label></li>
+<li><label><input type="checkbox" />Build real-time event parsing (Fed,
+CPI, earnings)</label></li>
+</ul>
+<h3 id="phase-4-live-trading-weeks-7-8">Phase 4: Live Trading (Weeks
+7-8)</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Paper trade for 2 weeks
+minimum</label></li>
+<li><label><input type="checkbox" />Monitor signal decay and strategy
+performance</label></li>
+<li><label><input type="checkbox" />Go live with small capital
+($5K-$10K)</label></li>
+<li><label><input type="checkbox" />Build monitoring
+dashboard</label></li>
+</ul>
+<hr />
+<h2 id="八关键洞察总结-key-insights-summary">八、关键洞察总结 — Key
+Insights Summary</h2>
+<ol type="1">
+<li><p><strong>The edge is reasoning, not speed</strong>: For an AI
+agent, the alpha is in understanding context and narrative — not in
+faster execution (that race is lost to HFT firms)</p></li>
+<li><p><strong>LLMs are genuinely changing the game</strong>: The
+ability to read earnings calls, parse Fed statements, and understand
+market narrative IS new alpha. This wasn’t possible 3 years
+ago.</p></li>
+<li><p><strong>Regime awareness is survival</strong>: Every strategy
+only works in certain regimes. Knowing WHEN to deploy a strategy is as
+important as the strategy itself.</p></li>
+<li><p><strong>Risk management &gt; signal quality</strong>: A mediocre
+signal with excellent risk management will outperform a great signal
+with poor risk management every time.</p></li>
+<li><p><strong>Signals decay, adaptation is forever</strong>: The
+half-life of alpha is shrinking. Continuous learning and adaptation is
+the only sustainable edge.</p></li>
+<li><p><strong>Start simple, add complexity</strong>: Don’t build a
+50-factor model on day 1. Start with one signal, one strategy, prove it
+works, then layer on.</p></li>
+</ol>
+<hr />
+<p><em>Report compiled by Alpha. For Zhilong’s review and
+discussion.</em> <em>Last updated: 2026-02-16</em></p>
+</body>
+</html>
