@@ -1,5 +1,6 @@
 import type { SidebarView } from '../types';
 import { getAgentList } from '../config/agents';
+import { AgentIcon } from './AgentIcons';
 
 interface SidebarProps {
   view: SidebarView;
@@ -170,7 +171,7 @@ export default function Sidebar({
                   : 'text-[#70757a] hover:text-[#3c4043] hover:bg-[#f1f3f4]'
                 }`}
             >
-              <span className="w-4 text-center text-xs">{agent.emoji}</span>
+              <AgentIcon agentId={agent.id} size={16} />
               {agent.label}
             </button>
           ))}
