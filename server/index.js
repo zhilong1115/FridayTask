@@ -874,6 +874,15 @@ app.get('*', (_req, res) => {
 
 // ─── Start ───────────────────────────────────────────────
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`✅ Friday Tasks API running on http://localhost:${PORT}`);
 });
+
+// Graceful shutdown — release port quickly
+function shutdown(signal) {
+  console.log(`\n⚠️ ${signal} received, shutting down...`);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 3000);
+}
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
