@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-23 - LLM 流式输出架构</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.7; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; }
+    h2 { color: #1a73e8; border-bottom: 1px solid #e8eaed; padding-bottom: 8px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Monaco, monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-blue { background: #d1ecf1; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-green { background: #d4edda; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-red { background: #f8d7da; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; font-size: 13px; line-height: 1.4; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f1f3f4; }
+    .series-nav { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .tag { display: inline-block; background: #e8eaed; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    @media (max-width: 768px) { .bilingual { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="series-nav">
+  📚 <strong>LLM 特有问题系列 Day 4/5</strong> |
+  <a href="2026-02-20-token-limit-handling-strategies.html">Day 1: Token 限制</a> →
+  <a href="2026-02-21-llm-cost-optimization.html">Day 2: 成本优化</a> →
+  <a href="2026-02-22-hallucination-detection-mitigation.html">Day 3: Hallucination</a> →
+  <strong>Day 4: 流式输出</strong> →
+  Day 5: Multi-turn 对话
+</div>
+
+<h1>⚡ LLM 流式输出架构 / Streaming Output Architecture</h1>
+<p>
+  <span class="tag">Phase 2.3</span>
+  <span class="tag">System Design</span>
+  <span class="tag">面试高频</span>
+  📅 2026-02-23
+</p>
+
+<h2>📖 为什么需要流式输出 / Why Streaming?</h2>
+<div class="bilingual">
+  <div class="zh">
+    <p>LLM 生成一个完整回复可能需要 <strong>3-30 秒</strong>。如果等全部生成完再返回，用户体验极差。流式输出让第一个 token 在 <strong>200-500ms</strong> 内就到达用户屏幕（TTFT - Time To First Token），给用户"AI 正在思考"的即时反馈。</p>
+    <p><strong>核心指标：</strong></p>
+    <ul>
+      <li><strong>TTFT</strong>（首 token 时间）：&lt;500ms 优秀</li>
+      <li><strong>TPS</strong>（token/秒吞吐）：30-80 tok/s 典型</li>
+      <li><strong>感知延迟</strong>：流式降低 80%+ 感知等待</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p>An LLM takes <strong>3-30 seconds</strong> to generate a full response. Waiting for completion creates terrible UX. Streaming delivers the first token in <strong>200-500ms</strong> (TTFT), giving users immediate "thinking" feedback.</p>
+    <p><strong>Key metrics:</strong></p>
+    <ul>
+      <li><strong>TTFT</strong> (Time To First Token): &lt;500ms is great</li>
+      <li><strong>TPS</strong> (Tokens Per Second): 30-80 tok/s typical</li>
+      <li><strong>Perceived latency</strong>: 80%+ reduction with streaming</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🏗️ 整体架构 / End-to-End Architecture</h2>
+
+<div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                    Complete Streaming Pipeline                    │
+│                                                                   │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │
+│  │  Client   │    │   API    │    │  Stream  │    │   LLM    │   │
+│  │(Browser/  │◄──►│ Gateway  │◄──►│ Processor│◄──►│ Engine   │   │
+│  │  App)     │    │(Nginx/   │    │(Node/Go) │    │(vLLM/    │   │
+│  │          │    │ Kong)    │    │          │    │ TGI)     │   │
+│  └──────────┘    └──────────┘    └──────────┘    └──────────┘   │
+│       │               │               │               │          │
+│       │   SSE/WS      │    gRPC/      │   Internal    │          │
+│       │   HTTP/2      │    HTTP/2     │   Iterator    │          │
+│       │               │               │               │          │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │
+│  │ UI State │    │Connection│    │  Token   │    │ KV Cache │   │
+│  │ Machine  │    │  Pool    │    │  Buffer  │    │ Manager  │   │
+│  └──────────┘    └──────────┘    └──────────┘    └──────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<h2>🔌 传输协议对比 / Protocol Comparison: SSE vs WebSocket vs HTTP/2</h2>
+
+<table>
+  <tr>
+    <th>维度</th>
+    <th>SSE (Server-Sent Events)</th>
+    <th>WebSocket</th>
+    <th>HTTP/2 Stream</th>
+  </tr>
+  <tr>
+    <td><strong>方向</strong></td>
+    <td>单向 (Server→Client)</td>
+    <td>双向</td>
+    <td>双向 (多路复用)</td>
+  </tr>
+  <tr>
+    <td><strong>协议</strong></td>
+    <td>HTTP/1.1 or HTTP/2</td>
+    <td>独立 ws:// 协议</td>
+    <td>HTTP/2</td>
+  </tr>
+  <tr>
+    <td><strong>自动重连</strong></td>
+    <td>✅ 内置 (EventSource API)</td>
+    <td>❌ 需自行实现</td>
+    <td>❌ 需自行实现</td>
+  </tr>
+  <tr>
+    <td><strong>负载均衡</strong></td>
+    <td>✅ 标准 HTTP，简单</td>
+    <td>⚠️ 需要 sticky session</td>
+    <td>✅ HTTP 原生</td>
+  </tr>
+  <tr>
+    <td><strong>CDN/Proxy 兼容</strong></td>
+    <td>✅ 普遍支持</td>
+    <td>⚠️ 需特殊配置</td>
+    <td>✅ 原生支持</td>
+  </tr>
+  <tr>
+    <td><strong>调试</strong></td>
+    <td>✅ curl 即可</td>
+    <td>⚠️ 需专用工具</td>
+    <td>✅ 标准 HTTP 工具</td>
+  </tr>
+  <tr>
+    <td><strong>典型使用者</strong></td>
+    <td>OpenAI, Anthropic, Gemini</td>
+    <td>实时协作、游戏</td>
+    <td>gRPC (内部通信)</td>
+  </tr>
+</table>
+
+<div class="highlight">
+  <h4>🎯 面试要点：为什么 LLM API 几乎都选 SSE？</h4>
+  <p><strong>1. 需求匹配</strong>：LLM 生成是"服务端→客户端"单向推送，不需要双向通信</p>
+  <p><strong>2. 运维友好</strong>：SSE 是标准 HTTP，所有负载均衡/CDN/代理都原生支持</p>
+  <p><strong>3. 自动重连</strong>：浏览器 EventSource API 内置重连 + Last-Event-ID 断点续传</p>
+  <p><strong>4. 简单调试</strong>：<code>curl</code> 加 <code>--no-buffer</code> 就能看到流式输出</p>
+</div>
+
+<h2>💻 SSE 协议详解 / SSE Protocol Deep Dive</h2>
+
+<h3>OpenAI 风格的 SSE 格式</h3>
+<pre><code>// HTTP Response Headers
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+// SSE Event Stream - 每个 chunk 是一个 JSON
+data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":" world"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":"stop"}]}
+
+data: [DONE]</code></pre>
+
+<h3>服务端实现 (Node.js / TypeScript)</h3>
+<pre><code>// === 生产级 SSE 流式处理服务 ===
+
+interface StreamOptions {
+  model: string;
+  messages: Message[];
+  onToken?: (token: string) => void;  // 中间处理 hook
+  signal?: AbortSignal;               // 客户端取消
+}
+
+async function streamCompletion(
+  req: Request, res: Response, options: StreamOptions
+) {
+  // 1️⃣ 设置 SSE Headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',  // no-transform 防 CDN 压缩
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',  // 禁用 Nginx 缓冲！关键！
+  });
+
+  // 2️⃣ 心跳保活 — 防止代理/LB 超时断连
+  const heartbeat = setInterval(() => {
+    res.write(': heartbeat\n\n');  // SSE 注释格式，客户端忽略
+  }, 15_000);
+
+  // 3️⃣ 调用 LLM 获取 stream
+  const stream = await openai.chat.completions.create({
+    ...options,
+    stream: true,
+  });
+
+  let fullContent = '';
+  let tokenCount = 0;
+
+  try {
+    for await (const chunk of stream) {
+      // 4️⃣ 检查客户端是否断连
+      if (req.socket.destroyed || options.signal?.aborted) {
+        stream.controller.abort();  // 停止 LLM 生成，节省成本！
+        break;
+      }
+
+      const delta = chunk.choices[0]?.delta?.content;
+      if (delta) {
+        fullContent += delta;
+        tokenCount++;
+
+        // 5️⃣ 中间处理 hook（safety filter、PII 检测等）
+        options.onToken?.(delta);
+
+        // 6️⃣ 发送 SSE event
+        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+      }
+
+      // 7️⃣ 检查完成原因
+      if (chunk.choices[0]?.finish_reason) {
+        break;
+      }
+    }
+
+    // 8️⃣ 发送完成信号
+    res.write('data: [DONE]\n\n');
+  } catch (err) {
+    // 9️⃣ 错误处理 — 发送 SSE error event
+    res.write(`event: error\ndata: ${JSON.stringify({
+      error: 'Stream interrupted',
+      partial: fullContent,  // 返回已生成的部分
+      tokens: tokenCount,
+    })}\n\n`);
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+
+    // 🔟 异步保存完整响应（不阻塞连接关闭）
+    saveToDatabase(fullContent, tokenCount).catch(console.error);
+  }
+}</code></pre>
+
+<h3>客户端实现 (TypeScript / React)</h3>
+<pre><code>// === 生产级客户端 SSE 消费 ===
+
+interface StreamState {
+  status: 'idle' | 'connecting' | 'streaming' | 'done' | 'error';
+  content: string;
+  tokenCount: number;
+  ttft: number | null;  // Time To First Token
+}
+
+function useStreamChat() {
+  const [state, setState] = useState&lt;StreamState&gt;({
+    status: 'idle', content: '', tokenCount: 0, ttft: null
+  });
+  const abortRef = useRef&lt;AbortController | null&gt;(null);
+
+  const startStream = async (messages: Message[]) => {
+    // 1️⃣ 取消上一个流（如果还在进行）
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setState({ status: 'connecting', content: '', tokenCount: 0, ttft: null });
+    const startTime = performance.now();
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, stream: true }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      // 2️⃣ 使用 ReadableStream 解析（比 EventSource 更灵活）
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';  // 处理跨 chunk 的不完整行
+      let content = '';
+      let tokenCount = 0;
+      let firstToken = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // 3️⃣ 逐行解析 SSE
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';  // 最后一行可能不完整
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              setState(s => ({ ...s, status: 'done' }));
+              return;
+            }
+
+            const chunk = JSON.parse(data);
+            const delta = chunk.choices[0]?.delta?.content;
+            if (delta) {
+              // 4️⃣ 记录 TTFT
+              if (firstToken) {
+                const ttft = performance.now() - startTime;
+                setState(s => ({ ...s, ttft, status: 'streaming' }));
+                firstToken = false;
+              }
+
+              content += delta;
+              tokenCount++;
+
+              // 5️⃣ 批量更新 UI（避免每个 token 都触发 re-render）
+              // React 18 自动 batching 已处理，但可进一步优化
+              setState(s => ({ ...s, content, tokenCount }));
+            }
+          }
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setState(s => ({ ...s, status: 'error' }));
+      }
+    }
+  };
+
+  const stopStream = () => abortRef.current?.abort();
+
+  return { ...state, startStream, stopStream };
+}</code></pre>
+
+<h2>⚡ 六大工程挑战 / Six Engineering Challenges</h2>
+
+<div class="highlight">
+  <h4>挑战 1：Nginx/代理缓冲 (The #1 Production Gotcha)</h4>
+  <div class="bilingual">
+    <div class="zh">
+      <p>Nginx 默认会缓冲后端响应，导致 tokens 积攒后批量发送，破坏逐 token 流式效果。</p>
+      <p><strong>解决方案：</strong></p>
+      <ul>
+        <li><code>proxy_buffering off;</code> — 全局关闭</li>
+        <li><code>X-Accel-Buffering: no</code> — 按请求关闭（推荐）</li>
+        <li><code>chunked_transfer_encoding on;</code></li>
+        <li>AWS ALB: 启用 "HTTP/2 streaming" 模式</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>Nginx buffers upstream responses by default, batching tokens together and destroying the streaming experience.</p>
+      <p><strong>Solutions:</strong></p>
+      <ul>
+        <li><code>proxy_buffering off;</code> — global disable</li>
+        <li><code>X-Accel-Buffering: no</code> — per-request (recommended)</li>
+        <li>AWS ALB: Enable "HTTP/2 streaming" mode</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="highlight-blue">
+  <h4>挑战 2：客户端断连检测与资源回收</h4>
+  <div class="bilingual">
+    <div class="zh">
+      <p>用户关闭页面/切换对话时，服务端必须<strong>立即停止 LLM 推理</strong>，否则浪费 GPU 和 token。</p>
+      <pre><code>// 服务端检测断连
+req.on('close', () => {
+  stream.controller.abort();   // 停止 LLM
+  clearInterval(heartbeat);    // 清理心跳
+  // GPU 资源即时释放回推理引擎
+});
+
+// 客户端主动取消（Stop Generating 按钮）
+const controller = new AbortController();
+fetch(url, { signal: controller.signal });
+// 用户点击 Stop → controller.abort();</code></pre>
+    </div>
+    <div class="en">
+      <p>When a user closes the tab or switches conversation, the server must <strong>immediately stop LLM inference</strong> to save GPU and tokens.</p>
+    </div>
+  </div>
+</div>
+
+<div class="highlight-green">
+  <h4>挑战 3：流式 Safety Filtering</h4>
+  <div class="bilingual">
+    <div class="zh">
+      <p>流式输出时，每个 token 独立到达，但安全检测需要<strong>语义上下文</strong>。挑战：如何在不增加延迟的情况下做安全过滤？</p>
+      <p><strong>三层方案：</strong></p>
+      <ol>
+        <li><strong>Token-level</strong>：关键词黑名单，即时拦截（延迟 &lt;1ms）</li>
+        <li><strong>Sliding-window</strong>：每积累 N 个 token 做一次分类（延迟 ~50ms）</li>
+        <li><strong>Post-hoc</strong>：完整响应后做深度检查，发现问题发 <code>retract</code> 事件</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p><strong>Three-layer approach:</strong></p>
+      <ol>
+        <li><strong>Token-level</strong>: keyword blocklist, instant (&lt;1ms)</li>
+        <li><strong>Sliding-window</strong>: classify every N tokens (~50ms)</li>
+        <li><strong>Post-hoc</strong>: full response check, send <code>retract</code> event if needed</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="highlight">
+  <h4>挑战 4：结构化输出的流式处理 (Streaming Structured Output)</h4>
+  <div class="bilingual">
+    <div class="zh">
+      <p>当 LLM 需要返回 JSON 时，流式输出面临特殊挑战：不完整的 JSON 无法解析。</p>
+      <p><strong>三种策略：</strong></p>
+      <ol>
+        <li><strong>增量 JSON 解析器</strong>：用 streaming JSON parser (如 <code>partial-json</code>)，每次尽可能多解析</li>
+        <li><strong>双通道</strong>：一个 SSE 流给 UI 显示原文，另一个通道在完成后返回结构化结果</li>
+        <li><strong>Function Calling 模式</strong>：OpenAI 的 tool_calls 流式返回 arguments 字段，按 index 拼接</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p>When LLM returns JSON, incomplete JSON can't be parsed. Solutions:</p>
+      <ol>
+        <li><strong>Incremental parser</strong>: streaming JSON parser like <code>partial-json</code></li>
+        <li><strong>Dual channel</strong>: stream raw text for UI, return structured result on completion</li>
+        <li><strong>Function Calling</strong>: OpenAI streams <code>tool_calls.arguments</code> incrementally</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="highlight-blue">
+  <h4>挑战 5：多用户并发与背压控制 (Backpressure)</h4>
+  <div class="bilingual">
+    <div class="zh">
+      <p>LLM 生成速度 (30-80 tok/s) 通常 <strong>快于网络发送速度</strong>（慢客户端）。Token 在服务端堆积 = OOM 风险。</p>
+      <p><strong>背压策略：</strong></p>
+      <ul>
+        <li><strong>有界缓冲</strong>：每个连接最多缓冲 100 tokens，满则暂停生成</li>
+        <li><strong>Drain 事件</strong>：Node.js <code>res.write()</code> 返回 <code>false</code> 时，等 <code>drain</code> 事件</li>
+        <li><strong>超时断连</strong>：如果 30s 内缓冲未清空，主动断连</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>LLM generates at 30-80 tok/s, often <strong>faster than slow clients can consume</strong>. Buffer buildup → OOM.</p>
+      <p><strong>Backpressure strategies:</strong></p>
+      <ul>
+        <li><strong>Bounded buffer</strong>: max 100 tokens per connection</li>
+        <li><strong>Drain event</strong>: pause when <code>res.write()</code> returns <code>false</code></li>
+        <li><strong>Timeout disconnect</strong>: drop connection if buffer not drained in 30s</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="highlight-green">
+  <h4>挑战 6：断点续传与容错 (Resumability)</h4>
+  <div class="bilingual">
+    <div class="zh">
+      <p>网络不稳定时，流式连接中断。如何从断点恢复？</p>
+      <pre><code>// 方案：SSE Last-Event-ID + 服务端 token 缓存
+// 服务端：每个 event 携带 id
+res.write(`id: ${requestId}-${tokenIndex}\n`);
+res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+
+// 客户端重连时自动携带 Last-Event-ID
+// 服务端检查 req.headers['last-event-id']
+// 从 Redis/内存缓存中恢复已生成的 tokens
+const lastId = req.headers['last-event-id'];
+if (lastId) {
+  const [reqId, idx] = lastId.split('-');
+  const cached = await redis.lrange(`stream:${reqId}`, +idx + 1, -1);
+  // 重放缓存的 tokens，然后继续生成
+  for (const token of cached) {
+    res.write(`data: ${token}\n\n`);
+  }
+}</code></pre>
+    </div>
+    <div class="en">
+      <p>SSE has built-in <code>Last-Event-ID</code> for resumption. Cache tokens in Redis keyed by request ID. On reconnect, replay missed tokens then continue generation.</p>
+    </div>
+  </div>
+</div>
+
+<h2>🔄 生产级架构：API Gateway 层 / Production Gateway Layer</h2>
+
+<div class="diagram">
+                    ┌─────────────────────────┐
+                    │     Load Balancer        │
+                    │  (L7, long-lived conn)   │
+                    └────────────┬────────────┘
+                                 │
+            ┌────────────────────┼────────────────────┐
+            │                    │                     │
+     ┌──────▼──────┐     ┌──────▼──────┐      ┌──────▼──────┐
+     │ API Server  │     │ API Server  │      │ API Server  │
+     │  Instance 1 │     │  Instance 2 │      │  Instance 3 │
+     └──────┬──────┘     └──────┬──────┘      └──────┬──────┘
+            │                    │                     │
+            └────────────────────┼────────────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │    Stream Router         │
+                    │  ┌────────────────────┐  │
+                    │  │ Rate Limiter       │  │
+                    │  │ Auth / Quota       │  │
+                    │  │ Model Router       │  │
+                    │  │ Token Counter      │  │
+                    │  │ Safety Filter      │  │
+                    │  │ Usage Billing      │  │
+                    │  └────────────────────┘  │
+                    └────────────┬────────────┘
+                                 │
+            ┌────────────────────┼────────────────────┐
+            │                    │                     │
+     ┌──────▼──────┐     ┌──────▼──────┐      ┌──────▼──────┐
+     │  GPU Pool   │     │  GPU Pool   │      │  GPU Pool   │
+     │  (vLLM)     │     │  (TGI)      │      │  (Ollama)   │
+     └─────────────┘     └─────────────┘      └─────────────┘
+</div>
+
+<div class="highlight">
+  <h4>🎯 关键设计决策</h4>
+  <table>
+    <tr><th>组件</th><th>设计选择</th><th>原因</th></tr>
+    <tr>
+      <td>LB → API Server</td>
+      <td>HTTP/2 长连接</td>
+      <td>减少 TLS 握手开销，多路复用</td>
+    </tr>
+    <tr>
+      <td>API → GPU</td>
+      <td>gRPC streaming</td>
+      <td>内部通信效率高，原生流支持</td>
+    </tr>
+    <tr>
+      <td>Token 计费</td>
+      <td>流式中间件拦截</td>
+      <td>实时统计 input/output tokens，流结束后写入计费系统</td>
+    </tr>
+    <tr>
+      <td>连接管理</td>
+      <td>30s idle timeout + heartbeat</td>
+      <td>防止连接泄露，但不误杀活跃流</td>
+    </tr>
+  </table>
+</div>
+
+<h2>📊 容量估算 / Capacity Estimation</h2>
+
+<div class="architecture">
+  <h4>场景：100K DAU 的 ChatBot 服务</h4>
+  <table>
+    <tr><th>参数</th><th>估算</th></tr>
+    <tr><td>并发对话</td><td>100K × 5% 同时在线 = 5,000 并发流</td></tr>
+    <tr><td>平均流持续时间</td><td>~10 秒（200 tokens × 50ms/token）</td></tr>
+    <tr><td>每个连接内存</td><td>~50KB（SSE buffer + metadata）</td></tr>
+    <tr><td>总内存 (连接)</td><td>5,000 × 50KB = 250MB</td></tr>
+    <tr><td>带宽</td><td>5,000 × 4KB/s（token data）= 20MB/s</td></tr>
+    <tr><td>API Server</td><td>单机 ~2,000 并发 SSE → 3 台（+ 冗余）</td></tr>
+    <tr><td>GPU (A100)</td><td>~50 并发/GPU → 100 GPUs（或用量化后 200 GPUs 等效）</td></tr>
+  </table>
+  <p><strong>瓶颈在 GPU，不在网络。</strong>SSE 连接非常轻量，真正的成本在 LLM 推理。</p>
+</div>
+
+<h2>🆚 流式 vs 非流式：何时不用流式 / When NOT to Stream</h2>
+
+<table>
+  <tr><th>场景</th><th>推荐</th><th>原因</th></tr>
+  <tr>
+    <td>用户对话（ChatBot）</td>
+    <td>✅ 流式</td>
+    <td>TTFT 体验关键</td>
+  </tr>
+  <tr>
+    <td>Batch 数据处理</td>
+    <td>❌ 非流式</td>
+    <td>不需要实时反馈，Batch API 更便宜 (50% off)</td>
+  </tr>
+  <tr>
+    <td>Tool Calling / Function</td>
+    <td>⚠️ 部分流式</td>
+    <td>显示"正在调用工具…"状态，但结果需完整 JSON</td>
+  </tr>
+  <tr>
+    <td>Agent 多步推理</td>
+    <td>⚠️ 事件流</td>
+    <td>流式发送步骤状态（thinking/tool_use/result），不是 token 级</td>
+  </tr>
+  <tr>
+    <td>结构化数据提取</td>
+    <td>❌ 非流式</td>
+    <td>需要完整 JSON 才能使用，流式增加复杂度无收益</td>
+  </tr>
+</table>
+
+<h2>📚 可学习的模式 / Patterns to Apply</h2>
+
+<div class="highlight-green">
+  <h4>Pattern 1: SSE + Heartbeat 保活</h4>
+  <p>任何长连接场景都需要心跳。SSE 注释 (<code>: heartbeat</code>) 是零成本保活，不会触发客户端事件处理。适用于：API Gateway 超时检测、CDN keep-alive。</p>
+
+  <h4>Pattern 2: Abort Propagation（取消传播）</h4>
+  <p>客户端 AbortController → API Server → LLM Engine。取消信号必须全链路传播，否则浪费 GPU 资源。这是 Go 的 <code>context.Context</code> 设计哲学。</p>
+
+  <h4>Pattern 3: Dual-Mode API（双模式 API）</h4>
+  <p>同一个 endpoint，<code>stream: true</code> 返回 SSE，<code>stream: false</code> 返回标准 JSON。内部共享同一个 LLM 调用逻辑，只是输出适配层不同。OpenAI/Anthropic 都是这种设计。</p>
+
+  <h4>Pattern 4: 流式中间件管道</h4>
+  <p>Token Counter → Safety Filter → PII Redactor → SSE Writer。每个中间件是一个 Transform Stream，可插拔组合。Node.js Streams / Go io.Reader 管道完美适配。</p>
+</div>
+
+<h2>🎤 面试高频题 / Interview Questions</h2>
+
+<div class="highlight-red">
+  <h4>Q1: 设计一个支持流式输出的 ChatBot API，你会选什么协议？为什么？</h4>
+  <p><strong>答题框架：</strong></p>
+  <ol>
+    <li>分析需求：单向推送 → SSE 最合适</li>
+    <li>对比 WebSocket：过重，需要状态管理，LB 需 sticky session</li>
+    <li>SSE 优势：HTTP 原生、自动重连、CDN 友好、curl 可调试</li>
+    <li>补充：内部服务间用 gRPC streaming（高效 + 类型安全）</li>
+  </ol>
+
+  <h4>Q2: 流式输出时如何做 Safety Filtering？</h4>
+  <p><strong>答题框架：</strong></p>
+  <ol>
+    <li>挑战：单个 token 无语义，但不能等完成后才过滤（用户已经看到了）</li>
+    <li>三层方案：token 级关键词 → 滑动窗口分类 → 完成后深度检查</li>
+    <li>兜底：Post-hoc 检测到问题后发 <code>retract</code> event，客户端删除/替换已显示内容</li>
+    <li>权衡：延迟 vs 安全。关键词匹配零延迟但漏检高，LLM 判断准但增加延迟</li>
+  </ol>
+
+  <h4>Q3: 用户点击 "Stop Generating"，系统需要做什么？</h4>
+  <p><strong>答题框架（全链路）：</strong></p>
+  <ol>
+    <li>客户端：AbortController.abort() → 断开 fetch/SSE 连接</li>
+    <li>API Gateway：检测到连接关闭 → 发送 cancel 到后端</li>
+    <li>LLM Engine：停止当前 KV cache 的推理 → 释放 GPU 显存</li>
+    <li>计费：只计算已生成的 tokens（不计取消后的部分）</li>
+    <li>日志：记录 partial response + cancel reason（分析用户行为）</li>
+  </ol>
+
+  <h4>Q4: 如何处理流式输出中的网络中断和恢复？</h4>
+  <p><strong>答题框架：</strong></p>
+  <ol>
+    <li>SSE 内置 <code>Last-Event-ID</code> + 自动重连机制</li>
+    <li>服务端：每个 event 带 id，token 缓存到 Redis（TTL 5min）</li>
+    <li>重连时：从 Last-Event-ID 之后的位置重放缓存 tokens</li>
+    <li>超时策略：如果 LLM 已完成生成，从缓存直接返回剩余 tokens；如果未完成，继续生成</li>
+    <li>权衡：缓存占用 vs 用户体验。大多数场景下 5min TTL 足够</li>
+  </ol>
+</div>
+
+<div class="series-nav">
+  <h3>📚 系列回顾 / Series Recap</h3>
+  <p>
+    <a href="2026-02-20-token-limit-handling-strategies.html">Day 1: Token 限制处理</a> — 六大策略破解上下文窗口<br>
+    <a href="2026-02-21-llm-cost-optimization.html">Day 2: 成本优化</a> — 缓存/路由/分流节省 91%<br>
+    <a href="2026-02-22-hallucination-detection-mitigation.html">Day 3: Hallucination</a> — 六层检测 + 六层防御<br>
+    <strong>Day 4: 流式输出架构</strong> — SSE 协议 + 六大工程挑战 ← 今天<br>
+    Day 5: Multi-turn 对话状态管理 — 明天！
+  </p>
+</div>
+
+<div class="follow-up">
+  <h3>💬 后续讨论 / Follow-up</h3>
+  <p>你可以问我：</p>
+  <ul>
+    <li>如何在 Next.js / Edge Runtime 中实现 SSE？</li>
+    <li>gRPC streaming vs SSE 在内部微服务中的选择？</li>
+    <li>OpenClaw 的流式架构是怎么实现的？</li>
+    <li>Anthropic 的 SSE 格式和 OpenAI 有什么区别？</li>
+  </ul>
+</div>
+
+</body>
+</html>

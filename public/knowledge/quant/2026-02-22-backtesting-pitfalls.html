@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-22 - 回测陷阱：Overfitting、Look-ahead Bias、Survivorship Bias</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
+    h2 { color: #c0392b; margin-top: 30px; }
+    h3 { color: #2980b9; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; line-height: 2; }
+    .code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; white-space: pre; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .example { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f5f5f5; }
+    .day-badge { background: #e74c3c; color: white; padding: 5px 15px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <span class="day-badge">📈 Day 7 | Phase 1 Foundations 完结篇</span>
+  <h1>回测陷阱 — Overfitting、Look-ahead Bias、Survivorship Bias</h1>
+  <h1>Backtesting Pitfalls — The Three Deadly Sins of Quant</h1>
+
+  <div class="warning">
+    <strong>⚠️ 核心警告 / Core Warning:</strong> 一个在回测中年化收益100%的策略，上线后可能亏损。问题往往不在策略本身，而在回测过程中的系统性偏差。今天的内容可能是整个课程中最重要的一课——因为它决定了你的其他所有知识是否能真正转化为实盘利润。<br><br>
+    A strategy showing 100% annualized returns in backtest might lose money live. The problem is often not the strategy itself, but systematic biases in the backtesting process. Today's lesson may be the most important in the entire curriculum — it determines whether all your other knowledge can actually translate into live profits.
+  </div>
+
+  <!-- ==================== 1. Overfitting ==================== -->
+  <h2>一、过拟合 / Overfitting</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h3>什么是过拟合？</h3>
+      <p>过拟合是指策略过度拟合了历史数据中的<strong>噪声</strong>而非<strong>信号</strong>。就像一个学生背下了所有历年试题的答案，但完全不理解原理——换一套新题就全部答错。</p>
+      <p>在量化交易中，过拟合表现为：</p>
+      <ul>
+        <li>参数数量过多（自由度过高）</li>
+        <li>在样本内（In-Sample）表现极佳，样本外（Out-of-Sample）表现糟糕</li>
+        <li>策略逻辑缺乏经济学直觉支撑</li>
+        <li>过度优化参数（如 SMA 周期精确到17.3天）</li>
+      </ul>
+    </div>
+    <div class="en">
+      <h3>What is Overfitting?</h3>
+      <p>Overfitting occurs when a strategy fits the <strong>noise</strong> in historical data rather than the <strong>signal</strong>. Like a student who memorizes all past exam answers without understanding principles — they fail on any new exam.</p>
+      <p>In quant trading, overfitting manifests as:</p>
+      <ul>
+        <li>Too many parameters (excessive degrees of freedom)</li>
+        <li>Excellent in-sample performance, terrible out-of-sample</li>
+        <li>Strategy logic lacks economic intuition</li>
+        <li>Over-optimized parameters (e.g., SMA period of exactly 17.3 days)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>📐 过拟合的数学度量 / Mathematical Measurement</h3>
+
+  <div class="formula">
+    <strong>Deflated Sharpe Ratio (Bailey & López de Prado, 2014):</strong><br><br>
+    给定 N 次独立回测试验，观测到的最大 Sharpe Ratio 的期望值为：<br><br>
+    E[max(SR)] ≈ √(2 · ln(N))<br><br>
+    其中 N = 试验次数。这意味着：<br>
+    &nbsp;&nbsp;N = 10 次试验 → E[max(SR)] ≈ 2.15<br>
+    &nbsp;&nbsp;N = 100 次试验 → E[max(SR)] ≈ 3.03<br>
+    &nbsp;&nbsp;N = 1000 次试验 → E[max(SR)] ≈ 3.72<br><br>
+    即使底层策略完全无效（真实 SR=0），大量试验也会产生看起来很好的 SR！<br><br>
+    <strong>Probability of Backtest Overfitting (PBO):</strong><br>
+    PBO = P(OOS rank of IS-optimal ≤ median)<br><br>
+    通过 CSCV（组合对称交叉验证）估计：将数据分成 S 个子集，<br>
+    穷举所有 C(S, S/2) 种训练/测试组合，计算 IS 最优策略在 OOS 的排名比例。<br>
+    PBO > 0.5 → 回测很可能过拟合。
+  </div>
+
+  <div class="insight">
+    <strong>💡 López de Prado 的警告：</strong>"大多数发表在金融期刊上的回测研究结果都是过拟合的产物。如果一个基金经理尝试了1000种策略变体后向你展示那个最好的，你看到的不是alpha，而是运气。" — <em>Advances in Financial Machine Learning</em> (2018)
+  </div>
+
+  <!-- ==================== 2. Look-ahead Bias ==================== -->
+  <h2>二、前视偏差 / Look-ahead Bias</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h3>什么是前视偏差？</h3>
+      <p>前视偏差是指在回测中使用了<strong>当时不可能获得的未来信息</strong>来做交易决策。这是最隐蔽也最危险的偏差之一。</p>
+      <p><strong>常见形式：</strong></p>
+      <ul>
+        <li><strong>数据泄漏</strong>：用收盘价计算信号，却在当日收盘前下单</li>
+        <li><strong>复权陷阱</strong>：使用后复权价格，但这些数据在当时并不存在（拆股/分红尚未发生）</li>
+        <li><strong>财报日期</strong>：使用了报告期的财务数据，但该数据实际在几周后才公布</li>
+        <li><strong>指数成分</strong>：用当前的 S&P 500 成分股回测历史策略（当时某些股票还未被纳入）</li>
+        <li><strong>特征工程</strong>：对整个数据集做归一化/标准化，而非仅用历史数据</li>
+      </ul>
+    </div>
+    <div class="en">
+      <h3>What is Look-ahead Bias?</h3>
+      <p>Look-ahead bias occurs when a backtest uses <strong>future information that would not have been available</strong> at the time of the trading decision. It's one of the most insidious and dangerous biases.</p>
+      <p><strong>Common forms:</strong></p>
+      <ul>
+        <li><strong>Data leakage</strong>: Computing signals with close prices but executing before close</li>
+        <li><strong>Adjustment trap</strong>: Using adjusted prices that weren't available yet (splits/dividends hadn't occurred)</li>
+        <li><strong>Earnings dates</strong>: Using financial data from report period, but it was published weeks later</li>
+        <li><strong>Index composition</strong>: Backtesting with current S&P 500 members (some weren't included historically)</li>
+        <li><strong>Feature engineering</strong>: Normalizing over the entire dataset instead of only historical data</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warning">
+    <strong>🔥 真实案例 / Real Example:</strong><br>
+    假设你在2020年1月回测一个基于 P/E Ratio 的选股策略。你从数据库获取2019年Q4的每股收益（EPS）。但实际上，大部分公司的Q4财报直到2020年2月-3月才发布！你的回测在2020年1月就使用了2月才公布的数据。<br><br>
+    Point-in-time (PIT) 数据库通过记录数据的<strong>发布日期</strong>（而非报告期）来解决这个问题。
+  </div>
+
+  <!-- ==================== 3. Survivorship Bias ==================== -->
+  <h2>三、幸存者偏差 / Survivorship Bias</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h3>什么是幸存者偏差？</h3>
+      <p>幸存者偏差是指回测数据集中<strong>只包含至今仍然存活的证券</strong>，而排除了已退市、破产、被收购的证券。这会系统性地高估策略表现。</p>
+      <p><strong>影响有多大？</strong></p>
+      <ul>
+        <li>研究显示，幸存者偏差可使年化收益率虚增 <strong>1-2%</strong></li>
+        <li>1926-2019年间，美股约有 <strong>40%</strong> 的股票最终退市</li>
+        <li>许多退市股票的收益率为 <strong>-100%</strong>（破产清零）</li>
+        <li>小市值股票的幸存者偏差更为严重</li>
+      </ul>
+    </div>
+    <div class="en">
+      <h3>What is Survivorship Bias?</h3>
+      <p>Survivorship bias occurs when the backtest dataset <strong>only includes securities that still exist today</strong>, excluding those that were delisted, went bankrupt, or were acquired. This systematically overstates strategy performance.</p>
+      <p><strong>How significant is it?</strong></p>
+      <ul>
+        <li>Studies show survivorship bias can inflate annual returns by <strong>1-2%</strong></li>
+        <li>Between 1926-2019, about <strong>40%</strong> of US stocks eventually delisted</li>
+        <li>Many delisted stocks had returns of <strong>-100%</strong> (bankruptcy)</li>
+        <li>Small-cap stocks suffer more severe survivorship bias</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="example">
+    <strong>📊 经典例子 / Classic Example:</strong><br>
+    你在2025年获取了"当前 S&P 500 成分股"的历史数据，回测2010-2025年的动量策略。问题是：2010年时 S&P 500 的成分完全不同！那些在这15年间因业绩不佳被踢出的公司，你全都没有纳入测试。你的策略本质上在"偷看未来"——只挑选了最终存活下来的赢家。
+  </div>
+
+  <!-- ==================== 4. 其他常见偏差 ==================== -->
+  <h2>四、其他常见偏差 / Other Common Biases</h2>
+
+  <table>
+    <tr>
+      <th>偏差 / Bias</th>
+      <th>描述 / Description</th>
+      <th>解决方案 / Solution</th>
+    </tr>
+    <tr>
+      <td><strong>Data-Snooping Bias</strong><br>数据窥探偏差</td>
+      <td>反复在同一数据集上测试不同策略，直到找到一个"有效"的</td>
+      <td>保留 holdout 数据集；使用 Bonferroni 校正或 Deflated Sharpe Ratio</td>
+    </tr>
+    <tr>
+      <td><strong>Transaction Cost Bias</strong><br>交易成本偏差</td>
+      <td>忽略手续费、滑点、市场冲击</td>
+      <td>加入真实的交易成本模型；高频策略尤其敏感</td>
+    </tr>
+    <tr>
+      <td><strong>Selection Bias</strong><br>选择偏差</td>
+      <td>只发表/展示表现好的策略</td>
+      <td>记录所有尝试过的策略（策略日志）</td>
+    </tr>
+    <tr>
+      <td><strong>Regime Change Bias</strong><br>市场环境偏差</td>
+      <td>策略在特定市场环境下有效，但环境已改变</td>
+      <td>分时期回测；压力测试不同市场环境</td>
+    </tr>
+  </table>
+
+  <!-- ==================== 5. 防御框架 ==================== -->
+  <h2>五、防御框架 / Defense Framework</h2>
+
+  <div class="bilingual">
+    <div class="zh">
+      <h3>系统化防御检查清单</h3>
+      <ol>
+        <li><strong>经济直觉</strong>：策略背后有合理的经济学解释吗？</li>
+        <li><strong>参数稳健性</strong>：微调参数后策略还能工作吗？（参数平原 vs 参数尖峰）</li>
+        <li><strong>样本外测试</strong>：严格分离 IS/OOS，用 walk-forward 分析</li>
+        <li><strong>跨市场测试</strong>：策略在其他市场/资产类别有效吗？</li>
+        <li><strong>多重假设校正</strong>：用 Deflated SR 或 PBO 量化过拟合概率</li>
+        <li><strong>简洁性</strong>：奥卡姆剃刀——参数越少越好</li>
+        <li><strong>Point-in-time 数据</strong>：确保没有前视偏差</li>
+        <li><strong>Survivorship-free 数据</strong>：使用包含退市股票的数据集</li>
+      </ol>
+    </div>
+    <div class="en">
+      <h3>Systematic Defense Checklist</h3>
+      <ol>
+        <li><strong>Economic intuition</strong>: Does the strategy have a sound economic rationale?</li>
+        <li><strong>Parameter robustness</strong>: Does it still work with slightly different parameters? (plateau vs spike)</li>
+        <li><strong>Out-of-sample testing</strong>: Strict IS/OOS separation, walk-forward analysis</li>
+        <li><strong>Cross-market testing</strong>: Does it work on other markets/asset classes?</li>
+        <li><strong>Multiple hypothesis correction</strong>: Use Deflated SR or PBO to quantify overfitting</li>
+        <li><strong>Simplicity</strong>: Occam's Razor — fewer parameters is better</li>
+        <li><strong>Point-in-time data</strong>: Ensure no look-ahead bias</li>
+        <li><strong>Survivorship-free data</strong>: Use datasets that include delisted stocks</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ==================== 6. 代码示例 ==================== -->
+  <h2>六、代码示例 / Code Examples</h2>
+
+  <h3>6.1 Walk-Forward Validation 滚动前向验证</h3>
+
+  <div class="code">import numpy as np
+import pandas as pd
+from itertools import combinations
+
+def walk_forward_validation(returns, strategy_func, 
+                            train_window=252, test_window=63):
+    """
+    Walk-forward analysis: train on rolling window, test on next period.
+    滚动前向验证：在滚动窗口上训练，在下一时段测试。
+    
+    Args:
+        returns: pd.Series of daily returns
+        strategy_func: function(train_data) -> optimal_params
+        train_window: training period in days (default 1 year)
+        test_window: testing period in days (default 1 quarter)
+    """
+    results = []
+    
+    for start in range(0, len(returns) - train_window - test_window, test_window):
+        # Strict separation: train and test never overlap
+        train_data = returns.iloc[start:start + train_window]
+        test_data = returns.iloc[start + train_window:
+                                  start + train_window + test_window]
+        
+        # Optimize on training data ONLY
+        optimal_params = strategy_func(train_data)
+        
+        # Evaluate on unseen test data
+        test_return = apply_strategy(test_data, optimal_params)
+        
+        results.append({
+            'train_start': train_data.index[0],
+            'test_start': test_data.index[0],
+            'test_end': test_data.index[-1],
+            'train_sharpe': sharpe_ratio(train_data),
+            'test_sharpe': sharpe_ratio(test_return),
+            'params': optimal_params
+        })
+    
+    df = pd.DataFrame(results)
+    
+    # KEY METRIC: correlation between IS and OOS performance
+    # 关键指标：样本内与样本外表现的相关性
+    correlation = df['train_sharpe'].corr(df['test_sharpe'])
+    print(f"IS-OOS Sharpe Correlation: {correlation:.3f}")
+    print(f"Mean IS Sharpe:  {df['train_sharpe'].mean():.3f}")
+    print(f"Mean OOS Sharpe: {df['test_sharpe'].mean():.3f}")
+    # If OOS Sharpe << IS Sharpe → likely overfitting!
+    
+    return df</div>
+
+  <h3>6.2 Deflated Sharpe Ratio 调整后的夏普比率</h3>
+
+  <div class="code">from scipy.stats import norm
+
+def deflated_sharpe_ratio(observed_sr, sr_std, n_trials, T, 
+                          skew=0, kurtosis=3):
+    """
+    Bailey & López de Prado (2014): Deflated Sharpe Ratio.
+    Tests whether observed SR is significant after accounting 
+    for multiple testing.
+    
+    考虑多重测试后，观测到的 SR 是否仍然显著。
+    
+    Args:
+        observed_sr: Best Sharpe ratio found (观测到的最佳SR)
+        sr_std: Std of SR estimates across trials (SR的标准差)
+        n_trials: Number of strategy variations tried (尝试的策略数)
+        T: Number of return observations (收益率观测数)
+        skew: Skewness of returns (收益率偏度)
+        kurtosis: Kurtosis of returns (收益率峰度)
+    """
+    # Expected maximum SR under null hypothesis (H0: true SR = 0)
+    # 零假设下的期望最大SR（真实SR为0时）
+    euler_mascheroni = 0.5772156649
+    expected_max_sr = ((1 - euler_mascheroni) * norm.ppf(1 - 1/n_trials) 
+                       + euler_mascheroni * norm.ppf(1 - 1/(n_trials * np.e)))
+    
+    # Standard error of SR estimate
+    # SR估计的标准误差
+    sr_se = np.sqrt((1 - skew * observed_sr 
+                     + (kurtosis - 1)/4 * observed_sr**2) / T)
+    
+    # Deflated SR: z-score against expected max
+    # 调整后SR：相对于期望最大值的z分数
+    dsr = (observed_sr - expected_max_sr * sr_std) / sr_se
+    p_value = 1 - norm.cdf(dsr)
+    
+    print(f"Observed SR:     {observed_sr:.3f}")
+    print(f"Expected Max SR: {expected_max_sr:.3f} (from {n_trials} trials)")
+    print(f"Deflated SR:     {dsr:.3f}")
+    print(f"P-value:         {p_value:.4f}")
+    print(f"Significant (5%): {'YES ✅' if p_value < 0.05 else 'NO ❌'}")
+    
+    return dsr, p_value
+
+# Example: You tried 100 strategy variations and found SR = 2.0
+# 例：尝试了100种策略变体，找到了SR=2.0的策略
+dsr, pval = deflated_sharpe_ratio(
+    observed_sr=2.0,   # Looks great! 看起来很棒！
+    sr_std=0.5,        # Variation across trials
+    n_trials=100,      # But you tried 100 times... 但你试了100次...
+    T=252 * 5          # 5 years of daily data
+)
+# Result: Probably NOT significant after correction!
+# 结果：校正后很可能不显著！</div>
+
+  <h3>6.3 检测前视偏差 / Detecting Look-ahead Bias</h3>
+
+  <div class="code">def check_look_ahead_bias(signals, prices):
+    """
+    Simple check: signals should only use data available at signal time.
+    简单检测：信号只应使用信号生成时刻可用的数据。
+    
+    Red flags (危险信号):
+    1. Signal at time t uses price at time t (close) but trades at t
+    2. Signal correlates with FUTURE returns better than past
+    """
+    # Test 1: Can you trade BEFORE the signal is fully formed?
+    # 检测1：你能在信号完全形成之前交易吗？
+    for t in range(len(signals)):
+        signal_inputs = get_data_used_by_signal(signals, t)
+        latest_timestamp = max(signal_inputs.index)
+        trade_timestamp = signals.index[t]
+        
+        if latest_timestamp >= trade_timestamp:
+            print(f"⚠️ LOOK-AHEAD at {trade_timestamp}: "
+                  f"signal uses data from {latest_timestamp}")
+    
+    # Test 2: Information coefficient with future vs past returns
+    # 检测2：信号与未来/过去收益的信息系数
+    future_returns = prices.pct_change().shift(-1)  # Next day return
+    past_returns = prices.pct_change()               # Current day return
+    
+    ic_future = signals.corr(future_returns)
+    ic_past = signals.corr(past_returns)
+    
+    print(f"IC with future returns: {ic_future:.4f}")
+    print(f"IC with past returns:   {ic_past:.4f}")
+    
+    # If IC_future >> IC_past → suspicious look-ahead!
+    if abs(ic_future) > 2 * abs(ic_past):
+        print("🚨 WARNING: Suspiciously high future IC - check for look-ahead bias!")</div>
+
+  <h3>6.4 Survivorship-free 回测示例</h3>
+
+  <div class="code">def survivorship_free_universe(date, full_listing_data):
+    """
+    Build point-in-time stock universe, including delisted stocks.
+    构建时点性股票池，包含已退市股票。
+    
+    Args:
+        date: The date for which to build the universe
+        full_listing_data: DataFrame with columns:
+            - ticker, listing_date, delisting_date, delisting_return
+    """
+    # Only include stocks that were ACTIVE on this date
+    # 只包含该日期时处于活跃状态的股票
+    universe = full_listing_data[
+        (full_listing_data['listing_date'] <= date) &
+        ((full_listing_data['delisting_date'] >= date) | 
+         (full_listing_data['delisting_date'].isna()))  # Still active
+    ]
+    
+    return universe['ticker'].tolist()
+
+# Survivorship bias impact simulation
+# 幸存者偏差影响模拟
+def simulate_survivorship_impact(n_stocks=500, n_years=10, 
+                                 annual_delist_rate=0.05,
+                                 delist_avg_return=-0.30):
+    """
+    Simulate how much survivorship bias inflates returns.
+    模拟幸存者偏差对收益的虚增程度。
+    """
+    np.random.seed(42)
+    n_days = n_years * 252
+    
+    # Generate returns for ALL stocks (survivors + non-survivors)
+    all_returns = np.random.normal(0.0003, 0.02, (n_days, n_stocks))
+    
+    # Randomly delist some stocks (with negative final returns)
+    n_delisted = int(n_stocks * annual_delist_rate * n_years)
+    delist_indices = np.random.choice(n_stocks, n_delisted, replace=False)
+    delist_days = np.random.randint(0, n_days, n_delisted)
+    
+    for idx, day in zip(delist_indices, delist_days):
+        all_returns[day, idx] = delist_avg_return  # Delisting shock
+        all_returns[day+1:, idx] = 0  # No more returns
+    
+    # Portfolio with ALL stocks (correct)
+    all_portfolio = np.mean(all_returns, axis=1)
+    
+    # Portfolio with SURVIVORS only (biased)
+    survivors = [i for i in range(n_stocks) if i not in delist_indices]
+    survivor_portfolio = np.mean(all_returns[:, survivors], axis=1)
+    
+    bias = (np.mean(survivor_portfolio) - np.mean(all_portfolio)) * 252
+    print(f"Annual return (all stocks):  {np.mean(all_portfolio)*252:.2%}")
+    print(f"Annual return (survivors):   {np.mean(survivor_portfolio)*252:.2%}")
+    print(f"Survivorship bias:           {bias:.2%} per year")
+    
+    return bias
+
+simulate_survivorship_impact()</div>
+
+  <!-- ==================== 7. References ==================== -->
+  <h2>七、参考文献 / References</h2>
+
+  <div class="references">
+    <ol>
+      <li>Bailey, D.H., Borwein, J., López de Prado, M., & Zhu, Q.J. (2015). <em>"The Probability of Backtest Overfitting."</em> Journal of Computational Finance. — 提出了 PBO 和 CSCV 框架</li>
+      <li>Bailey, D.H. & López de Prado, M. (2014). <em>"The Deflated Sharpe Ratio."</em> Journal of Portfolio Management. — Deflated SR 的原始论文</li>
+      <li>López de Prado, M. (2018). <em>"Advances in Financial Machine Learning."</em> Wiley. Chapter 11-12. — 回测过拟合的系统化处理</li>
+      <li>Chan, E. (2008). <em>"Quantitative Trading."</em> Wiley. Chapter 3. — 回测陷阱的实践者视角</li>
+      <li>Harvey, C.R., Liu, Y., & Zhu, H. (2016). <em>"... and the Cross-Section of Expected Returns."</em> Review of Financial Studies. — 发现大多数已发表的因子可能是 data-snooping 的产物</li>
+      <li>Elton, E.J., Gruber, M.J., & Blake, C.R. (1996). <em>"Survivorship Bias and Mutual Fund Performance."</em> Review of Financial Studies. — 幸存者偏差对基金评估的影响</li>
+    </ol>
+  </div>
+
+  <!-- ==================== 8. Knowledge Graph ==================== -->
+  <h2>八、知识网络 / Knowledge Graph</h2>
+
+  <div class="insight">
+    <p><strong>与前几天的联系：</strong></p>
+    <ul>
+      <li><strong>Day 2 (数据基础)</strong> → 数据质量问题直接导致前视偏差和幸存者偏差；Adjusted Prices 如果使用不当就是前视偏差</li>
+      <li><strong>Day 3 (收益率)</strong> → 收益率的计算方式会影响回测结果；复利效应在有偏差的回测中被放大</li>
+      <li><strong>Day 4 (统计/Fat Tails)</strong> → 过拟合的策略往往假设收益率是正态分布的；忽略尾部风险</li>
+      <li><strong>Day 5 (时间序列)</strong> → 对非平稳序列直接建模容易过拟合；伪回归就是一种过拟合</li>
+      <li><strong>Day 6 (回测框架)</strong> → 框架本身不能防止偏差；你需要正确使用框架</li>
+    </ul>
+    <p><strong>Phase 1 完结：</strong>基础篇到此结束。你现在拥有了量化交易的"基本功"——数据、统计、回测，以及最重要的：知道什么会出错。下一阶段我们将进入技术指标的世界。</p>
+  </div>
+
+  <!-- ==================== 9. Think About It ==================== -->
+  <h2>九、思考题 / Think About It</h2>
+
+  <div class="insight">
+    <p><strong>💭 问题：</strong>你发现了一个在过去10年回测中年化收益30%、Sharpe 2.5 的策略。你在开发过程中总共尝试了约200种参数组合。请问：</p>
+    <ol>
+      <li>使用 E[max(SR)] ≈ √(2·ln(N)) 公式，计算在零假设下（策略无效）你期望看到的最大 SR 是多少？</li>
+      <li>你的策略通过了 Deflated Sharpe Ratio 检验吗？</li>
+      <li>你还需要做哪些额外检查来增强信心？</li>
+    </ol>
+    <p><strong>💭 Question:</strong> You found a strategy with 30% annualized return and Sharpe 2.5 over 10 years of backtest. You tried about 200 parameter combinations during development.</p>
+    <ol>
+      <li>Using E[max(SR)] ≈ √(2·ln(N)), what's the expected maximum SR under the null hypothesis?</li>
+      <li>Does your strategy pass the Deflated Sharpe Ratio test?</li>
+      <li>What additional checks would you perform to build confidence?</li>
+    </ol>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-20 - Token 限制处理策略：LLM Context Window 的六大破解之道</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+    h2 { color: #3c4043; margin-top: 40px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-blue { background: #d1ecf1; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-green { background: #d4edda; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-red { background: #f8d7da; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; font-size: 13px; line-height: 1.4; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f0f0f0; }
+    .interview { background: #e8eaf6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3f51b5; }
+    .series-nav { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .tag { display: inline-block; background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    .strategy-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 15px 0; }
+    .strategy-card h4 { margin-top: 0; color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+<div class="series-nav">
+  📘 <strong>Phase 2.3: LLM 特有问题</strong> — Day 1 of 5<br>
+  Day 1: Token 限制处理策略 (本篇) → Day 2: 成本优化 → Day 3: Hallucination 检测 → Day 4: 流式输出架构 → Day 5: Multi-turn 对话状态管理
+</div>
+
+<h1>🔑 Token 限制处理策略：LLM Context Window 的六大破解之道</h1>
+<p>
+  <span class="tag">Phase 2.3</span>
+  <span class="tag">LLM</span>
+  <span class="tag">Context Window</span>
+  <span class="tag">面试高频</span>
+  📅 2026-02-20
+</p>
+
+<h2>📖 为什么 Token 限制是核心问题？</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>每个 LLM 都有一个 <strong>context window</strong>——它能一次处理的最大 token 数。这不仅仅是输入限制，它直接决定了系统设计的方方面面：</p>
+    <ul>
+      <li><strong>成本</strong>：token 越多，API 费用越高（通常是线性关系）</li>
+      <li><strong>延迟</strong>：Attention 计算是 O(n²)，context 翻倍延迟可能翻 4 倍</li>
+      <li><strong>质量</strong>："Lost in the Middle" 现象——模型更关注开头和结尾的信息</li>
+      <li><strong>架构</strong>：决定了你用 RAG 还是直接塞进 prompt</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p>Every LLM has a <strong>context window</strong>—the maximum tokens it can process at once. This isn't just an input limit; it shapes every aspect of system design:</p>
+    <ul>
+      <li><strong>Cost</strong>: More tokens = higher API costs (typically linear)</li>
+      <li><strong>Latency</strong>: Attention is O(n²); doubling context can quadruple latency</li>
+      <li><strong>Quality</strong>: "Lost in the Middle"—models attend more to start and end</li>
+      <li><strong>Architecture</strong>: Determines whether you use RAG or stuff everything in prompt</li>
+    </ul>
+  </div>
+</div>
+
+<div class="highlight">
+  💡 <strong>面试视角</strong>：被问到 "你的系统如何处理超长文档?" 时，不要只回答一种策略。面试官想看到你理解<strong>多种方案的 tradeoff</strong>，并能根据场景选择最优组合。
+</div>
+
+<div class="diagram">
+Context Window 现状 (2026)：
+
+┌─────────────────────────────────────────────────────────┐
+│ Model              │ Context Window │ ≈ 英文字数        │
+├─────────────────────────────────────────────────────────┤
+│ GPT-4o             │ 128K tokens    │ ~96K words        │
+│ Claude Opus/Sonnet │ 200K tokens    │ ~150K words       │
+│ Gemini 2.0         │ 2M tokens      │ ~1.5M words       │
+│ GPT-4 (original)   │ 8K tokens      │ ~6K words         │
+│ Llama 3.1          │ 128K tokens    │ ~96K words        │
+└─────────────────────────────────────────────────────────┘
+
+但！window 大 ≠ 应该全塞满：
+- 128K context 的 API call ≈ $0.40-2.00/次
+- 延迟可能 30-60 秒
+- 质量在 >60K tokens 后明显下降
+</div>
+
+<h2>🏗️ 六大策略总览</h2>
+
+<div class="diagram">
+策略选择决策树：
+
+                     输入超过 context window？
+                          │
+              ┌───────────┼───────────┐
+              │           │           │
+           刚好超      大幅超出     动态增长
+         (1.5-2x)     (>10x)     (对话/流式)
+              │           │           │
+        ┌─────┘     ┌─────┘     ┌─────┘
+        ▼           ▼           ▼
+   ① Truncation  ③ RAG      ⑤ Sliding Window
+   ② Compression ④ MapReduce ⑥ Hierarchical
+                                 Summarization
+
+跨层优化：所有策略都可搭配 Prompt Compression 进一步减少 token
+</div>
+
+<h2>✨ 策略一：Truncation & Priority Ordering</h2>
+
+<div class="strategy-card">
+  <h4>核心思想：最简单但最容易出错的方案</h4>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>直接截断超出 window 的内容。关键是<strong>截什么、保留什么</strong>：</p>
+      <ul>
+        <li><strong>头部截断</strong>：保留最新内容（对话场景）</li>
+        <li><strong>尾部截断</strong>：保留开头（文档分析）</li>
+        <li><strong>中间截断</strong>：保留头尾（利用 Lost-in-the-Middle 研究结论）</li>
+        <li><strong>优先级截断</strong>：按重要性排序后截断</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>Simply truncate what exceeds the window. The key is <strong>what to cut vs. keep</strong>:</p>
+      <ul>
+        <li><strong>Head truncation</strong>: Keep recent content (chat)</li>
+        <li><strong>Tail truncation</strong>: Keep beginning (document analysis)</li>
+        <li><strong>Middle truncation</strong>: Keep head+tail (leveraging Lost-in-the-Middle findings)</li>
+        <li><strong>Priority truncation</strong>: Rank by importance, then cut</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<pre><code>// Priority-based truncation for chat context
+interface Message { role: string; content: string; tokens: number; priority: number; }
+
+function truncateContext(messages: Message[], maxTokens: number): Message[] {
+  // 1. System prompt 永远保留 (priority = Infinity)
+  // 2. 最近 2 轮对话保留 (priority = 100)
+  // 3. 包含 tool results 的保留 (priority = 80)
+  // 4. 其余按时间倒序递减
+  
+  const systemMsg = messages.filter(m => m.role === 'system');
+  const recentMsgs = messages.slice(-4); // 最近 2 轮
+  const toolMsgs = messages.filter(m => m.role === 'tool');
+  
+  // 计算已用 token
+  let usedTokens = [...systemMsg, ...recentMsgs, ...toolMsgs]
+    .reduce((sum, m) => sum + m.tokens, 0);
+  
+  // 剩余空间按优先级填充
+  const remaining = messages
+    .filter(m => !systemMsg.includes(m) && !recentMsgs.includes(m))
+    .sort((a, b) => b.priority - a.priority);
+  
+  const result = [...systemMsg];
+  for (const msg of remaining) {
+    if (usedTokens + msg.tokens <= maxTokens) {
+      result.push(msg);
+      usedTokens += msg.tokens;
+    }
+  }
+  result.push(...recentMsgs);
+  return result;
+}</code></pre>
+
+<div class="highlight-red">
+  ⚠️ <strong>陷阱</strong>：很多系统直接按 character count 估算 token 数，但中文 1 字 ≈ 2-3 tokens，英文 1 word ≈ 1.3 tokens。一定要用 tokenizer（如 tiktoken）精确计算。
+</div>
+
+<h2>✨ 策略二：Prompt Compression (LLMLingua)</h2>
+
+<div class="strategy-card">
+  <h4>核心思想：用小模型压缩 prompt，大模型照样理解</h4>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>LLMLingua</strong> (微软研究院) 的核心洞察：prompt 中大量 token 是冗余的。用一个小 LM 计算每个 token 的 perplexity，低困惑度的 token（可预测的）可以安全删除。</p>
+      <p>三个模块协作：</p>
+      <ol>
+        <li><strong>Budget Controller</strong>：分配每个部分的压缩预算（demo 部分压更多，instruction 部分压更少）</li>
+        <li><strong>Iterative Token Compression</strong>：逐 token 评估，删除低信息量 token</li>
+        <li><strong>Distribution Alignment</strong>：确保压缩后的分布与原始对齐</li>
+      </ol>
+    </div>
+    <div class="en">
+      <p><strong>LLMLingua</strong> (Microsoft Research) key insight: most prompt tokens are redundant. A small LM scores each token's perplexity; low-perplexity (predictable) tokens are safely removed.</p>
+      <p>Three modules cooperate:</p>
+      <ol>
+        <li><strong>Budget Controller</strong>: Allocate compression budget per section</li>
+        <li><strong>Iterative Token Compression</strong>: Evaluate token-by-token, remove low-information ones</li>
+        <li><strong>Distribution Alignment</strong>: Ensure compressed distribution aligns with original</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<pre><code># LLMLingua-2 使用示例
+from llmlingua import PromptCompressor
+
+compressor = PromptCompressor(
+    model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
+    device_map="cpu"  # 小模型，CPU 就够
+)
+
+# 原始 prompt: 5000 tokens
+original_prompt = """
+[Very long system prompt with examples, context docs, user history...]
+"""
+
+# 压缩到 ~2000 tokens (60% reduction)
+compressed = compressor.compress_prompt(
+    original_prompt,
+    rate=0.4,                    # 保留 40% 的 token
+    force_tokens=["\\n", "?"],   # 强制保留的 token
+    chunk_end_tokens=[".", "\\n"] # chunk 边界
+)
+
+print(f"Original: {compressed['origin_tokens']} tokens")
+print(f"Compressed: {compressed['compressed_tokens']} tokens")
+print(f"Ratio: {compressed['ratio']:.1%}")
+# Output: Original: 5000 tokens → Compressed: 2000 tokens → Ratio: 40.0%</code></pre>
+
+<div class="diagram">
+LLMLingua 压缩效果对照：
+
+原始 prompt (10 tokens):
+  "The weather in San Francisco is usually foggy and cold"
+
+压缩后 (6 tokens, rate=0.6):
+  "weather San Francisco usually foggy cold"
+
+大模型理解：✅ 几乎无损
+成本节省：40%
+延迟减少：~35%
+
+┌─────────────────────────────────────────┐
+│ Compression Rate │ Quality Loss │ Savings │
+├─────────────────────────────────────────┤
+│ 0.8 (保留80%)    │ < 1%         │ 20%     │
+│ 0.6 (保留60%)    │ 2-3%         │ 40%     │
+│ 0.4 (保留40%)    │ 5-8%         │ 60%     │
+│ 0.2 (保留20%)    │ 15-25%       │ 80%     │
+└─────────────────────────────────────────┘
+Sweet spot: 0.5-0.6 (保留 50-60%)
+</div>
+
+<h2>✨ 策略三：RAG (Retrieval-Augmented Generation)</h2>
+
+<div class="strategy-card">
+  <h4>核心思想：不塞全部文档，只检索最相关的片段</h4>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>这是我们 Phase 1.3 深入学过的策略。在 token 限制的语境下，RAG 的本质是：<strong>把 "信息选择" 从模型内部移到模型外部</strong>。</p>
+      <p>关键决策点：</p>
+      <ul>
+        <li>检索 top-k 个 chunk，k 的选择直接影响 token 使用</li>
+        <li>Chunk size 越小，检索越精准，但可能丢失上下文</li>
+        <li>Reranking 后截断 vs 直接截断</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>This is what we covered deeply in Phase 1.3. In the token limit context, RAG's essence is: <strong>moving "information selection" from inside the model to outside</strong>.</p>
+      <p>Key decisions:</p>
+      <ul>
+        <li>Retrieve top-k chunks—k directly impacts token budget</li>
+        <li>Smaller chunks = more precise retrieval but may lose context</li>
+        <li>Rerank-then-truncate vs direct truncation</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<pre><code>// Token-aware RAG retrieval
+function retrieveWithTokenBudget(
+  query: string,
+  maxContextTokens: number,
+  reservedTokens: number  // for system prompt + output buffer
+): Chunk[] {
+  const budget = maxContextTokens - reservedTokens;
+  
+  // 1. 检索较多候选
+  const candidates = vectorSearch(query, topK: 20);
+  
+  // 2. Rerank
+  const reranked = crossEncoderRerank(query, candidates);
+  
+  // 3. 贪心填充：按相关度依次加入，直到 budget 耗尽
+  const selected: Chunk[] = [];
+  let usedTokens = 0;
+  
+  for (const chunk of reranked) {
+    if (usedTokens + chunk.tokens <= budget) {
+      selected.push(chunk);
+      usedTokens += chunk.tokens;
+    }
+    // 注意：不 break，后面可能有更小的 chunk 能塞进去
+    // 但如果相关度已经很低，就 break
+    if (chunk.relevanceScore < 0.3) break;
+  }
+  
+  // 4. 按原文顺序排列（提升连贯性）
+  return selected.sort((a, b) => a.originalPosition - b.originalPosition);
+}</code></pre>
+
+<h2>✨ 策略四：MapReduce / Hierarchical Processing</h2>
+
+<div class="strategy-card">
+  <h4>核心思想：分而治之，化整为零</h4>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>当文档实在太长（比如 100 页 PDF），单次 API call 放不下时，使用 <strong>MapReduce 模式</strong>：</p>
+      <ol>
+        <li><strong>Split</strong>：将文档拆分为 N 个 chunk</li>
+        <li><strong>Map</strong>：对每个 chunk 独立处理（摘要/提取/分析）</li>
+        <li><strong>Reduce</strong>：合并所有 Map 结果，生成最终答案</li>
+      </ol>
+      <p>变体：<strong>Refine 模式</strong>——串行处理，每次将上一次的结果 + 新 chunk 一起送入模型，逐步精炼答案。</p>
+    </div>
+    <div class="en">
+      <p>When documents are too long (e.g., 100-page PDF), use the <strong>MapReduce pattern</strong>:</p>
+      <ol>
+        <li><strong>Split</strong>: Divide document into N chunks</li>
+        <li><strong>Map</strong>: Process each chunk independently (summarize/extract/analyze)</li>
+        <li><strong>Reduce</strong>: Merge all Map results into final answer</li>
+      </ol>
+      <p>Variant: <strong>Refine mode</strong>—process sequentially, feeding previous result + new chunk each time, progressively refining the answer.</p>
+    </div>
+  </div>
+</div>
+
+<div class="diagram">
+MapReduce vs Refine：
+
+【MapReduce — 并行，快但可能丢关联信息】
+
+  Doc_1 ──→ LLM ──→ Summary_1 ─┐
+  Doc_2 ──→ LLM ──→ Summary_2 ─┼──→ LLM ──→ Final Answer
+  Doc_3 ──→ LLM ──→ Summary_3 ─┤
+  Doc_4 ──→ LLM ──→ Summary_4 ─┘
+
+  ✅ 可并行 (快)    ❌ 跨 chunk 关联可能丢失
+  ✅ 适合摘要/提取   ❌ 不适合需要全局理解的任务
+
+【Refine — 串行，慢但保留连贯性】
+
+  Doc_1 ──→ LLM ──→ Answer_v1
+  Answer_v1 + Doc_2 ──→ LLM ──→ Answer_v2
+  Answer_v2 + Doc_3 ──→ LLM ──→ Answer_v3
+  Answer_v3 + Doc_4 ──→ LLM ──→ Final Answer
+
+  ✅ 保留上下文连贯性  ❌ 串行（慢）
+  ✅ 逐步精炼          ❌ 后面 chunk 权重可能偏高
+
+【Hierarchical — 金字塔，平衡方案】
+
+  Level 0: [C1][C2][C3][C4][C5][C6][C7][C8]
+              ↓     ↓     ↓     ↓
+  Level 1:  [S12]  [S34]  [S56]  [S78]
+                ↓           ↓
+  Level 2:    [S1234]    [S5678]
+                    ↓
+  Level 3:      [Final Summary]
+
+  ✅ 平衡速度和质量  ✅ 可并行每层
+  ❌ 多层可能累积信息损失
+</div>
+
+<pre><code>// MapReduce implementation
+async function mapReduceSummarize(
+  document: string,
+  chunkSize: number = 4000,
+  question: string
+): Promise&lt;string&gt; {
+  // Split
+  const chunks = splitIntoChunks(document, chunkSize);
+  
+  // Map (parallel)
+  const mapPromises = chunks.map((chunk, i) =>
+    llm.complete({
+      prompt: `Analyze this section (${i+1}/${chunks.length}) 
+               in context of: "${question}"
+               
+               Section content:
+               ${chunk}
+               
+               Extract key points relevant to the question.`,
+      maxTokens: 500
+    })
+  );
+  const mapResults = await Promise.all(mapPromises);
+  
+  // Reduce
+  const combined = mapResults.join("\n---\n");
+  
+  // 如果 combined 仍然太长，递归 reduce
+  if (countTokens(combined) > chunkSize) {
+    return mapReduceSummarize(combined, chunkSize, question);
+  }
+  
+  return llm.complete({
+    prompt: `Based on these extracted points from a long document,
+             provide a comprehensive answer to: "${question}"
+             
+             Extracted points:
+             ${combined}`,
+    maxTokens: 1000
+  });
+}</code></pre>
+
+<h2>✨ 策略五：Sliding Window & Conversation Memory</h2>
+
+<div class="strategy-card">
+  <h4>核心思想：滑动窗口 + 记忆压缩，处理无限对话</h4>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>对话场景的特殊挑战：上下文<strong>持续增长</strong>。Phase 1.2 学过的 Memory 系统就是为此设计的：</p>
+      <ul>
+        <li><strong>Buffer Window</strong>：只保留最近 K 轮（最简单）</li>
+        <li><strong>Summary Memory</strong>：将旧对话压缩为摘要</li>
+        <li><strong>Token Buffer</strong>：保留最近 N tokens 而非 K 轮</li>
+        <li><strong>Hybrid</strong>：摘要 + 最近几轮完整保留</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>Chat scenarios face a unique challenge: context <strong>grows continuously</strong>. The Memory systems from Phase 1.2 address this:</p>
+      <ul>
+        <li><strong>Buffer Window</strong>: Keep only last K turns (simplest)</li>
+        <li><strong>Summary Memory</strong>: Compress old conversations into summaries</li>
+        <li><strong>Token Buffer</strong>: Keep last N tokens instead of K turns</li>
+        <li><strong>Hybrid</strong>: Summary + last few turns preserved fully</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<pre><code>// Hybrid sliding window with summary compression
+class ConversationManager {
+  private maxTokens = 100_000;
+  private reservedForSummary = 2000;
+  private reservedForSystem = 3000;
+  private reservedForOutput = 4000;
+  
+  async buildContext(history: Message[]): Promise&lt;Message[]&gt; {
+    const budget = this.maxTokens - this.reservedForSystem - this.reservedForOutput;
+    
+    // 1. 始终保留最近 3 轮 (≈6 messages)
+    const recentMessages = history.slice(-6);
+    let recentTokens = this.countTokens(recentMessages);
+    
+    // 2. 如果最近 3 轮就超 budget，截断最早的
+    if (recentTokens > budget) {
+      return this.truncateMessages(recentMessages, budget);
+    }
+    
+    // 3. 剩余空间：尝试填入更多历史
+    const remainingBudget = budget - recentTokens - this.reservedForSummary;
+    const olderMessages = history.slice(0, -6);
+    
+    if (this.countTokens(olderMessages) <= remainingBudget) {
+      // 全部放得下，直接用
+      return [...olderMessages, ...recentMessages];
+    }
+    
+    // 4. 放不下：压缩旧消息为摘要
+    const summary = await this.summarize(olderMessages);
+    return [
+      { role: 'system', content: `Previous conversation summary:\n${summary}` },
+      ...recentMessages
+    ];
+  }
+  
+  private async summarize(messages: Message[]): Promise&lt;string&gt; {
+    return llm.complete({
+      prompt: `Summarize this conversation, preserving:
+               - Key decisions and agreements
+               - Important facts mentioned
+               - User preferences expressed
+               - Unresolved questions
+               
+               Conversation:
+               ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}`,
+      maxTokens: this.reservedForSummary
+    });
+  }
+}</code></pre>
+
+<h2>✨ 策略六：Context Window Extension (模型层)</h2>
+
+<div class="strategy-card">
+  <h4>核心思想：从模型架构层面扩展 context window</h4>
+  
+  <div class="bilingual">
+    <div class="zh">
+      <p>前 5 种策略都是<strong>应用层</strong>的——围绕固定 window 做文章。第六种是<strong>模型层</strong>的——直接扩大 window：</p>
+      <ul>
+        <li><strong>RoPE Scaling</strong>：修改 Rotary Position Embedding 的频率，将 4K context 模型扩展到 128K+</li>
+        <li><strong>ALiBi</strong>：用线性偏置替代位置编码，天然支持外推</li>
+        <li><strong>Sliding Window Attention</strong>：每层只看局部窗口，通过层叠获得全局视野（Mistral 用法）</li>
+        <li><strong>Ring Attention</strong>：分布式 attention 计算，理论上无限 context</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>The first 5 strategies are <strong>application-level</strong>—working around a fixed window. The sixth is <strong>model-level</strong>—extending the window itself:</p>
+      <ul>
+        <li><strong>RoPE Scaling</strong>: Modify rotary position embedding frequencies to extend 4K models to 128K+</li>
+        <li><strong>ALiBi</strong>: Replace position encodings with linear bias, naturally extrapolates</li>
+        <li><strong>Sliding Window Attention</strong>: Each layer attends locally; stacked layers give global view (Mistral)</li>
+        <li><strong>Ring Attention</strong>: Distributed attention across devices—theoretically infinite context</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="diagram">
+RoPE Scaling 直觉理解：
+
+原始 RoPE (训练于 4K context):
+  Position 0    1000   2000   3000   4000   [超出→崩溃]
+  角度θ:  0°    90°    180°   270°   360°
+
+NTK-aware Scaling (扩展到 16K):
+  Position 0    4000   8000   12000  16000  [平滑外推]
+  角度θ:  0°    90°    180°   270°   360°
+  
+  → 把 "尺子" 拉长，让同样的角度范围覆盖更多位置
+  → 代价：相邻位置的区分度降低
+
+YaRN (Yet another RoPE extensioN):
+  → 选择性缩放：高频维度保持不变，只缩放低频维度
+  → 更好的近距离精度 + 远距离外推
+</div>
+
+<h2>🎯 策略选型矩阵</h2>
+
+<table>
+  <tr>
+    <th>策略</th>
+    <th>适用场景</th>
+    <th>压缩率</th>
+    <th>质量损失</th>
+    <th>实现复杂度</th>
+    <th>延迟影响</th>
+  </tr>
+  <tr>
+    <td>① Truncation</td>
+    <td>对话、简单溢出</td>
+    <td>任意</td>
+    <td>中-高</td>
+    <td>⭐</td>
+    <td>无额外</td>
+  </tr>
+  <tr>
+    <td>② Prompt Compression</td>
+    <td>长 prompt 优化</td>
+    <td>40-60%</td>
+    <td>低</td>
+    <td>⭐⭐</td>
+    <td>+50-200ms</td>
+  </tr>
+  <tr>
+    <td>③ RAG</td>
+    <td>知识库问答</td>
+    <td>95%+</td>
+    <td>低-中</td>
+    <td>⭐⭐⭐</td>
+    <td>+100-500ms</td>
+  </tr>
+  <tr>
+    <td>④ MapReduce</td>
+    <td>长文档分析</td>
+    <td>80-95%</td>
+    <td>中</td>
+    <td>⭐⭐</td>
+    <td>+N×单次延迟</td>
+  </tr>
+  <tr>
+    <td>⑤ Sliding Window</td>
+    <td>长对话</td>
+    <td>动态</td>
+    <td>低-中</td>
+    <td>⭐⭐</td>
+    <td>+摘要延迟</td>
+  </tr>
+  <tr>
+    <td>⑥ Window Extension</td>
+    <td>自部署模型</td>
+    <td>无需压缩</td>
+    <td>低</td>
+    <td>⭐⭐⭐⭐</td>
+    <td>O(n²)增长</td>
+  </tr>
+</table>
+
+<h2>🔀 生产级组合方案</h2>
+
+<div class="highlight-green">
+  <h4>推荐组合：大多数 LLM 应用</h4>
+  <p><strong>RAG + Prompt Compression + Priority Truncation</strong></p>
+  <ol>
+    <li>RAG 检索相关 chunks (top-10, ~8000 tokens)</li>
+    <li>LLMLingua 压缩到 60% (~4800 tokens)</li>
+    <li>如果仍超 budget，按 rerank score 截断低分 chunks</li>
+    <li>系统 prompt + 压缩 context + 最近对话 → 送入模型</li>
+  </ol>
+  <p>效果：处理 100K+ 文档，实际只用 ~10K tokens，成本降低 90%</p>
+</div>
+
+<pre><code>// Production token budget manager
+class TokenBudgetManager {
+  constructor(private config: {
+    maxContextTokens: number;   // e.g., 128000
+    systemPromptTokens: number; // e.g., 2000
+    outputReserve: number;      // e.g., 4000
+    safetyMargin: number;       // e.g., 0.9 (use 90% of budget)
+  }) {}
+
+  get availableBudget(): number {
+    return Math.floor(
+      (this.config.maxContextTokens * this.config.safetyMargin)
+      - this.config.systemPromptTokens
+      - this.config.outputReserve
+    );
+  }
+
+  allocate(): TokenBudgetAllocation {
+    const total = this.availableBudget;
+    return {
+      ragContext: Math.floor(total * 0.50),      // 50% for retrieved docs
+      conversationHistory: Math.floor(total * 0.30), // 30% for chat history
+      toolResults: Math.floor(total * 0.15),     // 15% for tool outputs
+      buffer: Math.floor(total * 0.05),          // 5% safety buffer
+    };
+  }
+
+  // 动态调整：如果某部分用不完，重新分配给其他部分
+  reallocate(actual: Partial&lt;TokenBudgetAllocation&gt;): TokenBudgetAllocation {
+    const allocation = this.allocate();
+    let surplus = 0;
+    
+    for (const [key, actualTokens] of Object.entries(actual)) {
+      const budgeted = allocation[key as keyof TokenBudgetAllocation];
+      if (actualTokens !== undefined && actualTokens < budgeted) {
+        surplus += budgeted - actualTokens;
+        allocation[key as keyof TokenBudgetAllocation] = actualTokens;
+      }
+    }
+    
+    // 把 surplus 给最需要的部分
+    allocation.ragContext += surplus;
+    return allocation;
+  }
+}</code></pre>
+
+<h2>🧩 与 Phase 2.1-2.2 知识的连接</h2>
+
+<div class="highlight-blue">
+  <h4>这些策略在之前的系统设计中都出现过：</h4>
+  <table>
+    <tr><th>系统</th><th>用到的 Token 策略</th></tr>
+    <tr><td>ChatGPT (Day 1)</td><td>Sliding Window + Summary Memory</td></tr>
+    <tr><td>推荐系统 (Day 2)</td><td>Feature truncation (embedding 压缩)</td></tr>
+    <tr><td>语义搜索 (Day 3)</td><td>RAG (检索替代全文)</td></tr>
+    <tr><td>RAG 知识库 (Day 4)</td><td>RAG + Hierarchical Chunking</td></tr>
+    <tr><td>Code Review (Day 5)</td><td>Context Engineering (选择性包含代码)</td></tr>
+    <tr><td>Feature Store (Day 7)</td><td>点查 vs 全量 (类比 RAG vs 全文)</td></tr>
+    <tr><td>Latency vs Quality (Day 10)</td><td>Prompt Compression + Model Cascade</td></tr>
+  </table>
+  <p>Token 管理不是孤立技术——它是<strong>每个 LLM 系统设计的底层约束</strong>。</p>
+</div>
+
+<h2>🎤 面试高频问题</h2>
+
+<div class="interview">
+  <h4>Q1: 你的 RAG 系统需要处理 500 页的 PDF，用户问了一个需要全文理解的问题（如 "总结这份合同的关键风险点"），你怎么处理？</h4>
+  <p><strong>参考答案</strong>：</p>
+  <ul>
+    <li>不能只用 RAG top-k——需要全文覆盖。用 <strong>MapReduce</strong>：先对每个 chunk 提取风险相关信息 (Map)，然后合并所有提取结果生成最终总结 (Reduce)</li>
+    <li>优化：Map 阶段可以并行，用 cheaper model (GPT-4o-mini)；Reduce 阶段用 stronger model (GPT-4o)</li>
+    <li>如果 Reduce 结果仍然太长，递归 Reduce 或用 Hierarchical 模式</li>
+    <li>成本估算：500 页 ≈ 250K tokens，Map 阶段 ~$0.04，Reduce ~$0.01，总计 <$0.10</li>
+  </ul>
+</div>
+
+<div class="interview">
+  <h4>Q2: 你的 chatbot 在第 50 轮对话后开始 "忘记" 早期的信息，怎么解决？</h4>
+  <p><strong>参考答案</strong>：</p>
+  <ul>
+    <li>这是经典的 context overflow 问题。分三层解决：</li>
+    <li><strong>L1 - Summary Memory</strong>：每 10 轮自动将旧对话压缩为摘要，保留关键事实</li>
+    <li><strong>L2 - Entity Memory</strong>：提取对话中的实体和关系，存入结构化存储</li>
+    <li><strong>L3 - Vector Memory</strong>：将历史对话 embed 后存入向量库，需要时检索相关片段</li>
+    <li>组合策略：System prompt 包含 entity memory + summary；RAG 检索补充具体细节</li>
+    <li>指标监控：定期测试 "第 N 轮还能否正确引用第 1 轮的信息"</li>
+  </ul>
+</div>
+
+<div class="interview">
+  <h4>Q3: Prompt Compression 和直接截断有什么本质区别？什么时候用哪个？</h4>
+  <p><strong>参考答案</strong>：</p>
+  <ul>
+    <li><strong>截断</strong>是 lossy——直接丢弃信息块。<strong>压缩</strong>是 lossy 但 information-preserving——保留语义，去除冗余</li>
+    <li>类比：截断 = 撕掉书的几页；压缩 = 用自己的话缩写全书</li>
+    <li>用截断：信息块边界清晰（如独立的 chat messages），优先级明确</li>
+    <li>用压缩：信息密度不均匀（如长文档），需要保留全局信息</li>
+    <li>最佳实践：先压缩（LLMLingua），如果仍超预算再按优先级截断</li>
+  </ul>
+</div>
+
+<div class="interview">
+  <h4>Q4: 设计一个 Token Budget Manager，需要考虑哪些因素？</h4>
+  <p><strong>参考答案</strong>：</p>
+  <ul>
+    <li><strong>静态分配</strong>：system prompt / context / history / output 各占比例</li>
+    <li><strong>动态重分配</strong>：如果某部分用不完（如无 tool results），把余量给其他部分</li>
+    <li><strong>安全边际</strong>：预留 5-10% buffer，因为 tokenizer 计算可能有误差</li>
+    <li><strong>输出预留</strong>：max_tokens 设太大浪费预算，太小回答截断</li>
+    <li><strong>多模型适配</strong>：不同模型 context window 不同，Manager 需要参数化</li>
+    <li><strong>监控告警</strong>：token 使用率 >90% 触发告警，>95% 自动降级（压缩或截断）</li>
+  </ul>
+</div>
+
+<h2>💭 思考题</h2>
+
+<div class="highlight">
+  <p><strong>Question</strong>：Google Gemini 已经支持 2M tokens 的 context window。如果未来所有模型都支持无限 context，上面这些策略还有意义吗？为什么？</p>
+  <p><em>提示：想想成本、延迟、Lost-in-the-Middle、以及 "能放 ≠ 应该放"</em></p>
+</div>
+
+<hr>
+<p style="color: #888; font-size: 14px;">
+  📚 Knowledge Agent | Phase 2.3: LLM 特有问题 Day 1/5 | 2026-02-20<br>
+  下一篇预告：Day 2 — 成本优化（缓存、路由、小模型分流）
+</p>
+
+</body>
+</html>

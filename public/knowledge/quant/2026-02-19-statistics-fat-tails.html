@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-19 统计基础 — 正态分布的谎言、Fat Tails、偏度与峰度</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
+    h2 { color: #34495e; margin-top: 30px; }
+    h3 { color: #555; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; line-height: 2; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; line-height: 1.5; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 30px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 20px 0; }
+    .example { background: #f0f7e6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #f8f9fa; }
+    .tag { display: inline-block; background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+  </style>
+</head>
+<body>
+
+<h1>📊 Day 4: 统计基础 — 正态分布的谎言、Fat Tails、偏度与峰度</h1>
+<p><span class="tag">Phase 1: Foundations</span> <span class="tag">Statistics</span> <span class="tag">Risk</span></p>
+<p><em>2026-02-19 | Quantitative Trading Series</em></p>
+
+<div class="bilingual">
+<div class="zh">
+<h2>🇨🇳 中文版</h2>
+
+<h3>1. 正态分布的"美丽谎言"</h3>
+<p>几乎所有入门金融教材都假设资产收益率服从正态分布（高斯分布）。这个假设为什么如此流行？因为它让数学变得优雅——均值和方差就能完全描述分布，VaR可以用简单公式计算，Black-Scholes公式也建立在此之上。</p>
+
+<p>但现实是残酷的。看一组真实数据：</p>
+<ul>
+  <li><strong>1987年黑色星期一</strong>：道指单日暴跌22.6%。在正态分布下，这大约是一个 <strong>25σ 事件</strong>——概率小于 10^(-135)，比宇宙中原子的数量还要小得不可思议。</li>
+  <li><strong>2008年10月</strong>：VIX从20飙升到80，多个"不可能"的日跌幅连续出现。</li>
+  <li><strong>2020年3月</strong>：S&P 500在一个月内暴跌34%，包含多个-7%以上的交易日。</li>
+</ul>
+
+<p>这些事件按正态分布来看"不可能发生"，但在现实中却反复出现。这就是金融领域最危险的谎言。</p>
+
+<div class="warning">
+<strong>⚠️ Nassim Taleb 的警告</strong>：在其2025年第三版的《Statistical Consequences of Fat Tails》中，Taleb 指出：在肥尾分布下，样本均值和样本方差的收敛速度极慢，传统统计推断几乎全部失效。你用1000天数据估计的均值，可能在第1001天因为一次极端事件而完全改变。
+</div>
+
+<h3>2. 四大矩：Mean、Variance、Skewness、Kurtosis</h3>
+
+<p>要理解收益率的真实形态，我们需要四个统计矩（moments）：</p>
+
+<p><strong>第一矩 — 均值 (Mean, μ)</strong>：收益率的中心位置。</p>
+<p><strong>第二矩 — 方差 (Variance, σ²)</strong>：收益率离散程度，即波动率的平方。</p>
+<p><strong>第三矩 — 偏度 (Skewness)</strong>：分布的不对称性。</p>
+<p><strong>第四矩 — 峰度 (Kurtosis)</strong>：尾部的厚度，极端事件的频率。</p>
+
+<p><strong>偏度 (Skewness)</strong>：</p>
+<ul>
+  <li>Skew = 0：对称分布（正态）</li>
+  <li>Skew < 0：<strong>左偏</strong>（负偏），左尾更长 → 大跌比大涨更频繁</li>
+  <li>Skew > 0：<strong>右偏</strong>（正偏），右尾更长</li>
+</ul>
+<p>美股个股收益率通常呈<strong>负偏度</strong>——涨是慢慢涨，跌是暴跌。这就是"电梯上楼，电梯井下楼"。</p>
+
+<p><strong>峰度 (Kurtosis)</strong>：</p>
+<ul>
+  <li>正态分布的峰度 = 3（超额峰度 = 0）</li>
+  <li><strong>Leptokurtic</strong>（尖峰肥尾）：峰度 > 3，极端事件更多</li>
+  <li><strong>Platykurtic</strong>（扁平瘦尾）：峰度 < 3，极端事件更少</li>
+</ul>
+<p>金融数据几乎总是 Leptokurtic！S&P 500 日收益率的超额峰度通常在 5-20 之间，这意味着极端事件出现的频率是正态分布预测的数倍到数十倍。</p>
+
+<h3>3. Fat Tails 的成因</h3>
+<p>为什么金融市场有肥尾？几个核心原因：</p>
+<ul>
+  <li><strong>波动率聚集 (Volatility Clustering)</strong>：大波动之后往往跟着大波动（GARCH 效应），Day 3 讲的波动率不是常数。</li>
+  <li><strong>杠杆效应 (Leverage Effect)</strong>：下跌时波动率上升，形成负偏度。</li>
+  <li><strong>羊群效应 (Herding)</strong>：恐慌时所有人同时卖出，相关性趋近于1。</li>
+  <li><strong>流动性蒸发</strong>：极端行情下买盘消失，价格跳空。</li>
+  <li><strong>非线性反馈</strong>：止损单触发更多止损，程序化交易的级联效应。</li>
+</ul>
+
+<h3>4. 替代分布</h3>
+<p>既然正态分布不行，量化金融常用哪些替代？</p>
+<ul>
+  <li><strong>Student's t 分布</strong>：最常用的替代，自由度参数控制尾部厚度。自由度越小，尾部越厚。</li>
+  <li><strong>Stable (Lévy) 分布</strong>：Mandelbrot 在1963年提出，允许无限方差。</li>
+  <li><strong>混合正态 (Mixture of Gaussians)</strong>：用两个或多个正态分布混合来拟合肥尾。</li>
+  <li><strong>广义极值分布 (GEV)</strong>：专门用于极端值建模。</li>
+</ul>
+
+<h3>5. 实战影响</h3>
+<p>忽略肥尾的后果：</p>
+<ul>
+  <li><strong>VaR 严重低估风险</strong>：正态 VaR 会低估尾部损失 2-5 倍</li>
+  <li><strong>期权定价偏差</strong>：BS 模型低估深度虚值期权价格（波动率微笑的来源）</li>
+  <li><strong>回测过于乐观</strong>：蒙特卡洛模拟用正态抽样，永远模拟不出真实的极端事件</li>
+  <li><strong>仓位过大</strong>：Kelly公式在肥尾下需要更保守的调整</li>
+</ul>
+</div>
+
+<div class="en">
+<h2>🇺🇸 English Version</h2>
+
+<h3>1. The Beautiful Lie of Normal Distribution</h3>
+<p>Almost every introductory finance textbook assumes asset returns follow a normal (Gaussian) distribution. Why? Because it makes the math elegant — mean and variance fully describe it, VaR has a simple formula, and Black-Scholes rests on this foundation.</p>
+
+<p>But reality is brutal:</p>
+<ul>
+  <li><strong>1987 Black Monday</strong>: Dow dropped 22.6% in one day — roughly a <strong>25σ event</strong> under normality, probability ~10^(-135).</li>
+  <li><strong>October 2008</strong>: VIX spiked from 20 to 80, multiple "impossible" daily drops.</li>
+  <li><strong>March 2020</strong>: S&P 500 crashed 34% in one month with several -7%+ days.</li>
+</ul>
+
+<p>These events are "impossible" under normality, yet they happen repeatedly.</p>
+
+<div class="warning">
+<strong>⚠️ Taleb's Warning</strong>: In the 3rd edition (2025) of "Statistical Consequences of Fat Tails," Taleb emphasizes that under fat-tailed distributions, sample mean and variance converge so slowly that traditional statistical inference essentially breaks down. 1000 days of data can be overturned by a single extreme event on day 1001.
+</div>
+
+<h3>2. Four Moments: Mean, Variance, Skewness, Kurtosis</h3>
+
+<p><strong>Skewness</strong> — asymmetry of the distribution:</p>
+<ul>
+  <li>Skew = 0: symmetric (normal)</li>
+  <li>Skew < 0: <strong>left-skewed</strong> (negative), longer left tail → crashes more common than rallies</li>
+  <li>Skew > 0: <strong>right-skewed</strong> (positive), longer right tail</li>
+</ul>
+<p>US equity returns are typically <strong>negatively skewed</strong> — "up by the stairs, down by the elevator."</p>
+
+<p><strong>Kurtosis</strong> — tail thickness:</p>
+<ul>
+  <li>Normal distribution kurtosis = 3 (excess kurtosis = 0)</li>
+  <li><strong>Leptokurtic</strong> (peaked, fat-tailed): kurtosis > 3</li>
+  <li><strong>Platykurtic</strong> (flat, thin-tailed): kurtosis < 3</li>
+</ul>
+<p>Financial data is almost always leptokurtic. S&P 500 daily returns typically show excess kurtosis of 5-20, meaning extreme events occur many times more frequently than Gaussian models predict.</p>
+
+<h3>3. Why Fat Tails Exist</h3>
+<ul>
+  <li><strong>Volatility Clustering</strong>: Large moves follow large moves (GARCH effect).</li>
+  <li><strong>Leverage Effect</strong>: Volatility rises on declines → negative skewness.</li>
+  <li><strong>Herding</strong>: Panic selling drives correlations to 1.</li>
+  <li><strong>Liquidity Evaporation</strong>: Bids disappear in extremes, causing gaps.</li>
+  <li><strong>Nonlinear Feedback</strong>: Stop-losses trigger cascading sells.</li>
+</ul>
+
+<h3>4. Alternative Distributions</h3>
+<ul>
+  <li><strong>Student's t</strong>: Most popular; degrees-of-freedom controls tail thickness.</li>
+  <li><strong>Stable (Lévy)</strong>: Mandelbrot (1963); allows infinite variance.</li>
+  <li><strong>Mixture of Gaussians</strong>: Blend 2+ normals to fit fat tails.</li>
+  <li><strong>GEV (Generalized Extreme Value)</strong>: For extreme value modeling.</li>
+</ul>
+
+<h3>5. Practical Consequences</h3>
+<ul>
+  <li><strong>VaR underestimates risk</strong> by 2-5x under Gaussian assumption</li>
+  <li><strong>Option pricing errors</strong>: BS underprices deep OTM options (volatility smile)</li>
+  <li><strong>Backtesting is too optimistic</strong>: Gaussian Monte Carlo can't generate real extremes</li>
+  <li><strong>Position sizing too aggressive</strong>: Kelly criterion needs fat-tail adjustments</li>
+</ul>
+</div>
+</div>
+
+<h2>📐 数学公式 / Key Formulas</h2>
+
+<div class="formula">
+<strong>偏度 / Skewness:</strong><br>
+S = E[(X - μ)³] / σ³ = (1/n) Σ [(xᵢ - x̄) / s]³<br><br>
+
+<strong>峰度 / Kurtosis:</strong><br>
+K = E[(X - μ)⁴] / σ⁴ = (1/n) Σ [(xᵢ - x̄) / s]⁴<br><br>
+
+<strong>超额峰度 / Excess Kurtosis:</strong><br>
+κ = K - 3 &nbsp;&nbsp;(normal distribution: κ = 0)<br><br>
+
+<strong>Jarque-Bera 正态性检验:</strong><br>
+JB = (n/6) × [S² + (1/4)(K - 3)²]<br>
+H₀: 数据服从正态分布。JB ~ χ²(2)。若 JB > 5.99 (α=0.05)，拒绝正态假设。<br><br>
+
+<strong>Student's t 分布 PDF (ν = 自由度):</strong><br>
+f(x) = Γ((ν+1)/2) / [√(νπ) × Γ(ν/2)] × (1 + x²/ν)^(-(ν+1)/2)<br>
+ν → ∞ 时趋近正态分布；ν ≤ 4 时方差趋近无穷。
+</div>
+
+<h2>💻 Python 实战 / Code</h2>
+
+<pre class="code">
+import numpy as np
+import pandas as pd
+from scipy import stats
+import yfinance as yf
+
+# 1. 下载真实数据
+spy = yf.download("SPY", start="2020-01-01", end="2026-02-01")
+returns = spy["Adj Close"].pct_change().dropna()
+
+# 2. 计算四大矩
+mean = returns.mean()
+std = returns.std()
+skew = returns.skew()
+kurt = returns.kurtosis()  # pandas 默认返回超额峰度
+
+print(f"均值 (Mean):       {mean:.6f} ({mean*252:.2%} annualized)")
+print(f"标准差 (Std):      {std:.6f} ({std*np.sqrt(252):.2%} annualized)")
+print(f"偏度 (Skewness):   {skew:.4f}")
+print(f"超额峰度 (Excess Kurtosis): {kurt:.4f}")
+
+# 3. Jarque-Bera 正态性检验
+jb_stat, jb_pvalue = stats.jarque_bera(returns)
+print(f"\nJarque-Bera 统计量: {jb_stat:.2f}")
+print(f"P-value: {jb_pvalue:.2e}")
+print(f"正态分布? {'是' if jb_pvalue > 0.05 else '否 ❌ 拒绝正态假设!'}")
+
+# 4. 对比：正态分布 vs 实际极端事件
+# 找出所有超过 3σ 的事件
+threshold = 3 * std
+extreme_days = returns[abs(returns) > threshold]
+n_extreme = len(extreme_days)
+expected_normal = len(returns) * 2 * stats.norm.sf(3)  # 两尾
+
+print(f"\n--- 极端事件分析 ---")
+print(f"实际 |r| > 3σ 的天数: {n_extreme}")
+print(f"正态分布预期天数:     {expected_normal:.1f}")
+print(f"实际/预期比率:        {n_extreme/expected_normal:.1f}x ← 肥尾!")
+
+# 5. 拟合 Student's t 分布
+df_t, loc_t, scale_t = stats.t.fit(returns)
+print(f"\nStudent's t 拟合自由度: {df_t:.2f}")
+print(f"(越小 = 尾部越厚; 正态对应 ν → ∞)")
+
+# 6. QQ-Plot 数值版（如果在终端）
+theoretical_q = np.percentile(np.random.normal(0, std, 100000), 
+                              [0.1, 1, 5, 95, 99, 99.9])
+actual_q = np.percentile(returns, [0.1, 1, 5, 95, 99, 99.9])
+
+print(f"\n--- QQ对比 (理论 vs 实际) ---")
+for p, tq, aq in zip([0.1, 1, 5, 95, 99, 99.9], theoretical_q, actual_q):
+    print(f"  {p:5.1f}th percentile: 理论 {tq:+.4f}  实际 {aq:+.4f}  "
+          f"{'← 尾部更极端!' if abs(aq) > abs(tq)*1.2 else ''}")
+</pre>
+
+<div class="example">
+<strong>🔍 典型输出示例 (SPY 2020-2026):</strong><br>
+偏度 ≈ -0.6 到 -1.0（负偏，左尾更厚）<br>
+超额峰度 ≈ 10-20（严重肥尾）<br>
+JB P-value ≈ 0.00（彻底拒绝正态假设）<br>
+实际极端事件 ≈ 正态预期的 5-15 倍<br>
+t 分布自由度 ≈ 3-5（远离正态的 ∞）
+</div>
+
+<h2>🔗 知识网络 / Knowledge Graph</h2>
+<div class="insight">
+<p><strong>与前几天的联系：</strong></p>
+<ul>
+  <li><strong>Day 2 (数据清洗)</strong>：清洗数据时不能简单删除极端值，因为那可能是真实的肥尾事件，不是错误数据。</li>
+  <li><strong>Day 3 (收益率与波动率)</strong>：用 log returns 可以略微减轻肥尾（加法性质），但不能消除。波动率聚集是肥尾的核心成因之一。</li>
+  <li><strong>预告 Day 5 (时间序列)</strong>：ADF 检验和自相关分析也受肥尾影响。我们需要稳健的统计方法。</li>
+  <li><strong>预告 Day 25 (VaR/CVaR)</strong>：今天的知识直接影响风险度量——正态 VaR vs 历史模拟 vs t-分布 VaR。</li>
+</ul>
+</div>
+
+<h2>💭 思考题 / Think About It</h2>
+<div class="insight">
+<p><strong>如果你正在构建一个量化策略的回测框架，用蒙特卡洛模拟来估计策略的最大回撤分布。你会选择哪种分布来生成模拟收益率？</strong></p>
+<p><strong>If you're building a Monte Carlo simulation for strategy drawdown estimation, which distribution would you use for generating synthetic returns, and why?</strong></p>
+<p>提示：考虑 Student's t（自由度从真实数据估计）、Block Bootstrap（保留时间序列结构）、和 GARCH + t 创新（同时捕捉聚集性和肥尾）。各有什么优劣？</p>
+</div>
+
+<div class="references">
+<h2>📖 参考文献 / References</h2>
+<ul>
+  <li>Taleb, N.N. (2025). <em>Statistical Consequences of Fat Tails</em>, 3rd Edition. arXiv:2001.10488</li>
+  <li>Mandelbrot, B. (1963). "The Variation of Certain Speculative Prices." <em>Journal of Business</em>, 36(4), 394-419.</li>
+  <li>Cont, R. (2001). "Empirical Properties of Asset Returns: Stylized Facts and Statistical Issues." <em>Quantitative Finance</em>, 1, 223-236.</li>
+  <li>Rachev, S.T. et al. (2005). <em>Fat-Tailed and Skewed Asset Return Distributions</em>. Wiley.</li>
+  <li>McNeil, A.J., Frey, R., & Embrechts, P. (2015). <em>Quantitative Risk Management</em>, 2nd Ed. Princeton University Press.</li>
+  <li>López de Prado, M. (2018). <em>Advances in Financial Machine Learning</em>. Wiley. Chapter 5 — Fractional Differentiation.</li>
+</ul>
+</div>
+
+</body>
+</html>

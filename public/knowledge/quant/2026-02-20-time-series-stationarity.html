@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-20 — 时间序列基础：平稳性、自相关、ADF 检验</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2980b9; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; overflow-x: auto; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; line-height: 1.5; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .key-concept { background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50; margin: 15px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f2f2f2; }
+    .tag { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 4px; font-size: 13px; margin: 2px; }
+  </style>
+</head>
+<body>
+
+<h1>📈 Day 5 — 时间序列基础：平稳性、自相关、ADF 检验</h1>
+<p><strong>Time Series Fundamentals: Stationarity, Autocorrelation & the ADF Test</strong></p>
+<p>2026-02-20 | Phase 1: Foundations | <span class="tag">时间序列</span> <span class="tag">平稳性</span> <span class="tag">ADF</span> <span class="tag">自相关</span></p>
+
+<hr>
+
+<div class="bilingual">
+<div class="zh">
+<h2>一、为什么量化交易必须理解时间序列？</h2>
+<p>量化交易的核心假设：<strong>历史模式会在未来重复</strong>。但这个假设只在数据具有某种"稳定性"时才成立。如果一个时间序列的统计特征（均值、方差）不断变化，那么你在历史数据上发现的任何规律都可能是海市蜃楼。</p>
+<p>这就是<strong>平稳性（Stationarity）</strong>如此重要的原因——它是几乎所有量化模型的前置条件。</p>
+</div>
+<div class="en">
+<h2>I. Why Must Quant Traders Understand Time Series?</h2>
+<p>The core assumption in quant trading: <strong>historical patterns repeat</strong>. But this only holds when data has some form of "stability." If a time series' statistical properties (mean, variance) keep shifting, any pattern you find in historical data may be a mirage.</p>
+<p>That's why <strong>stationarity</strong> matters so much—it's a prerequisite for nearly every quantitative model.</p>
+</div>
+</div>
+
+<h2>二、平稳性的三个层次 / Three Levels of Stationarity</h2>
+
+<div class="bilingual">
+<div class="zh">
+<h3>1. 严格平稳（Strict Stationarity）</h3>
+<p>联合分布不随时间平移而改变。数学上很美但实际中几乎无法验证。</p>
+
+<h3>2. 弱平稳 / 协方差平稳（Weak/Covariance Stationarity）</h3>
+<p><strong>这是量化中最常用的定义：</strong></p>
+<ul>
+<li>均值 E[Yₜ] = μ（常数，不随 t 变化）</li>
+<li>方差 Var(Yₜ) = σ²（常数）</li>
+<li>自协方差 Cov(Yₜ, Yₜ₊ₖ) = γ(k)（只依赖于滞后期 k，不依赖于 t）</li>
+</ul>
+
+<h3>3. 趋势平稳 vs 差分平稳</h3>
+<p><strong>趋势平稳</strong>：去掉确定性趋势后平稳（Yₜ = α + βt + εₜ）</p>
+<p><strong>差分平稳</strong>：需要差分才能变平稳（大多数金融时间序列属于此类）</p>
+</div>
+<div class="en">
+<h3>1. Strict Stationarity</h3>
+<p>Joint distribution is invariant under time shifts. Mathematically elegant but nearly impossible to verify.</p>
+
+<h3>2. Weak/Covariance Stationarity</h3>
+<p><strong>The definition most used in quant:</strong></p>
+<ul>
+<li>Mean E[Yₜ] = μ (constant)</li>
+<li>Variance Var(Yₜ) = σ² (constant)</li>
+<li>Autocovariance Cov(Yₜ, Yₜ₊ₖ) = γ(k) (depends only on lag k)</li>
+</ul>
+
+<h3>3. Trend-Stationary vs Difference-Stationary</h3>
+<p><strong>Trend-stationary</strong>: Stationary after removing deterministic trend</p>
+<p><strong>Difference-stationary</strong>: Requires differencing (most financial series)</p>
+</div>
+</div>
+
+<div class="key-concept">
+<strong>🔑 关键直觉 / Key Intuition：</strong> 股票<strong>价格</strong>几乎总是非平稳的（随机游走），但<strong>收益率</strong>通常是平稳的。这就是为什么 Day 3 我们强调要用 returns 而非 prices 做分析。
+</div>
+
+<h2>三、随机游走与单位根 / Random Walk & Unit Root</h2>
+
+<div class="formula">
+<strong>随机游走模型 / Random Walk:</strong><br>
+Yₜ = Yₜ₋₁ + εₜ , where εₜ ~ WN(0, σ²)<br><br>
+等价写法 / Equivalent: Yₜ = Y₀ + Σᵢ₌₁ᵗ εᵢ<br><br>
+<strong>性质 / Properties:</strong><br>
+E[Yₜ] = Y₀ (常数 ✓)<br>
+Var(Yₜ) = t·σ² (随 t 增长 ✗ — 非平稳!)<br><br>
+<strong>带漂移的随机游走 / Random Walk with Drift:</strong><br>
+Yₜ = μ + Yₜ₋₁ + εₜ<br>
+E[Yₜ] = Y₀ + μt (均值也不恒定了)
+</div>
+
+<div class="bilingual">
+<div class="zh">
+<h3>单位根问题</h3>
+<p>考虑 AR(1) 模型：Yₜ = φYₜ₋₁ + εₜ</p>
+<ul>
+<li>|φ| &lt; 1：平稳，均值回归 → 可以做 mean reversion 策略</li>
+<li>φ = 1：单位根，随机游走 → <strong>不平稳</strong></li>
+<li>|φ| > 1：爆炸过程 → 现实中罕见</li>
+</ul>
+<p><strong>检测是否存在单位根，就是检测平稳性的关键。</strong></p>
+</div>
+<div class="en">
+<h3>The Unit Root Problem</h3>
+<p>Consider AR(1): Yₜ = φYₜ₋₁ + εₜ</p>
+<ul>
+<li>|φ| &lt; 1: Stationary, mean-reverting → can trade mean reversion</li>
+<li>φ = 1: Unit root, random walk → <strong>non-stationary</strong></li>
+<li>|φ| > 1: Explosive → rare in practice</li>
+</ul>
+<p><strong>Testing for a unit root is the key to testing stationarity.</strong></p>
+</div>
+</div>
+
+<h2>四、自相关函数 ACF & PACF / Autocorrelation</h2>
+
+<div class="formula">
+<strong>自相关函数 (ACF) / Autocorrelation Function:</strong><br>
+ρ(k) = Cov(Yₜ, Yₜ₊ₖ) / Var(Yₜ) = γ(k) / γ(0)<br><br>
+
+<strong>偏自相关函数 (PACF) / Partial Autocorrelation Function:</strong><br>
+φₖₖ = Corr(Yₜ, Yₜ₊ₖ | Yₜ₊₁, ..., Yₜ₊ₖ₋₁)<br>
+（控制中间变量后的"纯"相关性 / "pure" correlation after controlling intermediate variables）
+</div>
+
+<div class="bilingual">
+<div class="zh">
+<h3>ACF/PACF 的量化交易含义</h3>
+<table>
+<tr><th>模式</th><th>ACF 特征</th><th>PACF 特征</th><th>交易含义</th></tr>
+<tr><td>白噪声</td><td>全部在置信区间内</td><td>全部在置信区间内</td><td>无可预测性 → 不要交易</td></tr>
+<tr><td>AR(p) 过程</td><td>指数衰减或振荡衰减</td><td>p 阶后截断</td><td>短期均值回归或动量</td></tr>
+<tr><td>MA(q) 过程</td><td>q 阶后截断</td><td>衰减</td><td>冲击有限持续 → 事件驱动</td></tr>
+<tr><td>随机游走</td><td>缓慢线性衰减</td><td>一阶显著</td><td>非平稳 → 需要差分</td></tr>
+</table>
+</div>
+<div class="en">
+<h3>ACF/PACF Trading Implications</h3>
+<table>
+<tr><th>Pattern</th><th>ACF</th><th>PACF</th><th>Trading Implication</th></tr>
+<tr><td>White Noise</td><td>All within CI</td><td>All within CI</td><td>Unpredictable → don't trade</td></tr>
+<tr><td>AR(p)</td><td>Exponential/oscillating decay</td><td>Cuts off after p</td><td>Short-term mean reversion or momentum</td></tr>
+<tr><td>MA(q)</td><td>Cuts off after q</td><td>Decays</td><td>Limited shock duration → event-driven</td></tr>
+<tr><td>Random Walk</td><td>Slow linear decay</td><td>Significant at lag 1</td><td>Non-stationary → difference first</td></tr>
+</table>
+</div>
+</div>
+
+<div class="warning">
+<strong>⚠️ 常见错误 / Common Mistake：</strong>对非平稳序列计算 ACF 会得到"虚假相关"。ACF 缓慢衰减不代表"长记忆"，可能只是序列不平稳。<strong>永远先检验平稳性！</strong>
+</div>
+
+<h2>五、ADF 检验详解 / The Augmented Dickey-Fuller Test</h2>
+
+<div class="bilingual">
+<div class="zh">
+<h3>从 DF 到 ADF</h3>
+<p>原始 Dickey-Fuller 检验基于：</p>
+<p style="font-family: monospace;">ΔYₜ = (φ-1)Yₜ₋₁ + εₜ = δYₜ₋₁ + εₜ</p>
+<p>H₀: δ = 0 (存在单位根，非平稳)<br>
+H₁: δ &lt; 0 (平稳)</p>
+<p>问题：原始 DF 假设误差项是白噪声，但现实中误差可能自相关。<strong>ADF 通过添加滞后差分项来解决</strong>：</p>
+</div>
+<div class="en">
+<h3>From DF to ADF</h3>
+<p>Original Dickey-Fuller test is based on:</p>
+<p style="font-family: monospace;">ΔYₜ = δYₜ₋₁ + εₜ</p>
+<p>H₀: δ = 0 (unit root, non-stationary)<br>
+H₁: δ &lt; 0 (stationary)</p>
+<p>Problem: Original DF assumes white noise errors. Reality has autocorrelated errors. <strong>ADF fixes this by adding lagged differences</strong>:</p>
+</div>
+</div>
+
+<div class="formula">
+<strong>ADF 回归方程 / ADF Regression:</strong><br><br>
+ΔYₜ = α + βt + δYₜ₋₁ + Σᵢ₌₁ᵖ γᵢΔYₜ₋ᵢ + εₜ<br><br>
+其中 / where:<br>
+- α = 截距/常数项 (intercept/drift)<br>
+- βt = 时间趋势项 (time trend, optional)<br>
+- δYₜ₋₁ = 单位根检验项 (unit root test term)<br>
+- Σ γᵢΔYₜ₋ᵢ = 滞后差分项，消除残差自相关 (lagged differences to remove autocorrelation)<br>
+- p = 滞后阶数 (lag order, typically chosen by AIC/BIC)<br><br>
+
+<strong>检验统计量 / Test Statistic:</strong><br>
+ADF stat = δ̂ / SE(δ̂)<br>
+注意：不服从标准 t 分布！使用 Dickey-Fuller 临界值表<br>
+(Does NOT follow standard t-distribution! Uses DF critical value tables)
+</div>
+
+<div class="key-concept">
+<strong>🔑 三种 ADF 模型规格 / Three ADF Specifications:</strong><br><br>
+1. <strong>无常数无趋势</strong> (None): ΔYₜ = δYₜ₋₁ + Σ γᵢΔYₜ₋ᵢ + εₜ<br>
+2. <strong>有常数无趋势</strong> (Constant): ΔYₜ = α + δYₜ₋₁ + Σ γᵢΔYₜ₋ᵢ + εₜ — <strong>最常用</strong><br>
+3. <strong>有常数有趋势</strong> (Constant + Trend): ΔYₜ = α + βt + δYₜ₋₁ + Σ γᵢΔYₜ₋ᵢ + εₜ<br><br>
+金融数据通常用第 2 种。如果你怀疑有确定性趋势（如 GDP），用第 3 种。
+</div>
+
+<h2>六、Python 实战 / Python Implementation</h2>
+
+<pre class="code">
+import numpy as np
+import pandas as pd
+import yfinance as yf
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller, acf, pacf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+# ============================================
+# 1. 获取数据 / Fetch Data
+# ============================================
+spy = yf.download('SPY', start='2020-01-01', end='2026-02-01')
+prices = spy['Close']
+returns = prices.pct_change().dropna()
+log_returns = np.log(prices / prices.shift(1)).dropna()
+
+# ============================================
+# 2. ADF 检验函数 / ADF Test Function
+# ============================================
+def run_adf_test(series, name="Series"):
+    """运行 ADF 检验并打印详细结果"""
+    result = adfuller(series.dropna(), autolag='AIC')
+    
+    print(f"\n{'='*50}")
+    print(f"ADF Test for: {name}")
+    print(f"{'='*50}")
+    print(f"ADF Statistic:  {result[0]:.6f}")
+    print(f"p-value:        {result[1]:.6f}")
+    print(f"Lags Used:      {result[2]}")
+    print(f"Observations:   {result[3]}")
+    print(f"Critical Values:")
+    for key, val in result[4].items():
+        marker = " ← REJECT H₀" if result[0] < val else ""
+        print(f"  {key}: {val:.4f}{marker}")
+    
+    if result[1] < 0.05:
+        print(f"\n✅ 结论: {name} 是平稳的 (p={result[1]:.4f} < 0.05)")
+    else:
+        print(f"\n❌ 结论: {name} 是非平稳的 (p={result[1]:.4f} >= 0.05)")
+    
+    return result
+
+# ============================================
+# 3. 对价格和收益率分别检验
+# ============================================
+price_result = run_adf_test(prices, "SPY Prices")
+# 典型输出: ADF stat ≈ -1.2, p ≈ 0.65 → 非平稳
+
+return_result = run_adf_test(returns, "SPY Returns")
+# 典型输出: ADF stat ≈ -15.3, p ≈ 0.00 → 平稳！
+
+log_return_result = run_adf_test(log_returns, "SPY Log Returns")
+# 同样平稳
+
+# ============================================
+# 4. ACF/PACF 可视化 / Visualization
+# ============================================
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# 价格的 ACF — 缓慢衰减 = 非平稳信号
+plot_acf(prices.dropna(), lags=40, ax=axes[0, 0], title='ACF: SPY Prices (Non-Stationary)')
+
+# 收益率的 ACF — 快速衰减 = 平稳信号  
+plot_acf(returns.dropna(), lags=40, ax=axes[0, 1], title='ACF: SPY Returns (Stationary)')
+
+# 收益率的 PACF
+plot_pacf(returns.dropna(), lags=40, ax=axes[1, 0], title='PACF: SPY Returns')
+
+# 收益率平方的 ACF — 波动率聚集!
+plot_acf(returns.dropna()**2, lags=40, ax=axes[1, 1], 
+         title='ACF: SPY Returns² (Volatility Clustering)')
+
+plt.tight_layout()
+plt.savefig('acf_pacf_analysis.png', dpi=150)
+plt.show()
+
+# ============================================
+# 5. 实际应用：配对交易平稳性检验
+#    Pairs Trading: Test Spread Stationarity
+# ============================================
+# 下载两只高度相关的股票
+data = yf.download(['KO', 'PEP'], start='2020-01-01', end='2026-02-01')
+ko = data['Close']['KO']
+pep = data['Close']['PEP']
+
+# 简单价差 — 通常不平稳
+simple_spread = ko - pep
+run_adf_test(simple_spread, "KO - PEP Simple Spread")
+
+# OLS 对冲比率 → 协整价差
+from sklearn.linear_model import LinearRegression
+model = LinearRegression()
+model.fit(pep.values.reshape(-1, 1), ko.values)
+hedge_ratio = model.coef_[0]
+print(f"\nHedge Ratio (β): {hedge_ratio:.4f}")
+
+# 协整价差
+coint_spread = ko - hedge_ratio * pep
+run_adf_test(coint_spread, f"KO - {hedge_ratio:.3f}*PEP Cointegrated Spread")
+# 如果平稳 → 可以做配对交易！
+
+# ============================================
+# 6. KPSS 检验（互补）/ KPSS Test
+# ============================================
+from statsmodels.tsa.stattools import kpss
+
+def run_kpss_test(series, name="Series"):
+    """KPSS 与 ADF 互补：H₀ 是平稳（相反！）"""
+    stat, p, lags, crit = kpss(series.dropna(), regression='c', nlags='auto')
+    print(f"\nKPSS Test for: {name}")
+    print(f"KPSS Stat: {stat:.4f}, p-value: {p:.4f}")
+    if p > 0.05:
+        print(f"✅ 不能拒绝平稳性假设")
+    else:
+        print(f"❌ 拒绝平稳性假设 → 非平稳")
+
+# ADF + KPSS 联合判断（最佳实践）
+# ADF 平稳 + KPSS 平稳 → 确认平稳 ✅
+# ADF 非平稳 + KPSS 非平稳 → 确认非平稳 ❌
+# 两者矛盾 → 需要更多分析 ⚠️
+run_kpss_test(returns, "SPY Returns")
+run_kpss_test(prices, "SPY Prices")
+</pre>
+
+<h2>七、量化交易中的实际应用 / Practical Applications</h2>
+
+<div class="bilingual">
+<div class="zh">
+<h3>应用 1：配对交易前置检验</h3>
+<p>在做 Pairs Trading（Day 16 会详细讲）之前，<strong>必须</strong>先用 ADF 检验确认价差序列的平稳性。如果价差不平稳，均值回归策略将失败。</p>
+
+<h3>应用 2：特征工程</h3>
+<p>喂给 ML 模型的特征<strong>必须是平稳的</strong>。常见转换：</p>
+<ul>
+<li>价格 → 收益率（一阶差分）</li>
+<li>成交量 → 成交量变化率</li>
+<li>波动率 → 波动率比率（当前/历史）</li>
+<li>市盈率 → z-score 标准化</li>
+</ul>
+
+<h3>应用 3：策略信号验证</h3>
+<p>如果你的 alpha 信号是非平稳的，它可能捕捉的是趋势而非真实 alpha。差分或去趋势后再评估。</p>
+
+<h3>应用 4：风险模型</h3>
+<p>VaR 和波动率模型都假设收益率平稳。在市场 regime change 期间（如 COVID crash），这个假设被打破，模型会严重低估风险。</p>
+</div>
+<div class="en">
+<h3>App 1: Pairs Trading Pre-check</h3>
+<p>Before Pairs Trading (covered in Day 16), you <strong>must</strong> confirm spread stationarity via ADF. Non-stationary spread = failed mean reversion strategy.</p>
+
+<h3>App 2: Feature Engineering</h3>
+<p>Features fed to ML models <strong>must be stationary</strong>. Common transforms:</p>
+<ul>
+<li>Price → Returns (first difference)</li>
+<li>Volume → Volume change rate</li>
+<li>Volatility → Volatility ratio (current/historical)</li>
+<li>P/E ratio → z-score normalization</li>
+</ul>
+
+<h3>App 3: Signal Validation</h3>
+<p>If your alpha signal is non-stationary, it might capture trend, not true alpha. Difference or detrend before evaluating.</p>
+
+<h3>App 4: Risk Models</h3>
+<p>VaR and volatility models assume stationary returns. During regime changes (e.g., COVID crash), this assumption breaks, and models severely underestimate risk.</p>
+</div>
+</div>
+
+<div class="insight">
+<strong>💡 进阶洞察 / Advanced Insight：</strong><br><br>
+<strong>ADF vs KPSS 联合检验策略：</strong><br>
+ADF 的 H₀ 是"非平稳"，KPSS 的 H₀ 是"平稳"。单独使用任何一个都可能犯错。<br>
+最佳实践是两者同时使用：<br><br>
+• ADF reject + KPSS not reject → <strong>确认平稳</strong> ✅<br>
+• ADF not reject + KPSS reject → <strong>确认非平稳</strong> ❌<br>
+• 两者都 reject → 可能是趋势平稳 ⚠️<br>
+• 两者都不 reject → 需要更多数据或其他检验 ⚠️<br><br>
+参考: Kwiatkowski, Phillips, Schmidt, Shin (1992)，这也是 Marcos López de Prado 在《Advances in Financial Machine Learning》中推荐的方法。
+</div>
+
+<h2>八、与前几天的知识网络 / Knowledge Graph</h2>
+
+<div class="key-concept">
+<strong>知识连接 / Connections:</strong><br><br>
+📊 <strong>Day 3 (收益率)</strong> → 今天解释了<em>为什么</em>用收益率：因为收益率通常是平稳的！<br>
+📊 <strong>Day 4 (Fat Tails)</strong> → 即使平稳的收益率序列也可能有 fat tails，这影响 ADF 检验的可靠性<br>
+📊 <strong>Day 2 (数据清洗)</strong> → 数据中的错误（如缺失值、异常值）会严重影响平稳性检验<br>
+🔮 <strong>Day 6 (回测框架)</strong> → 需要平稳性检验来验证策略假设<br>
+🔮 <strong>Day 16 (Pairs Trading)</strong> → ADF/协整检验是配对交易的核心工具<br>
+🔮 <strong>Day 33 (特征工程)</strong> → 所有输入 ML 的特征都需要平稳性转换
+</div>
+
+<h2>九、参考文献 / References</h2>
+
+<div class="references">
+<ol>
+<li>Hamilton, J.D. (1994). <em>Time Series Analysis</em>. Princeton University Press. — 时间序列分析的圣经</li>
+<li>Tsay, R.S. (2010). <em>Analysis of Financial Time Series</em>, 3rd ed. Wiley. — 金融时间序列专著</li>
+<li>López de Prado, M. (2018). <em>Advances in Financial Machine Learning</em>. Wiley. — Ch. 5: Fractional Differentiation</li>
+<li>Chan, E. (2013). <em>Algorithmic Trading</em>. Wiley. — Ch. 2: Mean Reversion & Stationarity Tests</li>
+<li>Dickey, D.A. & Fuller, W.A. (1979). "Distribution of the Estimators for Autoregressive Time Series With a Unit Root." <em>JASA</em>, 74(366), 427-431.</li>
+<li>Kwiatkowski, D., Phillips, P.C.B., Schmidt, P. & Shin, Y. (1992). "Testing the null hypothesis of stationarity." <em>Journal of Econometrics</em>, 54(1-3), 159-178.</li>
+<li>Dil, A.R. (2025). "Testing for Time Series Stationarity: A Practical Guide to the Dickey-Fuller and Augmented Dickey-Fuller Tests." SSRN 5287311.</li>
+</ol>
+</div>
+
+<h2>十、思考题 / Think About It</h2>
+
+<div class="insight">
+<strong>💭 如果一个价差序列在 2020-2023 年通过了 ADF 检验（平稳），但在 2024-2025 年不再平稳，你的配对交易策略会发生什么？你如何设计一个"自适应"的平稳性监控系统来实时检测这种 regime change？</strong><br><br>
+<em>What if a spread passes the ADF test in 2020-2023 but becomes non-stationary in 2024-2025? What happens to your pairs trading strategy? How would you design an adaptive stationarity monitoring system to detect such regime changes in real-time?</em>
+</div>
+
+<hr>
+<p style="text-align: center; color: #888; font-size: 13px;">
+📚 Knowledge Agent | Quant Trading Series Day 5 | 2026-02-20<br>
+Phase 1: Foundations (5/7)
+</p>
+
+</body>
+</html>

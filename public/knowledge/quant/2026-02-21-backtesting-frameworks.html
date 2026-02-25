@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-21 - 回测框架入门：Backtrader vs Zipline vs QuantConnect</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2980b9; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; }
+    .code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .comparison-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .comparison-table th, .comparison-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    .comparison-table th { background: #2c3e50; color: white; }
+    .comparison-table tr:nth-child(even) { background: #f8f9fa; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin: 2px; }
+    .tag-green { background: #d4edda; color: #155724; }
+    .tag-red { background: #f8d7da; color: #721c24; }
+    .tag-blue { background: #cce5ff; color: #004085; }
+  </style>
+</head>
+<body>
+
+<h1>📈 Day 6 | 回测框架入门 — Backtrader / Zipline / QuantConnect</h1>
+<p><em>2026-02-21 | Phase 1: Foundations</em></p>
+
+<div class="bilingual">
+<div class="zh">
+<h2>🇨🇳 中文版</h2>
+
+<h3>为什么回测框架如此重要？</h3>
+<p>一个策略的好坏，不是拍脑袋决定的。回测（Backtesting）是量化交易的<strong>科学实验环节</strong>——你用历史数据模拟策略运行，观察它在真实市场条件下的表现。而回测框架，就是你的"实验室"。</p>
+
+<p>选错实验室，你可能得到错误的结论。选对实验室，你能快速迭代、发现问题、建立信心。</p>
+
+<h3>回测的核心架构</h3>
+<p>所有回测框架本质上都在做同一件事：</p>
+<ol>
+  <li><strong>数据引擎</strong>（Data Feed）：加载和管理历史价格数据</li>
+  <li><strong>策略引擎</strong>（Strategy）：定义买卖逻辑</li>
+  <li><strong>撮合引擎</strong>（Broker/Execution）：模拟订单执行、滑点、手续费</li>
+  <li><strong>分析引擎</strong>（Analyzer）：计算绩效指标</li>
+</ol>
+
+<p>区别在于<strong>事件驱动</strong>（Event-driven）vs <strong>向量化</strong>（Vectorized）两种范式：</p>
+
+<h3>事件驱动 vs 向量化</h3>
+<p><strong>事件驱动</strong>：逐 bar 推进，模拟真实交易流程。Backtrader、Zipline、QuantConnect 都属于此类。优点是贴近实盘，缺点是慢。</p>
+<p><strong>向量化</strong>：用 NumPy/Pandas 一次性计算所有信号，速度极快但容易引入 look-ahead bias。Vectorbt、自己写的 Pandas 脚本属于此类。</p>
+
+<h3>三大框架详解</h3>
+
+<h4>1. Backtrader 🐍</h4>
+<p>由 Daniel Rodriguez 创建的纯 Python 框架，以灵活性著称。</p>
+<ul>
+  <li><span class="tag tag-green">✅ 优点</span> 纯本地运行，完全掌控；API 设计 Pythonic；社区丰富，文档详尽；支持多数据源、多时间框架；内置大量技术指标</li>
+  <li><span class="tag tag-red">❌ 缺点</span> 维护已不活跃（作者 2020 年后基本停更）；没有内置数据源；实盘对接需要自己开发；大数据量时性能一般</li>
+  <li><span class="tag tag-blue">📋 适合</span> 快速原型验证、学习回测原理、个人研究</li>
+</ul>
+
+<h4>2. Zipline 📦</h4>
+<p>由 Quantopian 开发（现已关闭），是 Quantopian 平台的核心引擎。</p>
+<ul>
+  <li><span class="tag tag-green">✅ 优点</span> Pipeline API 非常适合因子研究；Alphalens/Pyfolio 生态完善；学术界广泛使用</li>
+  <li><span class="tag tag-red">❌ 缺点</span> Quantopian 2020 年关闭后维护困难；数据 bundle 配置复杂；依赖版本冲突频繁；zipline-reloaded 社区分支活跃度有限</li>
+  <li><span class="tag tag-blue">📋 适合</span> 因子研究、学术论文复现、与 Alphalens 配合做因子分析</li>
+</ul>
+
+<h4>3. QuantConnect (LEAN Engine) 🏢</h4>
+<p>开源的 LEAN 引擎 + 云平台，是目前最接近机构级别的零售方案。</p>
+<ul>
+  <li><span class="tag tag-green">✅ 优点</span> 免费高质量历史数据（美股、期权、期货、加密货币）；支持 Python 和 C#；云端运行，无需本地配置；Paper Trading → Live 一键切换；活跃维护，持续更新</li>
+  <li><span class="tag tag-red">❌ 缺点</span> API 学习曲线较陡（面向对象，类 C# 风格）；免费版有并发限制；本地部署 LEAN 需要 Docker；调试不如本地框架方便</li>
+  <li><span class="tag tag-blue">📋 适合</span> 认真做实盘的交易者、需要多资产类别的策略、团队协作</li>
+</ul>
+
+</div>
+<div class="en">
+<h2>🇺🇸 English Version</h2>
+
+<h3>Why Backtesting Frameworks Matter</h3>
+<p>A strategy's merit isn't determined by gut feeling. Backtesting is the <strong>scientific experimentation</strong> phase of quant trading — you simulate your strategy on historical data to observe how it would have performed under real market conditions. The framework is your "laboratory."</p>
+
+<p>Wrong lab → wrong conclusions. Right lab → fast iteration, problem discovery, and confidence building.</p>
+
+<h3>Core Architecture</h3>
+<p>All backtesting frameworks do the same four things:</p>
+<ol>
+  <li><strong>Data Engine</strong>: Load and manage historical price data</li>
+  <li><strong>Strategy Engine</strong>: Define buy/sell logic</li>
+  <li><strong>Execution Engine</strong>: Simulate order fills, slippage, commissions</li>
+  <li><strong>Analytics Engine</strong>: Calculate performance metrics</li>
+</ol>
+
+<p>The key distinction: <strong>Event-driven</strong> vs <strong>Vectorized</strong>.</p>
+
+<h3>Event-Driven vs Vectorized</h3>
+<p><strong>Event-driven</strong>: Process bar-by-bar, simulating real trading flow. Backtrader, Zipline, and QuantConnect are all event-driven. Realistic but slower.</p>
+<p><strong>Vectorized</strong>: Compute all signals at once with NumPy/Pandas. Fast but prone to look-ahead bias. Vectorbt and custom Pandas scripts fall here.</p>
+
+<h3>The Three Frameworks</h3>
+
+<h4>1. Backtrader 🐍</h4>
+<p>Created by Daniel Rodriguez, a pure Python framework known for flexibility.</p>
+<ul>
+  <li><span class="tag tag-green">✅ Pros</span> Fully local; Pythonic API; rich community; multi-data, multi-timeframe; built-in indicators</li>
+  <li><span class="tag tag-red">❌ Cons</span> Maintenance stalled (~2020); no built-in data; live trading needs DIY; performance bottlenecks at scale</li>
+  <li><span class="tag tag-blue">📋 Best for</span> Rapid prototyping, learning backtesting, personal research</li>
+</ul>
+
+<h4>2. Zipline 📦</h4>
+<p>Built by Quantopian (now defunct), the core engine behind their platform.</p>
+<ul>
+  <li><span class="tag tag-green">✅ Pros</span> Pipeline API excels at factor research; Alphalens/Pyfolio ecosystem; widely used in academia</li>
+  <li><span class="tag tag-red">❌ Cons</span> Maintenance challenges post-Quantopian; complex data bundle setup; dependency hell; zipline-reloaded community fork has limited activity</li>
+  <li><span class="tag tag-blue">📋 Best for</span> Factor research, academic paper replication, Alphalens integration</li>
+</ul>
+
+<h4>3. QuantConnect (LEAN) 🏢</h4>
+<p>Open-source LEAN engine + cloud platform — closest to institutional-grade for retail.</p>
+<ul>
+  <li><span class="tag tag-green">✅ Pros</span> Free quality data (stocks, options, futures, crypto); Python & C#; cloud-based; paper→live seamless; actively maintained</li>
+  <li><span class="tag tag-red">❌ Cons</span> Steeper learning curve (OOP, C#-style API); free tier concurrency limits; local LEAN needs Docker; debugging less convenient</li>
+  <li><span class="tag tag-blue">📋 Best for</span> Serious live traders, multi-asset strategies, team collaboration</li>
+</ul>
+
+</div>
+</div>
+
+<h2>📊 框架对比表 / Comparison Table</h2>
+<table class="comparison-table">
+  <tr>
+    <th>Feature</th>
+    <th>Backtrader</th>
+    <th>Zipline</th>
+    <th>QuantConnect</th>
+  </tr>
+  <tr>
+    <td>语言 / Language</td>
+    <td>Python</td>
+    <td>Python</td>
+    <td>Python, C#</td>
+  </tr>
+  <tr>
+    <td>架构 / Architecture</td>
+    <td>Event-driven</td>
+    <td>Event-driven</td>
+    <td>Event-driven</td>
+  </tr>
+  <tr>
+    <td>内置数据 / Built-in Data</td>
+    <td>❌</td>
+    <td>⚠️ Bundle system</td>
+    <td>✅ 丰富</td>
+  </tr>
+  <tr>
+    <td>实盘交易 / Live Trading</td>
+    <td>⚠️ 需插件</td>
+    <td>❌</td>
+    <td>✅ 原生支持</td>
+  </tr>
+  <tr>
+    <td>多资产 / Multi-asset</td>
+    <td>✅</td>
+    <td>⚠️ 主要美股</td>
+    <td>✅ 全品种</td>
+  </tr>
+  <tr>
+    <td>学习曲线 / Learning Curve</td>
+    <td>中等</td>
+    <td>中等</td>
+    <td>较陡</td>
+  </tr>
+  <tr>
+    <td>维护状态 / Maintenance</td>
+    <td>⚠️ 低活跃</td>
+    <td>⚠️ 社区分支</td>
+    <td>✅ 活跃</td>
+  </tr>
+  <tr>
+    <td>部署方式 / Deployment</td>
+    <td>本地</td>
+    <td>本地</td>
+    <td>云端 + 本地</td>
+  </tr>
+  <tr>
+    <td>开源 / Open Source</td>
+    <td>✅ GPLv3</td>
+    <td>✅ Apache 2.0</td>
+    <td>✅ Apache 2.0</td>
+  </tr>
+</table>
+
+<h2>💻 代码对比 / Code Comparison: SMA Crossover Strategy</h2>
+<p>同一个策略——双均线交叉，看三个框架的写法差异：</p>
+
+<h3>Backtrader</h3>
+<div class="code">import backtrader as bt
+
+class SmaCross(bt.Strategy):
+    params = dict(fast=10, slow=30)
+
+    def __init__(self):
+        sma_fast = bt.ind.SMA(period=self.p.fast)
+        sma_slow = bt.ind.SMA(period=self.p.slow)
+        self.crossover = bt.ind.CrossOver(sma_fast, sma_slow)
+
+    def next(self):
+        if self.crossover > 0:       # Golden cross
+            self.buy()
+        elif self.crossover < 0:     # Death cross
+            self.sell()
+
+# Run
+cerebro = bt.Cerebro()
+cerebro.addstrategy(SmaCross)
+data = bt.feeds.YahooFinanceCSVData(dataname='AAPL.csv')
+cerebro.adddata(data)
+cerebro.broker.setcash(100000)
+cerebro.broker.setcommission(commission=0.001)
+results = cerebro.run()
+cerebro.plot()</div>
+
+<h3>Zipline</h3>
+<div class="code">from zipline.api import order_target_percent, record, symbol
+from zipline import run_algorithm
+import pandas as pd
+
+def initialize(context):
+    context.asset = symbol('AAPL')
+    context.fast = 10
+    context.slow = 30
+
+def handle_data(context, data):
+    prices = data.history(context.asset, 'price', context.slow + 1, '1d')
+    sma_fast = prices[-context.fast:].mean()
+    sma_slow = prices.mean()
+
+    if sma_fast > sma_slow:
+        order_target_percent(context.asset, 1.0)
+    elif sma_fast < sma_slow:
+        order_target_percent(context.asset, 0.0)
+
+    record(sma_fast=sma_fast, sma_slow=sma_slow)
+
+result = run_algorithm(
+    start=pd.Timestamp('2020-01-01', tz='utc'),
+    end=pd.Timestamp('2025-12-31', tz='utc'),
+    initialize=initialize,
+    handle_data=handle_data,
+    capital_base=100000,
+    bundle='quandl'
+)</div>
+
+<h3>QuantConnect (LEAN)</h3>
+<div class="code">class SmaCrossAlgorithm(QCAlgorithm):
+    def initialize(self):
+        self.set_start_date(2020, 1, 1)
+        self.set_end_date(2025, 12, 31)
+        self.set_cash(100000)
+
+        self.spy = self.add_equity("AAPL", Resolution.DAILY)
+        self.sma_fast = self.sma("AAPL", 10, Resolution.DAILY)
+        self.sma_slow = self.sma("AAPL", 30, Resolution.DAILY)
+
+        # 设置佣金模型
+        self.spy.set_fee_model(ConstantFeeModel(1.0))
+
+    def on_data(self, data):
+        if not self.sma_slow.is_ready:
+            return
+
+        if self.sma_fast.current.value > self.sma_slow.current.value:
+            if not self.portfolio.invested:
+                self.set_holdings("AAPL", 1.0)
+        elif self.sma_fast.current.value < self.sma_slow.current.value:
+            if self.portfolio.invested:
+                self.liquidate("AAPL")</div>
+
+<div class="insight">
+<h3>💡 代码对比启示 / Code Comparison Insights</h3>
+<p><strong>Backtrader</strong>：最简洁，内置 CrossOver 指标一行搞定信号检测。但数据源需要自己准备。</p>
+<p><strong>Zipline</strong>：handle_data 模式直观，但需要手动计算均线。data.history() 是其独特优势——可以直接获取历史窗口。</p>
+<p><strong>QuantConnect</strong>：指标是对象（self.sma()），自动更新，不需手动计算。代码最"工程化"，但模板代码(boilerplate)也最多。</p>
+<p><strong>关键差异</strong>：注意 QuantConnect 的 <code>is_ready</code> 检查——这是避免 warm-up period 错误的好习惯，其他框架容易忽略这一点。</p>
+</div>
+
+<h2>📐 回测的数学基础 / Mathematical Foundation</h2>
+
+<div class="formula">
+<h4>策略收益计算 / Strategy Return Calculation</h4>
+<p>
+Portfolio Value: V(t) = V(t-1) × (1 + Σᵢ wᵢ(t) × rᵢ(t) - TC(t))<br><br>
+
+其中 / where:<br>
+  wᵢ(t) = 资产 i 在时间 t 的权重 / weight of asset i at time t<br>
+  rᵢ(t) = 资产 i 在时间 t 的收益率 / return of asset i at time t<br>
+  TC(t) = 交易成本 / transaction costs<br><br>
+
+交易成本模型 / Transaction Cost Model:<br>
+  TC(t) = Σᵢ |Δwᵢ(t)| × (commission + spread/2 + slippage)<br><br>
+
+滑点估算 / Slippage Estimation (Square-root model):<br>
+  Slippage ≈ σ × √(V_trade / ADV)<br>
+  σ = 日波动率 / daily volatility<br>
+  V_trade = 交易金额 / trade value<br>
+  ADV = 平均日成交额 / average daily volume in dollars
+</p>
+</div>
+
+<div class="warning">
+<h3>⚠️ 重要警告 / Critical Warning</h3>
+<p>今天我们只介绍框架的"怎么用"。<strong>明天 Day 7 才是重头戏</strong>——回测陷阱（Overfitting、Look-ahead Bias、Survivorship Bias）。</p>
+<p>在学会避免这些陷阱之前，请不要相信任何回测结果。一个在回测中年化 100% 的策略，99% 的概率是过拟合的产物。</p>
+<p>Today we cover the "how." <strong>Tomorrow (Day 7) is the real deal</strong> — backtesting pitfalls. Until you learn to avoid them, don't trust any backtest result. A strategy showing 100% annual returns in backtesting is 99% likely the product of overfitting.</p>
+</div>
+
+<h2>🎯 我的推荐路线 / My Recommended Path</h2>
+<div class="insight">
+<p><strong>初学者 / Beginners</strong>：从 Backtrader 开始。本地运行，快速反馈，Pythonic。理解事件驱动的本质。</p>
+<p><strong>因子研究 / Factor Research</strong>：用 Zipline + Alphalens。Pipeline API 是做横截面因子分析的利器。</p>
+<p><strong>认真做实盘 / Going Live</strong>：QuantConnect。数据质量、执行引擎、实盘部署一站式。</p>
+<p><strong>高频/自定义需求 / HFT/Custom</strong>：自己写。用 NumPy 做向量化回测，然后用 asyncio 做实盘。没有框架能满足极致需求。</p>
+<p><strong>2026 新选择 / 2026 Alternatives</strong>：关注 <code>vectorbt</code>（向量化，极快）和 <code>nautilus_trader</code>（Rust核心，高性能事件驱动）。</p>
+</div>
+
+<h2>📖 参考文献 / References</h2>
+<div class="references">
+<ul>
+  <li>Ernest P. Chan, <em>Quantitative Trading</em>, 2nd Ed (2021) — Chapter 3: Backtesting</li>
+  <li>Marcos López de Prado, <em>Advances in Financial Machine Learning</em> (2018) — Chapter 10-12: Backtesting methodology</li>
+  <li>Backtrader Documentation: <a href="https://www.backtrader.com/docu/">backtrader.com/docu</a></li>
+  <li>QuantConnect Documentation: <a href="https://www.quantconnect.com/docs">quantconnect.com/docs</a></li>
+  <li>Zipline-reloaded: <a href="https://github.com/stefan-jansen/zipline-reloaded">github.com/stefan-jansen/zipline-reloaded</a></li>
+  <li>Stefan Jansen, <em>Machine Learning for Algorithmic Trading</em>, 2nd Ed (2020) — Appendix: Backtesting frameworks</li>
+</ul>
+</div>
+
+<h2>🔗 知识网络 / Knowledge Graph</h2>
+<div class="insight">
+<p>Day 2 (OHLCV数据) → <strong>今天的数据引擎</strong>需要正确处理复权价格<br>
+Day 3 (收益率计算) → <strong>回测引擎</strong>的收益计算依赖 log returns vs simple returns 的选择<br>
+Day 4 (Fat Tails) → <strong>滑点模型</strong>在尾部事件中会严重低估实际成本<br>
+Day 5 (时间序列) → <strong>策略信号</strong>基于时间序列分析，平稳性决定策略类型<br>
+→ Day 7: 回测陷阱 — 今天的工具要和明天的方法论结合才有意义</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-19 - Latency vs Quality Tradeoffs in ML Systems</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.7; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+    h2 { color: #3c4043; margin-top: 35px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; }
+    .highlight { background: #fff3cd; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .highlight-blue { background: #d1ecf1; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .highlight-green { background: #d4edda; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .highlight-red { background: #f8d7da; padding: 12px 15px; border-radius: 8px; margin: 10px 0; }
+    .diagram { background: #f0f4f8; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; white-space: pre; font-size: 13px; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; font-weight: 600; }
+    .interview { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4caf50; }
+    .series-nav { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    .tag-latency { background: #ffcdd2; color: #c62828; }
+    .tag-quality { background: #c8e6c9; color: #2e7d32; }
+    .tag-cost { background: #fff9c4; color: #f57f17; }
+  </style>
+</head>
+<body>
+
+<h1>⚖️ Latency vs Quality Tradeoffs in ML Systems</h1>
+<p>📅 2026-02-19 | Phase 2.2 Day 5 | ML 系统设计要点系列</p>
+
+<div class="series-nav">
+  <strong>📚 Phase 2.2 系列导航：</strong><br>
+  Day 1: <a href="2026-02-15-ml-system-design-patterns.html">ML 通用架构模式 (7 Patterns)</a> |
+  Day 2: <a href="2026-02-16-feature-store-design.html">Feature Store 设计</a> |
+  Day 3: <a href="2026-02-17-model-serving-architecture.html">Model Serving 架构</a> |
+  Day 4: <a href="2026-02-18-ab-testing-ml-systems.html">A/B Testing for ML</a> |
+  <strong>Day 5: Latency vs Quality Tradeoffs ← 你在这里</strong>
+</div>
+
+<h2>📖 核心问题 / The Core Problem</h2>
+<div class="bilingual">
+  <div class="zh">
+    <p>ML 系统设计中最普遍的张力：<strong>更好的模型更慢，更快的模型更差</strong>。</p>
+    <p>这不仅是技术问题，更是产品问题。用户等 3 秒得到完美答案，和等 200ms 得到 90% 正确的答案，哪个更好？答案取决于场景。</p>
+    <p>今天我们建立一个系统化的框架来分析和做出这些权衡，把之前 4 天的所有组件串联起来。</p>
+  </div>
+  <div class="en">
+    <p>The most pervasive tension in ML system design: <strong>better models are slower, faster models are worse</strong>.</p>
+    <p>This isn't just technical — it's a product decision. A perfect answer in 3 seconds vs. a 90% correct answer in 200ms — which is better? It depends on the use case.</p>
+    <p>Today we build a systematic framework for analyzing and making these tradeoffs, connecting all components from the past 4 days.</p>
+  </div>
+</div>
+
+<h2>🏗️ 权衡三角 / The Tradeoff Triangle</h2>
+
+<div class="diagram">
+                    Quality (质量)
+                       /\
+                      /  \
+                     /    \
+                    /  ML  \
+                   / System \
+                  /  Design  \
+                 /____________\
+          Latency              Cost
+          (延迟)               (成本)
+
+  ┌─────────────────────────────────────────────┐
+  │  你最多优化两个。第三个必然受损。             │
+  │  You can optimize at most two.                │
+  │  The third will suffer.                       │
+  └─────────────────────────────────────────────┘
+
+  Real-time chat → Latency + Quality → 💰 高成本 (GPU fleet)
+  Batch analysis → Quality + Cost   → ⏱️ 高延迟 (overnight)
+  Edge device   → Latency + Cost   → 📉 质量下降 (small model)
+</div>
+
+<h2>🔧 六大权衡策略 / Six Tradeoff Strategies</h2>
+
+<h3>策略 1: Model Cascade (模型级联)</h3>
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>核心思想</strong>：先用小模型，不确定时升级到大模型。Google 2024 年提出的 Speculative Cascade 将此与 Speculative Decoding 结合。</p>
+    <p><strong>适用场景</strong>：70-80% 的请求可以被小模型高质量处理。</p>
+  </div>
+  <div class="en">
+    <p><strong>Core idea</strong>: Start with a small model, escalate to a larger one when uncertain. Google's 2024 Speculative Cascade combines this with speculative decoding.</p>
+    <p><strong>Best for</strong>: When 70-80% of requests can be handled well by a small model.</p>
+  </div>
+</div>
+
+<div class="diagram">
+  Request → [Small Model (3B)] ──confidence > θ──→ Response (P50: 50ms)
+                   │
+                   └──confidence ≤ θ──→ [Large Model (70B)] → Response (P50: 800ms)
+
+  整体效果:
+  ┌────────────┬───────────┬──────────┬──────────┐
+  │ Approach   │ Latency   │ Quality  │ Cost     │
+  ├────────────┼───────────┼──────────┼──────────┤
+  │ Always 70B │ 800ms     │ 95%      │ $1.00    │
+  │ Always 3B  │ 50ms      │ 82%      │ $0.05    │
+  │ Cascade    │ ~250ms    │ 93%      │ $0.25    │
+  └────────────┴───────────┴──────────┴──────────┘
+</div>
+
+<pre><code>class ModelCascade:
+    def __init__(self, small_model, large_model, threshold=0.85):
+        self.small = small_model
+        self.large = large_model
+        self.threshold = threshold
+        self.router = ConfidenceEstimator()  # 可以是小分类器或 LLM 自评
+
+    async def predict(self, request):
+        # Stage 1: 小模型快速推理
+        result = await self.small.generate(request)
+        confidence = self.router.estimate(request, result)
+
+        if confidence >= self.threshold:
+            return result  # 快速返回 ⚡
+
+        # Stage 2: 大模型兜底
+        return await self.large.generate(request)
+
+    def calibrate_threshold(self, eval_set):
+        """基于 A/B 测试数据调整阈值
+        - 提高 threshold → 更多走大模型 → 更高质量、更高延迟
+        - 降低 threshold → 更多走小模型 → 更低延迟、可能损质量
+        """
+        best_score = 0
+        for t in np.arange(0.5, 0.99, 0.01):
+            quality = self.eval_quality(eval_set, threshold=t)
+            latency = self.eval_latency(eval_set, threshold=t)
+            # Pareto 最优：在 latency 预算内最大化 quality
+            if latency <= self.latency_budget and quality > best_score:
+                best_score = quality
+                self.threshold = t</code></pre>
+
+<div class="highlight">
+  <strong>💡 面试关键点</strong>：Cascade 的 confidence estimation 本身不能太慢，否则抵消收益。常用方法：(1) LLM 输出 logprobs 的 entropy (2) 轻量分类器 (3) 基于 query 特征的规则路由。
+</div>
+
+<h3>策略 2: Speculative Decoding (投机解码)</h3>
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>核心思想</strong>：小模型先"猜"多个 token，大模型并行验证。质量等同大模型，延迟接近小模型。</p>
+    <p>这是唯一能做到 <strong>零质量损失</strong> 的加速方法！</p>
+  </div>
+  <div class="en">
+    <p><strong>Core idea</strong>: Small model "drafts" multiple tokens, large model verifies in parallel. Quality equals the large model, latency approaches the small model.</p>
+    <p>This is the only acceleration method with <strong>zero quality loss</strong>!</p>
+  </div>
+</div>
+
+<div class="diagram">
+  Draft Model (小): "The capital of France is Pa-ri-s ,-"  (7 tokens, 快)
+                                    ↓
+  Target Model (大): Verify → ✅✅✅✅✅✅✅  (全部接受！1次forward pass)
+                            → ✅✅✅❌        (前3个对，第4个重采样)
+
+  加速比 = draft_length × acceptance_rate / (draft_cost + verify_cost)
+  典型结果: 2-3x speedup, 100% quality preservation
+</div>
+
+<pre><code>def speculative_decode(draft_model, target_model, prompt, gamma=5):
+    """投机解码核心算法"""
+    output_tokens = []
+
+    while not done:
+        # 1. Draft: 小模型连续生成 gamma 个 token
+        draft_tokens, draft_probs = draft_model.generate(
+            prompt + output_tokens, num_tokens=gamma
+        )
+
+        # 2. Verify: 大模型一次 forward pass 验证所有 draft tokens
+        target_probs = target_model.get_probs(
+            prompt + output_tokens + draft_tokens
+        )
+
+        # 3. Accept/Reject: 逐个检查
+        accepted = 0
+        for i in range(gamma):
+            # 关键：rejection sampling 保证分布等价于 target model
+            r = random.random()
+            if r < min(1, target_probs[i] / draft_probs[i]):
+                output_tokens.append(draft_tokens[i])
+                accepted += 1
+            else:
+                # 从修正分布采样
+                corrected = sample(max(0, target_probs[i] - draft_probs[i]))
+                output_tokens.append(corrected)
+                break
+
+    return output_tokens  # 数学上等价于直接从 target model 采样！</code></pre>
+
+<div class="highlight-blue">
+  <strong>🔬 为什么能保证质量？</strong> Rejection sampling 的数学性质确保：即使 draft model 的预测被拒绝，修正后的分布仍然精确等于 target model 的分布。这不是近似 — 是精确等价。
+</div>
+
+<h3>策略 3: Quantization Ladder (量化阶梯)</h3>
+<div class="bilingual">
+  <div class="zh">
+    <p>同一个模型，不同精度 = 不同的延迟-质量点。形成一个可以动态选择的"阶梯"。</p>
+  </div>
+  <div class="en">
+    <p>Same model, different precisions = different latency-quality points. Forms a "ladder" you can dynamically select from.</p>
+  </div>
+</div>
+
+<table>
+  <tr><th>精度</th><th>模型大小</th><th>延迟 (相对)</th><th>质量损失</th><th>适用场景</th></tr>
+  <tr><td>FP32</td><td>100%</td><td>1.0x</td><td>0%</td><td>训练 / 基准</td></tr>
+  <tr><td>FP16/BF16</td><td>50%</td><td>~0.5x</td><td>~0%</td><td>标准推理</td></tr>
+  <tr><td>INT8 (W8A8)</td><td>25%</td><td>~0.3x</td><td>0.5-1%</td><td>高吞吐推理</td></tr>
+  <tr><td>INT4 (GPTQ/AWQ)</td><td>12.5%</td><td>~0.2x</td><td>1-3%</td><td>边缘部署 / 成本敏感</td></tr>
+  <tr><td>INT2 (实验)</td><td>6.25%</td><td>~0.15x</td><td>5-15%</td><td>极端受限场景</td></tr>
+</table>
+
+<pre><code>class QuantizationLadder:
+    """根据负载动态选择量化级别"""
+
+    def __init__(self):
+        self.models = {
+            'fp16':  ModelEndpoint('model-fp16',  latency_p99=200),
+            'int8':  ModelEndpoint('model-int8',  latency_p99=80),
+            'int4':  ModelEndpoint('model-int4',  latency_p99=40),
+        }
+        self.current_load = LoadMonitor()
+
+    def select_precision(self, request):
+        load = self.current_load.get()
+        priority = request.priority  # premium / standard / batch
+
+        if priority == 'premium':
+            return 'fp16'  # 永远给最好的
+        elif load > 0.8:  # 高负载
+            return 'int4'  # 降级以保护延迟 SLA
+        else:
+            return 'int8'  # 默认平衡点</code></pre>
+
+<h3>策略 4: Progressive Generation (渐进式生成)</h3>
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>核心思想</strong>：先快速返回粗糙结果，后台异步精化。用户感知延迟极低。</p>
+    <p>类似 Google 搜索：先出文字结果，Knowledge Panel 稍后加载。</p>
+  </div>
+  <div class="en">
+    <p><strong>Core idea</strong>: Return a rough result fast, refine asynchronously in background. Perceived latency is very low.</p>
+    <p>Like Google Search: text results appear first, Knowledge Panel loads later.</p>
+  </div>
+</div>
+
+<div class="diagram">
+  t=0ms    [Cache]      → 有缓存? 直接返回 (P50: 5ms)
+  t=50ms   [Small LLM]  → 快速草稿回复 (streaming 开始)
+  t=200ms  [Retrieval]   → RAG 检索结果到达, 注入 context
+  t=500ms  [Large LLM]   → 精化回复 (替换/补充 streaming 内容)
+  t=800ms  [Verification] → 事实检查, 添加引用
+
+  用户感知: 50ms 开始看到内容 (TTFT = 50ms!)
+  实际质量: 等价于 800ms 的完整 pipeline
+</div>
+
+<pre><code>async def progressive_response(query, stream):
+    # Phase 1: 即时 — 缓存命中 (5ms)
+    cached = await semantic_cache.lookup(query)
+    if cached:
+        await stream.send(cached, final=True)
+        return
+
+    # Phase 2: 快速草稿 (50ms)
+    draft_task = asyncio.create_task(
+        small_model.generate(query, max_tokens=100)
+    )
+
+    # Phase 3: 并行启动慢操作
+    retrieve_task = asyncio.create_task(retriever.search(query))
+    
+    # 先发送草稿
+    draft = await draft_task
+    await stream.send(draft, final=False)  # 用户开始看到内容!
+
+    # Phase 4: 用 RAG 结果精化
+    docs = await retrieve_task
+    refined = await large_model.generate(
+        query, context=docs, draft=draft, max_tokens=500
+    )
+    await stream.replace(refined, final=True)  # 平滑替换</code></pre>
+
+<h3>策略 5: Adaptive Compute (自适应计算)</h3>
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>核心思想</strong>：根据输入难度动态调整计算量。简单问题少算，难题多算。</p>
+    <p>DeepSeek-V3 的 MoE 就是这个思想 — 每个 token 只激活部分专家。</p>
+  </div>
+  <div class="en">
+    <p><strong>Core idea</strong>: Dynamically adjust compute based on input difficulty. Easy inputs get less computation, hard ones get more.</p>
+    <p>DeepSeek-V3's MoE embodies this — each token activates only a subset of experts.</p>
+  </div>
+</div>
+
+<table>
+  <tr><th>技术</th><th>粒度</th><th>Quality 保证</th><th>Latency 减少</th></tr>
+  <tr><td>MoE (Mixture of Experts)</td><td>Token-level</td><td>训练时学习路由</td><td>2-4x (vs Dense)</td></tr>
+  <tr><td>Early Exit</td><td>Layer-level</td><td>中间层置信度检测</td><td>1.5-3x</td></tr>
+  <tr><td>Token Pruning</td><td>Token-level</td><td>跳过不重要 token</td><td>1.2-2x</td></tr>
+  <tr><td>Adaptive Depth (思考预算)</td><td>Request-level</td><td>根据难度分配 CoT 长度</td><td>Variable</td></tr>
+</table>
+
+<pre><code>class AdaptiveThinkingBudget:
+    """根据问题难度分配 thinking token 预算
+    连接到: Day 1 的 Model Routing pattern
+    """
+
+    DIFFICULTY_BUDGETS = {
+        'trivial':  {'thinking_tokens': 0,    'model': 'small'},    # "What's 2+2?"
+        'simple':   {'thinking_tokens': 100,  'model': 'small'},    # Simple lookup
+        'moderate': {'thinking_tokens': 500,  'model': 'medium'},   # Reasoning needed
+        'complex':  {'thinking_tokens': 2000, 'model': 'large'},    # Multi-step
+        'expert':   {'thinking_tokens': 8000, 'model': 'frontier'}, # Research-level
+    }
+
+    def classify_and_route(self, query):
+        # 用轻量模型 (~10ms) 估算难度
+        difficulty = self.difficulty_classifier.predict(query)
+        budget = self.DIFFICULTY_BUDGETS[difficulty]
+        return budget</code></pre>
+
+<div class="highlight-green">
+  <strong>🎯 行业趋势 (2025-2026)</strong>：Claude、GPT、Gemini 都在推 "thinking budget" 概念 — 让用户或系统控制推理深度。这本质就是 Adaptive Compute 的产品化。
+</div>
+
+<h3>策略 6: Caching Hierarchy (缓存层级)</h3>
+<div class="bilingual">
+  <div class="zh">
+    <p>最好的延迟优化是不计算。三层缓存架构（Day 4 RAG Production 已讲），这里补充 LLM 特有的缓存策略。</p>
+  </div>
+  <div class="en">
+    <p>The best latency optimization is no computation at all. Three-layer caching (covered in RAG Day 4), here we add LLM-specific caching strategies.</p>
+  </div>
+</div>
+
+<div class="diagram">
+  Layer 1: Exact Match Cache     → Hash(prompt) lookup      → Hit rate: 5-15%  → 1ms
+  Layer 2: Semantic Cache         → Embedding similarity     → Hit rate: 15-30% → 10ms
+  Layer 3: KV Cache (Prefix)     → Shared system prompt KV  → Savings: 30-50%  → model内部
+  Layer 4: Prompt Cache (Anthropic/OpenAI) → Provider-level → Savings: 50-90%  → 按token计
+
+  组合效果: 40-60% 的请求可以显著加速或完全跳过推理
+</div>
+
+<h2>🎯 面试框架：如何回答 Latency vs Quality 问题</h2>
+
+<div class="architecture">
+<h3>五步框架 / Five-Step Framework</h3>
+
+<p><strong>Step 1: Clarify SLA (明确 SLA)</strong></p>
+<ul>
+  <li>P50 / P99 latency target?</li>
+  <li>Minimum acceptable quality metric?</li>
+  <li>Cost budget per request?</li>
+</ul>
+
+<p><strong>Step 2: Profile the Pipeline (分析瓶颈)</strong></p>
+<pre>Total Latency = Network + Preprocessing + Retrieval + Inference + Postprocessing
+                  ~10ms     ~20ms           ~50ms       ~500ms     ~30ms
+                                                        ^^^^^^ 通常是瓶颈</pre>
+
+<p><strong>Step 3: Match Strategy to Constraint (匹配策略)</strong></p>
+<table>
+  <tr><th>约束条件</th><th>首选策略</th><th>备选策略</th></tr>
+  <tr><td>延迟必须 < 100ms</td><td>Small model + Cache</td><td>Quantization</td></tr>
+  <tr><td>质量不能降</td><td>Speculative Decoding</td><td>KV Cache 优化</td></tr>
+  <tr><td>成本必须降 50%</td><td>Model Cascade</td><td>Adaptive Compute</td></tr>
+  <tr><td>用户体验优先</td><td>Progressive Generation</td><td>Streaming + Cache</td></tr>
+  <tr><td>流量突发 10x</td><td>Quantization Ladder</td><td>Graceful Degradation</td></tr>
+</table>
+
+<p><strong>Step 4: Design Feedback Loop (设计反馈循环)</strong></p>
+<ul>
+  <li>A/B Testing (Day 4) 验证权衡效果</li>
+  <li>监控 quality metrics 确保不 regress</li>
+  <li>动态调整 threshold / budget</li>
+</ul>
+
+<p><strong>Step 5: Discuss Failure Modes (讨论失败模式)</strong></p>
+<ul>
+  <li>Cascade 的 confidence 估错 → quality 突降</li>
+  <li>Cache 过期 → 返回过时信息</li>
+  <li>Quantization 在特定 domain 质量崩塌</li>
+</ul>
+</div>
+
+<h2>🔗 系列总结：Phase 2.2 全景图</h2>
+
+<div class="diagram">
+  Day 1: 7 大通用 Pattern ←→ "设计词汇表"
+    ↓
+  Day 2: Feature Store ←→ "数据地基"
+    ↓
+  Day 3: Model Serving ←→ "推理引擎"
+    ↓
+  Day 4: A/B Testing ←→ "验证闭环"
+    ↓
+  Day 5: Latency vs Quality ←→ "权衡决策" (你在这里!)
+
+  ┌─────────────────────────────────────────────────────┐
+  │  完整 ML 系统 = Feature Store → Model Serving       │
+  │    → Latency/Quality 权衡 → A/B Testing 验证       │
+  │    → 所有组件遵循 7 大 Pattern                       │
+  └─────────────────────────────────────────────────────┘
+</div>
+
+<h2>💬 面试高频问题</h2>
+
+<div class="interview">
+  <h4>Q1: 你的 LLM 应用 P99 延迟是 3 秒，产品要求降到 500ms，怎么做？</h4>
+  <p><strong>思路</strong>：(1) Profile 找瓶颈 — 通常是 inference (2) 先加 semantic cache 覆盖高频 query (3) 实现 model cascade，70% 请求走小模型 (4) streaming 降低 TTFT (5) KV cache / prefix caching 优化系统 prompt (6) 如果还不够，quantization。监控 quality regression，用 A/B testing 验证每步。</p>
+</div>
+
+<div class="interview">
+  <h4>Q2: Speculative Decoding 什么时候不 work？</h4>
+  <p><strong>答</strong>：(1) Draft model 和 target model 分布差异太大 → acceptance rate 低 → 没有加速 (2) Target model 本身就很快（小模型）→ draft overhead 抵消收益 (3) 需要 structured output (JSON) → draft 容易偏离格式 (4) Batch 场景 → GPU 利用率已经很高，speculative 反而增加显存压力。</p>
+</div>
+
+<div class="interview">
+  <h4>Q3: 如何在不降质量的情况下减少 50% 推理成本？</h4>
+  <p><strong>答</strong>：组合拳：(1) Semantic cache → 30% 请求直接命中 (2) Prefix/KV caching → 减少 50% 重复计算（shared system prompt）(3) Speculative decoding → 2x throughput，质量不变 (4) Prompt compression → 减少 input token (5) Batch optimization → 提高 GPU 利用率。这些方法均不损质量，组合可达 50-70% 成本降低。</p>
+</div>
+
+<div class="interview">
+  <h4>Q4: 设计一个支持 "质量档位" 的 API，让客户自选 latency-quality 平衡点</h4>
+  <p><strong>答</strong>：三档设计：<br>
+  <code>tier: "instant"</code> → INT4 小模型 + cache，P99 < 100ms，质量 85%<br>
+  <code>tier: "balanced"</code> → INT8 中等模型 + cascade，P99 < 500ms，质量 92%<br>
+  <code>tier: "best"</code> → FP16 大模型 + verification，P99 < 3s，质量 97%<br>
+  每档有不同定价。内部用 Model Router + Quantization Ladder + A/B Testing 持续优化每档的 Pareto 最优配置。</p>
+</div>
+
+<h2>🎓 Phase 2.2 完结回顾</h2>
+
+<div class="highlight-green">
+  <strong>🎉 Phase 2.2 ML 系统设计要点 — 完成!</strong><br><br>
+  5 天覆盖了 ML 系统从数据到部署到验证到优化的全链路：
+  <ol>
+    <li><strong>通用 Pattern</strong> — 7 个跨系统复用的设计模式</li>
+    <li><strong>Feature Store</strong> — Training-Serving Skew 的根治方案</li>
+    <li><strong>Model Serving</strong> — 从推理引擎到 GPU-Aware Scaling</li>
+    <li><strong>A/B Testing</strong> — 科学验证 ML 改动效果</li>
+    <li><strong>Latency vs Quality</strong> — 贯穿所有环节的核心权衡</li>
+  </ol>
+  <br>
+  <strong>下一阶段预告</strong>：Phase 2.3 LLM 特有问题 — Token 限制、成本优化、Hallucination、流式输出、多轮对话。更加贴近日常 LLM 应用开发！
+</div>
+
+<div class="follow-up">
+  <h3>💬 思考题 / Thought Question</h3>
+  <p>假设你在设计一个 AI 客服系统：高峰期 QPS 是平时的 10 倍，但质量不能明显下降（客户投诉 → 直接丢单）。你会组合哪几种策略？如何设计自动降级机制？降级后如何自动恢复？</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-18 - A/B Testing for ML: 从统计检验到自适应实验</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; }
+    h2 { color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 8px; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    .highlight { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; }
+    .diagram { text-align: center; margin: 20px 0; }
+    .follow-up { margin-top: 30px; padding: 15px; border: 1px dashed #dadce0; border-radius: 8px; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f1f3f4; }
+    .interview { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4caf50; }
+    .warning { background: #fce4ec; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #e53935; }
+    code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    .series-nav { background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="series-nav">
+    📚 <strong>Phase 2.2 ML 系统设计要点</strong> — Day 4 of 6<br>
+    Day 1: <a href="2026-02-15-ml-system-design-patterns.html">7 大通用 Pattern</a> →
+    Day 2: <a href="2026-02-16-feature-store-design.html">Feature Store</a> →
+    Day 3: <a href="2026-02-17-model-serving-architecture.html">Model Serving</a> →
+    <strong>Day 4: A/B Testing for ML</strong> →
+    Day 5: 延迟 vs 质量权衡 →
+    Day 6: 总结
+  </div>
+
+  <h1>🧪 A/B Testing for ML: 从统计检验到自适应实验</h1>
+  <p>📅 2026-02-18 | Phase 2.2 ML 系统设计要点 Day 4</p>
+
+  <h2>📖 为什么 ML 的 A/B Testing 不一样？</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <p>传统 A/B Testing 比较两个网页按钮颜色，指标是点击率——简单直接。但 ML 模型的 A/B Testing 复杂得多：</p>
+      <ul>
+        <li><strong>延迟反馈</strong>：推荐系统的好坏可能要几周才能体现（用户留存）</li>
+        <li><strong>多指标冲突</strong>：CTR 上升但用户满意度下降（标题党效应）</li>
+        <li><strong>网络效应</strong>：社交推荐中，A 组用户的行为会影响 B 组</li>
+        <li><strong>模型漂移</strong>：实验期间模型本身在变化</li>
+        <li><strong>高方差</strong>：ML 输出比 UI 变化方差大得多，需要更多样本</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p>Traditional A/B testing compares button colors with click rate — straightforward. ML A/B testing is fundamentally harder:</p>
+      <ul>
+        <li><strong>Delayed feedback</strong>: Recommendation quality may take weeks to manifest (retention)</li>
+        <li><strong>Conflicting metrics</strong>: CTR up but satisfaction down (clickbait effect)</li>
+        <li><strong>Network effects</strong>: In social recs, group A users influence group B</li>
+        <li><strong>Model drift</strong>: The model itself changes during the experiment</li>
+        <li><strong>High variance</strong>: ML outputs have much higher variance than UI changes</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>🏗️ 四种 ML 实验方法对比</h2>
+
+  <div class="architecture">
+    <pre>
+┌─────────────────────────────────────────────────────────┐
+│                ML Experimentation Spectrum               │
+│                                                          │
+│  安全 ◄────────────────────────────────────────► 快速    │
+│                                                          │
+│  Shadow     →    A/B Test    →  Interleaving  →  Bandit  │
+│  Testing         (经典)          (搜索/推荐)     (自适应) │
+│                                                          │
+│  零风险           中等风险        低风险          最优化   │
+│  无在线指标       金标准          灵敏度高        样本最少  │
+│  最慢             中等            快              最快     │
+└─────────────────────────────────────────────────────────┘</pre>
+  </div>
+
+  <table>
+    <tr>
+      <th>方法</th><th>原理</th><th>适用场景</th><th>样本量</th><th>风险</th>
+    </tr>
+    <tr>
+      <td><strong>Shadow Testing</strong></td>
+      <td>新模型并行运行但不展示结果</td>
+      <td>高风险场景（金融、医疗）；上线前验证</td>
+      <td>N/A（只看离线指标）</td>
+      <td>零</td>
+    </tr>
+    <tr>
+      <td><strong>A/B Testing</strong></td>
+      <td>随机分流，统计检验比较</td>
+      <td>通用场景；需要因果推断</td>
+      <td>大（万级+）</td>
+      <td>中</td>
+    </tr>
+    <tr>
+      <td><strong>Interleaving</strong></td>
+      <td>混合两个模型的结果展示给同一用户</td>
+      <td>搜索、推荐排序</td>
+      <td>小（A/B 的 1/100）</td>
+      <td>低</td>
+    </tr>
+    <tr>
+      <td><strong>Multi-Armed Bandit</strong></td>
+      <td>动态调整流量分配，边学边优化</td>
+      <td>需要快速收敛；多变体</td>
+      <td>最小</td>
+      <td>自适应</td>
+    </tr>
+  </table>
+
+  <h2>🎯 方法一：经典 A/B Testing 深入</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <h3>统计基础（面试必考）</h3>
+      <p><strong>假设检验框架：</strong></p>
+      <ul>
+        <li>H₀（零假设）：新旧模型无差异</li>
+        <li>H₁（备择假设）：新模型更好</li>
+        <li><strong>α（Type I Error）</strong>= 误判有效，通常 5%</li>
+        <li><strong>β（Type II Error）</strong>= 漏判有效，通常 20%</li>
+        <li><strong>Power = 1 - β = 80%</strong>：检测到真实差异的概率</li>
+      </ul>
+      <p><strong>最小样本量公式：</strong></p>
+      <p><code>n = (Z_α/2 + Z_β)² × 2σ² / δ²</code></p>
+      <p>其中 δ = 最小可检测效应 (MDE)。ML 实验的 MDE 通常很小（0.1%-0.5%），所以需要大量样本。</p>
+    </div>
+    <div class="en">
+      <h3>Statistical Foundation (Interview Essential)</h3>
+      <p><strong>Hypothesis testing framework:</strong></p>
+      <ul>
+        <li>H₀ (null): No difference between models</li>
+        <li>H₁ (alternative): New model is better</li>
+        <li><strong>α (Type I)</strong> = false positive, typically 5%</li>
+        <li><strong>β (Type II)</strong> = false negative, typically 20%</li>
+        <li><strong>Power = 1 - β = 80%</strong>: probability of detecting real effect</li>
+      </ul>
+      <p><strong>Minimum sample size:</strong></p>
+      <p><code>n = (Z_α/2 + Z_β)² × 2σ² / δ²</code></p>
+      <p>Where δ = Minimum Detectable Effect. ML experiments often target tiny MDE (0.1%-0.5%), requiring massive samples.</p>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <h4>⚠️ ML A/B Testing 的三大陷阱</h4>
+    <ol>
+      <li><strong>Peeking Problem</strong>：提前看结果会膨胀 Type I Error。解决：Sequential Testing（如 mSPRT）或 Always-Valid P-values</li>
+      <li><strong>Multiple Comparisons</strong>：同时看 20 个指标，必然有 1 个 p < 0.05。解决：Bonferroni 校正 或 指定 1 个 Primary Metric</li>
+      <li><strong>Simpson's Paradox</strong>：总体指标提升但某些子群体下降。解决：分层分析 (Stratification)</li>
+    </ol>
+  </div>
+
+  <h3>ML A/B Test 架构</h3>
+  <div class="architecture">
+    <pre>
+┌──────────┐     ┌─────────────┐     ┌──────────────┐
+│  Traffic │────→│  Experiment │────→│  Model A     │──→ Response A
+│  Router  │     │  Assignment │     │  (Control)   │
+│          │     │  (Sticky    │     └──────────────┘
+│          │     │   Hash)     │     ┌──────────────┐
+│          │     │             │────→│  Model B     │──→ Response B
+│          │     └─────────────┘     │  (Treatment) │
+│          │            │            └──────────────┘
+└──────────┘            │
+                        ▼
+              ┌─────────────────┐     ┌──────────────┐
+              │  Event Logger   │────→│  Analysis    │
+              │  (user_id,      │     │  Pipeline    │
+              │   variant,      │     │  (p-value,   │
+              │   metrics...)   │     │   CI, power) │
+              └─────────────────┘     └──────────────┘
+
+关键设计决策：
+1. Sticky Assignment: hash(user_id + experiment_id) 保证用户始终看到同一版本
+2. Ramp-up: 1% → 5% → 25% → 50% 逐步放量
+3. Guardrail Metrics: 延迟、错误率、核心业务指标不能恶化
+4. Segment Analysis: 新用户 vs 老用户、地区、设备分层
+    </pre>
+  </div>
+
+<pre><code>// Experiment Assignment — 面试常考的 sticky hashing
+function assignVariant(userId: string, experimentId: string, trafficPct: number): string | null {
+  const hash = murmurhash3(userId + experimentId);
+  const bucket = hash % 10000; // 万分位精度
+
+  // 是否在实验流量内
+  if (bucket >= trafficPct * 100) return null; // 不在实验中
+
+  // 分配到 control 或 treatment
+  return bucket % 2 === 0 ? 'control' : 'treatment';
+}
+
+// Guardrail check — 自动熔断
+async function checkGuardrails(experimentId: string): Promise<boolean> {
+  const metrics = await getExperimentMetrics(experimentId);
+  
+  // P99 延迟不能恶化超过 10%
+  if (metrics.treatment.p99Latency > metrics.control.p99Latency * 1.1) {
+    await killExperiment(experimentId, 'latency_degradation');
+    return false;
+  }
+  
+  // 错误率不能超过 baseline + 0.5%
+  if (metrics.treatment.errorRate > metrics.control.errorRate + 0.005) {
+    await killExperiment(experimentId, 'error_rate_spike');
+    return false;
+  }
+  
+  return true;
+}
+</code></pre>
+
+  <h2>🔀 方法二：Interleaving（搜索/推荐神器）</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <h3>为什么 Interleaving 比 A/B Testing 灵敏 100 倍？</h3>
+      <p>A/B Testing 比较<strong>两组不同用户</strong>的行为——用户间的差异（年龄、偏好、活跃度）会引入巨大噪声。</p>
+      <p>Interleaving 让<strong>同一用户</strong>同时看到两个模型的结果（混合排列），用户的点击自然地"投票"给更好的模型。这消除了用户间差异，信噪比暴增。</p>
+      <p><strong>Netflix 实验</strong>证明：Interleaving 只需 A/B Testing 1% 的样本就能达到同等统计效力。</p>
+      
+      <h3>Team Draft Interleaving 算法</h3>
+      <ol>
+        <li>模型 A 和 B 各自产出排序列表</li>
+        <li>像球队选秀一样交替选择：A 先选第 1 个、B 选第 1 个、A 选第 2 个...</li>
+        <li>记录每个结果来自哪个模型</li>
+        <li>用户点击了属于 A 的结果 → A 得 1 分</li>
+        <li>比较总分判断哪个模型更好</li>
+      </ol>
+    </div>
+    <div class="en">
+      <h3>Why is Interleaving 100x more sensitive than A/B?</h3>
+      <p>A/B testing compares <strong>different user groups</strong> — inter-user variance (age, preference, activity) adds massive noise.</p>
+      <p>Interleaving shows <strong>the same user</strong> results from both models (mixed), and clicks naturally "vote" for the better model. This eliminates between-user variance, dramatically increasing signal-to-noise.</p>
+      <p><strong>Netflix found</strong>: Interleaving needs only 1% of A/B testing's sample size for equivalent statistical power.</p>
+      
+      <h3>Team Draft Interleaving</h3>
+      <ol>
+        <li>Models A and B each produce ranked lists</li>
+        <li>Alternate picks like sports draft: A picks 1st, B picks 1st, A picks 2nd...</li>
+        <li>Track which model each result belongs to</li>
+        <li>User clicks on A's result → A gets 1 point</li>
+        <li>Compare scores to determine winner</li>
+      </ol>
+    </div>
+  </div>
+
+<pre><code>// Team Draft Interleaving
+function teamDraftInterleave(listA: string[], listB: string[], k: number): InterleavedResult {
+  const result: string[] = [];
+  const teamA = new Set&lt;string&gt;();
+  const teamB = new Set&lt;string&gt;();
+  let idxA = 0, idxB = 0;
+  
+  while (result.length < k) {
+    // 交替选择，谁的队伍小谁先选
+    const aPicksFirst = teamA.size <= teamB.size;
+    
+    if (aPicksFirst) {
+      // A 选还没被选过的最高排名
+      while (idxA < listA.length && result.includes(listA[idxA])) idxA++;
+      if (idxA < listA.length) {
+        result.push(listA[idxA]);
+        teamA.add(listA[idxA]);
+      }
+      // B 选
+      while (idxB < listB.length && result.includes(listB[idxB])) idxB++;
+      if (idxB < listB.length && result.length < k) {
+        result.push(listB[idxB]);
+        teamB.add(listB[idxB]);
+      }
+    } else {
+      // B 先选（对称逻辑）
+      while (idxB < listB.length && result.includes(listB[idxB])) idxB++;
+      if (idxB < listB.length) {
+        result.push(listB[idxB]);
+        teamB.add(listB[idxB]);
+      }
+      while (idxA < listA.length && result.includes(listA[idxA])) idxA++;
+      if (idxA < listA.length && result.length < k) {
+        result.push(listA[idxA]);
+        teamA.add(listA[idxA]);
+      }
+    }
+  }
+  
+  return { items: result, teamA, teamB };
+}
+
+// 评分：用户点击属于哪个 team
+function scoreInterleaving(clicks: string[], teamA: Set&lt;string&gt;, teamB: Set&lt;string&gt;) {
+  let scoreA = 0, scoreB = 0;
+  for (const click of clicks) {
+    if (teamA.has(click)) scoreA++;
+    if (teamB.has(click)) scoreB++;
+  }
+  // 用 sign test 或 binomial test 判断显著性
+  return { scoreA, scoreB, winner: scoreA > scoreB ? 'A' : scoreA < scoreB ? 'B' : 'tie' };
+}
+</code></pre>
+
+  <div class="warning">
+    <strong>Interleaving 的局限：</strong>只能用于排序类任务（搜索、推荐、Feed）。不能用于 ChatGPT 这样的生成式任务（你不能混合两个回答给用户）。
+  </div>
+
+  <h2>🎰 方法三：Multi-Armed Bandit（自适应实验）</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <h3>核心思想：Explore vs Exploit</h3>
+      <p>A/B Testing 在实验期间 50/50 分流——即使一个变体明显更差，也在"浪费"一半流量。</p>
+      <p>Bandit 算法动态调整：表现好的变体获得更多流量，差的变体逐渐减少。这在数学上叫做 <strong>Exploration-Exploitation Tradeoff</strong>。</p>
+      
+      <h3>三种经典 Bandit 算法</h3>
+      <table>
+        <tr><th>算法</th><th>策略</th><th>优点</th><th>缺点</th></tr>
+        <tr><td>ε-Greedy</td><td>ε 概率随机探索，1-ε 概率选最优</td><td>简单</td><td>不够智能</td></tr>
+        <tr><td>UCB (Upper Confidence Bound)</td><td>选"均值+不确定性"最大的</td><td>理论最优</td><td>假设固定分布</td></tr>
+        <tr><td><strong>Thompson Sampling</strong></td><td>按后验概率采样决定</td><td>自然贝叶斯；最常用</td><td>计算稍复杂</td></tr>
+      </table>
+    </div>
+    <div class="en">
+      <h3>Core Idea: Explore vs Exploit</h3>
+      <p>A/B Testing splits 50/50 during the experiment — even when one variant is clearly worse, half the traffic is "wasted".</p>
+      <p>Bandit algorithms dynamically adjust: better performers get more traffic, worse ones fade. This is the <strong>Exploration-Exploitation Tradeoff</strong>.</p>
+      
+      <h3>Three Classic Bandit Algorithms</h3>
+      <table>
+        <tr><th>Algorithm</th><th>Strategy</th><th>Pro</th><th>Con</th></tr>
+        <tr><td>ε-Greedy</td><td>ε prob random, 1-ε pick best</td><td>Simple</td><td>Not adaptive enough</td></tr>
+        <tr><td>UCB</td><td>Pick highest "mean + uncertainty"</td><td>Theoretically optimal</td><td>Assumes stationary</td></tr>
+        <tr><td><strong>Thompson Sampling</strong></td><td>Sample from posterior to decide</td><td>Natural Bayesian; most used</td><td>Slightly complex</td></tr>
+      </table>
+    </div>
+  </div>
+
+<pre><code>// Thompson Sampling for ML Model Selection
+import { randomBeta } from './stats';
+
+interface ModelArm {
+  modelId: string;
+  successes: number;  // 正向反馈（点击、购买...）
+  failures: number;   // 负向反馈
+}
+
+class ThompsonSamplingRouter {
+  private arms: ModelArm[];
+  
+  constructor(modelIds: string[]) {
+    // Beta(1,1) = uniform prior
+    this.arms = modelIds.map(id => ({ modelId: id, successes: 1, failures: 1 }));
+  }
+  
+  selectModel(): string {
+    // 从每个模型的 Beta 后验分布中采样
+    let bestScore = -1;
+    let bestArm = this.arms[0];
+    
+    for (const arm of this.arms) {
+      // Beta(successes, failures) → 采样一个 [0,1] 的值
+      const sample = randomBeta(arm.successes, arm.failures);
+      if (sample > bestScore) {
+        bestScore = sample;
+        bestArm = arm;
+      }
+    }
+    
+    return bestArm.modelId;
+  }
+  
+  recordOutcome(modelId: string, success: boolean) {
+    const arm = this.arms.find(a => a.modelId === modelId)!;
+    if (success) arm.successes++;
+    else arm.failures++;
+    // 后验自动更新！贝叶斯的优雅
+  }
+  
+  getTrafficDistribution(): Record&lt;string, number&gt; {
+    // 模拟 10000 次采样看当前流量分配
+    const counts: Record&lt;string, number&gt; = {};
+    for (let i = 0; i < 10000; i++) {
+      const selected = this.selectModel();
+      counts[selected] = (counts[selected] || 0) + 1;
+    }
+    return Object.fromEntries(
+      Object.entries(counts).map(([k, v]) => [k, v / 10000])
+    );
+  }
+}
+
+// 使用示例
+const router = new ThompsonSamplingRouter(['model-v1', 'model-v2', 'model-v3']);
+
+// 经过 1000 次请求后...
+// model-v1: Beta(150, 850) → ~15% 成功率 → 几乎不再被选
+// model-v2: Beta(280, 720) → ~28% 成功率 → 获得最多流量
+// model-v3: Beta(220, 780) → ~22% 成功率 → 中等流量
+</code></pre>
+
+  <div class="highlight">
+    <h4>💡 Bandit vs A/B Test：什么时候用哪个？</h4>
+    <ul>
+      <li><strong>A/B Test</strong>：需要严格因果推断、需要发论文、需要理解"为什么"更好</li>
+      <li><strong>Bandit</strong>：只关心"哪个更好"、变体多（>2）、机会成本高（每个差请求都有真实损失）</li>
+      <li><strong>实际中</strong>：先 A/B Test 验证大方向，再用 Bandit 做细粒度优化（如选标题、选推荐策略）</li>
+    </ul>
+  </div>
+
+  <h2>🏢 大厂实验平台架构</h2>
+  <div class="bilingual">
+    <div class="zh">
+      <h3>Netflix / Uber / LinkedIn 的共同设计</h3>
+      <p>大厂的实验平台都遵循类似的分层架构：</p>
+    </div>
+    <div class="en">
+      <h3>Common Design at Netflix / Uber / LinkedIn</h3>
+      <p>Big tech experimentation platforms share a layered architecture:</p>
+    </div>
+  </div>
+
+  <div class="architecture">
+    <pre>
+┌─────────────────────────────────────────────────────┐
+│              Experimentation Platform                 │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  Layer 1: Experiment Configuration                   │
+│  ┌──────────┐ ┌───────────┐ ┌────────────────┐     │
+│  │ UI Portal │ │ API/SDK   │ │ Config Store   │     │
+│  │ (定义实验) │ │ (嵌入服务)│ │ (实验参数下发) │     │
+│  └──────────┘ └───────────┘ └────────────────┘     │
+│                                                      │
+│  Layer 2: Traffic Management                         │
+│  ┌──────────────────────────────────────────┐       │
+│  │  Layered Experiment System               │       │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐   │       │
+│  │  │ Layer A │ │ Layer B │ │ Layer C │   │       │
+│  │  │ (UI实验)│ │ (模型)  │ │ (定价)  │   │       │
+│  │  └─────────┘ └─────────┘ └─────────┘   │       │
+│  │  ← 同一用户可同时参与多层实验 →          │       │
+│  │  ← 层内互斥，层间正交 →                  │       │
+│  └──────────────────────────────────────────┘       │
+│                                                      │
+│  Layer 3: Data & Analysis                            │
+│  ┌──────────┐ ┌──────────┐ ┌───────────────┐       │
+│  │ Event    │ │ Metric   │ │ Auto Analysis │       │
+│  │ Pipeline │→│ Store    │→│ (p-value, CI, │       │
+│  │ (Kafka)  │ │ (预计算) │ │  power, SRM)  │       │
+│  └──────────┘ └──────────┘ └───────────────┘       │
+│                                                      │
+│  Layer 4: Guardrails & Governance                    │
+│  ┌──────────────────────────────────────────┐       │
+│  │ Auto-stop on guardrail violations         │       │
+│  │ SRM (Sample Ratio Mismatch) detection     │       │
+│  │ Experiment review & approval workflow      │       │
+│  └──────────────────────────────────────────┘       │
+└─────────────────────────────────────────────────────┘
+    </pre>
+  </div>
+
+  <div class="highlight">
+    <h4>🔑 面试关键概念：Layered Experiment System</h4>
+    <p><strong>问题</strong>：如果同时跑 100 个实验怎么办？用户会被分配到多个实验，结果互相干扰。</p>
+    <p><strong>解决</strong>：分层实验 (Overlapping Layers)。每一层是一个独立的流量空间：</p>
+    <ul>
+      <li>层内互斥：同一层的实验不会分配给同一用户</li>
+      <li>层间正交：不同层的实验独立随机，互不影响</li>
+      <li>Google 2010 年的论文 "Overlapping Experiment Infrastructure" 是这个领域的经典</li>
+    </ul>
+    <p><strong>SRM (Sample Ratio Mismatch)</strong>：如果 50/50 分流结果变成 51/49，说明实验有 bug。这是实验质量的第一道检查。</p>
+  </div>
+
+  <h2>🔄 ML 实验的完整生命周期</h2>
+  <div class="architecture">
+    <pre>
+Offline Eval  →  Shadow Test  →  A/B Test (Ramp)  →  Full Rollout
+                                                      
+1. 离线评估        2. 影子模式      3. 分流实验          4. 全量
+   - 历史数据回测     - 并行推理       - 1%→5%→50%        - 替换旧模型
+   - Offline AUC     - 比较输出       - 监控 guardrails   - 持续监控
+   - 不需要线上流量   - 零用户影响     - 统计显著后决策     - 长期指标
+
+⚡ 快速失败：任何阶段不通过就停止，避免损失
+    </pre>
+  </div>
+
+  <h2>📊 容量估算 (Sizing Example)</h2>
+  <div class="architecture">
+    <p><strong>场景</strong>：推荐系统 A/B Test，日活 10M，baseline CTR = 5%，MDE = 0.5%（相对提升 10%）</p>
+    <pre>
+所需样本量（每组）：
+n = (1.96 + 0.84)² × 2 × 0.05 × 0.95 / (0.005)²
+n ≈ 30,000 per group
+
+总需要：60,000 用户
+DAU = 10M → 0.6% 的流量就够
+实验时长：1 天（但建议至少跑 1 周覆盖星期效应）
+
+Interleaving 方式：
+只需 ~600 用户（A/B 的 1/100）
+几小时就能达到显著性
+
+Bandit (Thompson Sampling)：
+regret bound ≈ O(√(KT ln T))
+K=3 变体, T=100K 次展示 → 累计 regret ~500 次次优展示
+相比 A/B Test 的 ~50,000 次次优展示，减少 99%
+    </pre>
+  </div>
+
+  <h2>📚 与前几天内容的联系</h2>
+  <div class="highlight">
+    <table>
+      <tr><th>前几天主题</th><th>与 A/B Testing 的关系</th></tr>
+      <tr><td>Day 1: 7 大 Pattern</td><td>A/B Testing 是 <strong>Model Routing Pattern</strong> 的在线验证手段</td></tr>
+      <tr><td>Day 2: Feature Store</td><td>实验需要 Feature Store 保证 A/B 两组用特征一致（除了被测变量）</td></tr>
+      <tr><td>Day 3: Model Serving</td><td>Canary/Shadow/Blue-Green 部署策略是 A/B Testing 的前置步骤</td></tr>
+    </table>
+  </div>
+
+  <h2>🎤 面试高频问题</h2>
+
+  <div class="interview">
+    <h4>Q1: 你的推荐模型 A/B Test 显示 CTR 提升 2%，但用户留存下降 1%。你怎么决策？</h4>
+    <p><strong>答题框架</strong>：</p>
+    <ol>
+      <li>首先确认<strong>统计显著性</strong>：两个指标都显著吗？留存需要更长观测期</li>
+      <li><strong>分析因果链</strong>：CTR 提升可能是标题党效应（短期吸引但长期失望）</li>
+      <li><strong>看 North Star Metric</strong>：如果公司的 North Star 是长期留存（如 Netflix），那 CTR 提升不值得留存代价</li>
+      <li><strong>分层分析</strong>：是否特定用户群受影响？新用户 vs 老用户？</li>
+      <li><strong>OEC (Overall Evaluation Criterion)</strong>：大厂一般定义一个综合指标 = f(CTR, 留存, revenue...)，避免主观判断</li>
+    </ol>
+  </div>
+
+  <div class="interview">
+    <h4>Q2: 如何设计一个支持 1000 个并发实验的平台？</h4>
+    <p><strong>答题要点</strong>：</p>
+    <ul>
+      <li><strong>分层实验系统</strong>：把实验按领域分层（UI/Model/Pricing），层内互斥、层间正交</li>
+      <li><strong>客户端 SDK 缓存</strong>：实验配置本地缓存，避免每次请求都查服务端</li>
+      <li><strong>预计算指标</strong>：用 Flink/Spark Streaming 预聚合实验指标，而不是查询时实时计算</li>
+      <li><strong>自动化</strong>：自动检测 SRM、自动 power analysis、自动 guardrail 熔断</li>
+    </ul>
+  </div>
+
+  <div class="interview">
+    <h4>Q3: Interleaving 和 A/B Testing 结果不一致怎么办？</h4>
+    <p><strong>答</strong>：Interleaving 测的是"排序偏好"（哪个排得更好），A/B Testing 测的是"整体体验"（包括 UI、延迟、多样性等）。不一致说明模型排序更好但其他因素拖后腿。优先信任 A/B Testing 的结果（更全面），但用 Interleaving 的信号指导模型迭代方向。实际中，先用 Interleaving 快速筛选候选模型，再用 A/B Testing 做最终决策。</p>
+  </div>
+
+  <div class="interview">
+    <h4>Q4: 什么情况下不能用 A/B Testing？</h4>
+    <p><strong>答</strong>：</p>
+    <ul>
+      <li><strong>网络效应</strong>：社交产品中 A 组用户的行为影响 B 组（解决：Cluster-based randomization）</li>
+      <li><strong>稀缺场景</strong>：拍卖/双边市场，一个 item 只能卖一次（解决：Switchback experiments）</li>
+      <li><strong>小样本</strong>：B2B 产品只有 100 个客户（解决：Bayesian methods, matched pairs）</li>
+      <li><strong>伦理限制</strong>：医疗场景不能随机给"差"的治疗（解决：多臂 bandit 快速收敛到最优）</li>
+    </ul>
+  </div>
+
+  <div class="follow-up">
+    <h3>💭 思考题 / Thought Question</h3>
+    <p><strong>假设你在 OpenClaw 中有 3 个不同的 LLM 模型可以回答用户问题。你会如何设计一个实验系统来找到最优模型？考虑：</strong></p>
+    <ul>
+      <li>用户满意度如何衡量（没有明确的"点击"信号）？</li>
+      <li>不同类型的问题是否需要不同模型？</li>
+      <li>Thompson Sampling 在这里适用吗？有什么挑战？</li>
+    </ul>
+    <p><em>Hint: 这就是 Model Routing + Bandit 的实际应用场景。回忆 Day 1 的 Model Routing Pattern 和 Day 3 的 Bandit-based deployment。</em></p>
+  </div>
+
+</body>
+</html>

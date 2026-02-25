@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-23 - 移动平均线 — SMA/EMA/WMA，Golden Cross 策略</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; line-height: 2; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .keyword { color: #569cd6; }
+    .string { color: #ce9178; }
+    .comment { color: #6a9955; }
+    .number { color: #b5cea8; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+
+<h1>📈 Day 8: 移动平均线 — SMA/EMA/WMA，Golden Cross 策略</h1>
+<p><em>Moving Averages — SMA/EMA/WMA and the Golden Cross Strategy</em></p>
+<p>2026-02-23 | Phase 2: Technical Indicators 技术指标篇</p>
+
+<hr>
+
+<div class="bilingual">
+<div class="zh">
+<h2>🇨🇳 中文版</h2>
+
+<h3>一、为什么从移动平均线开始？</h3>
+<p>移动平均线（Moving Average, MA）是技术分析中最古老、最广泛使用的指标。它的核心思想极其简单：<strong>通过平滑价格噪声，揭示底层趋势</strong>。</p>
+<p>几乎所有趋势跟踪策略都以某种形式的移动平均线为基础。理解MA是理解整个技术指标体系的起点。</p>
+
+<h3>二、三种核心移动平均线</h3>
+
+<h4>1. 简单移动平均线 SMA (Simple Moving Average)</h4>
+<p>对过去 N 个周期的价格取算术平均：</p>
+<div class="formula">
+SMA(t, N) = (1/N) × Σᵢ₌₀ᴺ⁻¹ P(t-i)<br><br>
+其中 P(t) 为 t 时刻的价格（通常用收盘价）
+</div>
+<p><strong>特点：</strong>所有数据点权重相同（1/N）。这意味着50天前的价格和今天的价格对SMA的影响完全一样。</p>
+<p><strong>问题：</strong>滞后性强。当价格剧烈波动时，SMA反应迟钝。而且当一个很旧的异常值"滑出"窗口时，SMA会突然跳动——这被称为 <strong>"drop-off effect"</strong>。</p>
+
+<h4>2. 指数移动平均线 EMA (Exponential Moving Average)</h4>
+<p>EMA 通过指数衰减赋予近期数据更高权重：</p>
+<div class="formula">
+EMA(t) = α × P(t) + (1-α) × EMA(t-1)<br><br>
+α = 2 / (N+1)　（平滑因子）<br><br>
+展开后：EMA(t) = α × [P(t) + (1-α)P(t-1) + (1-α)²P(t-2) + ...]
+</div>
+<p><strong>关键洞察：</strong>EMA 是一个无限记忆的加权平均。权重按 (1-α)ᵏ 几何衰减。对于 N=20 的 EMA，α=0.0952，最近一天的权重约 9.5%，而20天前的权重仅约 1.3%。</p>
+<p><strong>优势：</strong>响应更快，没有 drop-off effect。</p>
+
+<h4>3. 加权移动平均线 WMA (Weighted Moving Average)</h4>
+<p>线性递减权重：</p>
+<div class="formula">
+WMA(t, N) = Σᵢ₌₀ᴺ⁻¹ (N-i) × P(t-i) / Σᵢ₌₀ᴺ⁻¹ (N-i)<br><br>
+分母 = N(N+1)/2
+</div>
+<p>WMA 在实践中使用较少，但它体现了"近期数据更重要"的思想，是理解 EMA 的中间步骤。</p>
+
+<h3>三、Golden Cross & Death Cross 策略</h3>
+<p>最经典的双均线交叉策略：</p>
+<ul>
+<li><strong>Golden Cross（金叉）：</strong>短期均线（如50日）从下方穿越长期均线（如200日）→ 买入信号</li>
+<li><strong>Death Cross（死叉）：</strong>短期均线从上方穿越长期均线 → 卖出信号</li>
+</ul>
+
+<h4>为什么是 50/200？</h4>
+<p>50日 ≈ 一个季度的交易日，200日 ≈ 约一年。这对组合捕捉的是<strong>中长期趋势转换</strong>。研究表明，在 S&P 500 上（1960-2020），Golden Cross 策略累计收益约 118%，但同期 Buy & Hold 收益更高。<strong>它的真正价值在于降低回撤</strong>——在2008金融危机中，Death Cross 帮助避开了最惨烈的下跌。</p>
+
+<div class="warning">
+<strong>⚠️ 实战陷阱：</strong>
+<ul>
+<li><strong>震荡市 Whipsaw：</strong>在横盘市场中，均线反复交叉产生大量假信号，交易成本吞噬利润</li>
+<li><strong>严重滞后：</strong>200日均线的转向通常在趋势建立很久之后才发生</li>
+<li><strong>参数过拟合：</strong>50/200只是一个约定，没有理论上的"最优"参数</li>
+</ul>
+</div>
+
+<h3>四、超越简单交叉：改进方法</h3>
+<ul>
+<li><strong>DEMA/TEMA：</strong>双/三重指数平均，进一步减少滞后</li>
+<li><strong>均线斜率过滤：</strong>只在长期均线斜率为正时接受金叉信号</li>
+<li><strong>价格-均线距离：</strong>当价格偏离均线过远时，预期均值回归</li>
+<li><strong>多时间框架确认：</strong>日线金叉 + 周线趋势向上 = 更强信号</li>
+</ul>
+
+</div>
+
+<div class="en">
+<h2>🇺🇸 English Version</h2>
+
+<h3>I. Why Start with Moving Averages?</h3>
+<p>The Moving Average (MA) is the oldest and most widely used technical indicator. Its core idea is simple: <strong>smooth out price noise to reveal the underlying trend</strong>.</p>
+<p>Almost all trend-following strategies build on some form of MA. Understanding MAs is the gateway to the entire technical indicator ecosystem.</p>
+
+<h3>II. Three Core Moving Averages</h3>
+
+<h4>1. Simple Moving Average (SMA)</h4>
+<p>Arithmetic mean of the past N periods:</p>
+<div class="formula">
+SMA(t, N) = (1/N) × Σᵢ₌₀ᴺ⁻¹ P(t-i)
+</div>
+<p><strong>Characteristic:</strong> Equal weighting (1/N). A price from 50 days ago affects the SMA exactly as much as today's price.</p>
+<p><strong>Issue:</strong> High lag. And when an old outlier "drops off" the window, the SMA jumps—the <strong>"drop-off effect"</strong>.</p>
+
+<h4>2. Exponential Moving Average (EMA)</h4>
+<p>Exponentially decaying weights give recent data more importance:</p>
+<div class="formula">
+EMA(t) = α × P(t) + (1-α) × EMA(t-1)<br>
+α = 2/(N+1)
+</div>
+<p><strong>Key insight:</strong> EMA has infinite memory with geometrically decaying weights (1-α)ᵏ. For N=20 EMA, α≈0.095, so today's weight is ~9.5% while 20 days ago is only ~1.3%.</p>
+
+<h4>3. Weighted Moving Average (WMA)</h4>
+<div class="formula">
+WMA(t, N) = Σᵢ₌₀ᴺ⁻¹ (N-i)×P(t-i) / [N(N+1)/2]
+</div>
+<p>Linearly decreasing weights. Less common in practice but conceptually bridges SMA and EMA.</p>
+
+<h3>III. Golden Cross & Death Cross Strategy</h3>
+<ul>
+<li><strong>Golden Cross:</strong> Short MA (50d) crosses above Long MA (200d) → Buy</li>
+<li><strong>Death Cross:</strong> Short MA crosses below Long MA → Sell</li>
+</ul>
+<p>On the S&P 500 (1960-2020), this strategy returned ~118%, but Buy & Hold outperformed in total return. The real value is <strong>drawdown reduction</strong>—it helped avoid the worst of the 2008 crash.</p>
+
+<div class="warning">
+<strong>⚠️ Practical Pitfalls:</strong>
+<ul>
+<li><strong>Whipsaw:</strong> In ranging markets, frequent false crossovers eat into profits via transaction costs</li>
+<li><strong>Severe lag:</strong> The 200-day MA turns long after the trend is established</li>
+<li><strong>Parameter overfitting:</strong> 50/200 is convention, not theoretically optimal</li>
+</ul>
+</div>
+
+<h3>IV. Beyond Simple Crossovers</h3>
+<ul>
+<li><strong>DEMA/TEMA:</strong> Double/Triple EMA for reduced lag</li>
+<li><strong>Slope filter:</strong> Only accept golden cross when 200MA slope is positive</li>
+<li><strong>Price-MA distance:</strong> Mean reversion when price deviates far from MA</li>
+<li><strong>Multi-timeframe confirmation:</strong> Daily cross + Weekly uptrend = stronger signal</li>
+</ul>
+
+</div>
+</div>
+
+<hr>
+
+<h2>💻 Python 实现 / Implementation</h2>
+
+<pre class="code"><span class="comment"># Moving Average Strategies — Full Implementation</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+<span class="keyword">import</span> yfinance <span class="keyword">as</span> yf
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+<span class="comment"># 1. Fetch data / 获取数据</span>
+spy = yf.download(<span class="string">"SPY"</span>, start=<span class="string">"2015-01-01"</span>, end=<span class="string">"2026-02-01"</span>)
+close = spy[<span class="string">"Close"</span>].squeeze()
+
+<span class="comment"># 2. Calculate moving averages / 计算各类均线</span>
+<span class="keyword">def</span> sma(series, n):
+    <span class="string">"""Simple Moving Average"""</span>
+    <span class="keyword">return</span> series.rolling(window=n).mean()
+
+<span class="keyword">def</span> ema(series, n):
+    <span class="string">"""Exponential Moving Average"""</span>
+    <span class="keyword">return</span> series.ewm(span=n, adjust=<span class="keyword">False</span>).mean()
+
+<span class="keyword">def</span> wma(series, n):
+    <span class="string">"""Weighted Moving Average"""</span>
+    weights = np.arange(<span class="number">1</span>, n + <span class="number">1</span>)
+    <span class="keyword">return</span> series.rolling(window=n).apply(
+        <span class="keyword">lambda</span> x: np.dot(x, weights) / weights.sum(), raw=<span class="keyword">True</span>
+    )
+
+<span class="comment"># 3. Golden Cross Strategy / 金叉策略</span>
+<span class="keyword">def</span> golden_cross_backtest(prices, short_window=<span class="number">50</span>, long_window=<span class="number">200</span>,
+                           ma_type=<span class="string">"sma"</span>):
+    <span class="string">"""
+    Backtest Golden Cross / Death Cross strategy.
+    Returns a DataFrame with signals and equity curve.
+    """</span>
+    ma_func = {<span class="string">"sma"</span>: sma, <span class="string">"ema"</span>: ema, <span class="string">"wma"</span>: wma}[ma_type]
+    
+    df = pd.DataFrame({<span class="string">"price"</span>: prices})
+    df[<span class="string">"ma_short"</span>] = ma_func(prices, short_window)
+    df[<span class="string">"ma_long"</span>] = ma_func(prices, long_window)
+    
+    <span class="comment"># Signal: 1 when short > long, 0 otherwise</span>
+    df[<span class="string">"signal"</span>] = (df[<span class="string">"ma_short"</span>] > df[<span class="string">"ma_long"</span>]).astype(<span class="keyword">int</span>)
+    
+    <span class="comment"># Detect crossovers / 检测交叉点</span>
+    df[<span class="string">"crossover"</span>] = df[<span class="string">"signal"</span>].diff()
+    <span class="comment"># +1 = golden cross, -1 = death cross</span>
+    
+    <span class="comment"># Strategy returns (enter next day) / 策略收益（次日入场）</span>
+    df[<span class="string">"daily_ret"</span>] = prices.pct_change()
+    df[<span class="string">"strat_ret"</span>] = df[<span class="string">"signal"</span>].shift(<span class="number">1</span>) * df[<span class="string">"daily_ret"</span>]
+    
+    <span class="comment"># Equity curves / 资金曲线</span>
+    df[<span class="string">"buy_hold"</span>] = (<span class="number">1</span> + df[<span class="string">"daily_ret"</span>]).cumprod()
+    df[<span class="string">"strategy"</span>] = (<span class="number">1</span> + df[<span class="string">"strat_ret"</span>]).cumprod()
+    
+    <span class="keyword">return</span> df
+
+<span class="comment"># 4. Run backtest / 运行回测</span>
+result = golden_cross_backtest(close, <span class="number">50</span>, <span class="number">200</span>, <span class="string">"sma"</span>)
+
+<span class="comment"># 5. Performance metrics / 绩效指标</span>
+<span class="keyword">def</span> calc_metrics(df):
+    strat = df[<span class="string">"strat_ret"</span>].dropna()
+    bh = df[<span class="string">"daily_ret"</span>].dropna()
+    
+    ann = <span class="number">252</span>
+    
+    <span class="keyword">def</span> sharpe(r):
+        <span class="keyword">return</span> r.mean() / r.std() * np.sqrt(ann) <span class="keyword">if</span> r.std() > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0</span>
+    
+    <span class="keyword">def</span> max_dd(equity):
+        peak = equity.cummax()
+        dd = (equity - peak) / peak
+        <span class="keyword">return</span> dd.min()
+    
+    print(<span class="string">f"Strategy Sharpe:  {sharpe(strat):.3f}"</span>)
+    print(<span class="string">f"Buy&Hold Sharpe:  {sharpe(bh):.3f}"</span>)
+    print(<span class="string">f"Strategy MaxDD:   {max_dd(df['strategy']):.2%}"</span>)
+    print(<span class="string">f"Buy&Hold MaxDD:   {max_dd(df['buy_hold']):.2%}"</span>)
+    print(<span class="string">f"Strategy Return:  {df['strategy'].iloc[-1]-1:.2%}"</span>)
+    print(<span class="string">f"Buy&Hold Return:  {df['buy_hold'].iloc[-1]-1:.2%}"</span>)
+    
+    <span class="comment"># Count trades / 交易次数</span>
+    trades = (df[<span class="string">"crossover"</span>].abs() == <span class="number">1</span>).sum()
+    print(<span class="string">f"Total Crossovers: {trades}"</span>)
+
+calc_metrics(result)
+
+<span class="comment"># 6. Comparison: SMA vs EMA Golden Cross / 对比 SMA 和 EMA 金叉</span>
+<span class="keyword">for</span> mt <span class="keyword">in</span> [<span class="string">"sma"</span>, <span class="string">"ema"</span>]:
+    r = golden_cross_backtest(close, <span class="number">50</span>, <span class="number">200</span>, mt)
+    final = r[<span class="string">"strategy"</span>].iloc[-<span class="number">1</span>] - <span class="number">1</span>
+    print(<span class="string">f"{mt.upper()} 50/200 Return: {final:.2%}"</span>)
+</pre>
+
+<hr>
+
+<h2>📊 SMA vs EMA vs WMA 对比 / Comparison</h2>
+
+<table>
+<tr><th>特性 / Feature</th><th>SMA</th><th>EMA</th><th>WMA</th></tr>
+<tr><td>权重分布 / Weights</td><td>均等 Equal</td><td>指数衰减 Exponential</td><td>线性衰减 Linear</td></tr>
+<tr><td>滞后性 / Lag</td><td>最高 Highest</td><td>较低 Lower</td><td>中等 Medium</td></tr>
+<tr><td>噪声敏感 / Noise</td><td>最低 Lowest</td><td>较高 Higher</td><td>中等 Medium</td></tr>
+<tr><td>Drop-off Effect</td><td>有 Yes</td><td>无 No</td><td>有 Yes</td></tr>
+<tr><td>计算复杂度 / Complexity</td><td>O(1) 递推</td><td>O(1) 递推</td><td>O(N)</td></tr>
+<tr><td>常见用途 / Use Case</td><td>趋势识别 Trend ID</td><td>短期交易 Short-term</td><td>较少使用 Rare</td></tr>
+</table>
+
+<div class="insight">
+<h3>💡 关键洞察 / Key Insight</h3>
+<p><strong>中文：</strong>移动平均线本质上是一个低通滤波器（low-pass filter）。N 越大，滤除的高频噪声越多，但延迟也越大。选择 N 就是在<strong>噪声过滤</strong>和<strong>信号延迟</strong>之间做权衡——这个 trade-off 贯穿整个量化交易。</p>
+<p><strong>English:</strong> A moving average is essentially a low-pass filter. Larger N filters more high-frequency noise but increases lag. Choosing N is a trade-off between <strong>noise filtering</strong> and <strong>signal delay</strong>—a tension that permeates all of quantitative trading.</p>
+</div>
+
+<h2>📖 参考文献 / References</h2>
+<div class="references">
+<ol>
+<li>Ernest P. Chan, <em>Quantitative Trading</em> (Wiley, 2009) — Ch. 4 on basic technical strategies</li>
+<li>Perry Kaufman, <em>Trading Systems and Methods</em> (Wiley, 6th ed.) — Comprehensive MA analysis</li>
+<li>Robert D. Edwards & John Magee, <em>Technical Analysis of Stock Trends</em> — Classic text on trend following</li>
+<li>Marcos López de Prado, <em>Advances in Financial Machine Learning</em> (Wiley, 2018) — Ch. 5 on structural breaks vs. MA signals</li>
+<li>QuantifiedStrategies.com — Golden Cross Backtest: S&P 500 1960-2020</li>
+<li>Meb Faber, "A Quantitative Approach to Tactical Asset Allocation" (SSRN, 2007) — 10-month SMA timing</li>
+</ol>
+</div>
+
+<h2>🔗 知识网络 / Knowledge Graph</h2>
+<div class="insight">
+<p>Day 3（收益率）→ 移动平均线基于价格序列 → Day 5（时间序列平稳性）中讨论的自相关与 MA 的滞后直接相关 → Day 7（回测陷阱）中的 overfitting 警告适用于 MA 参数选择 → 下一步 Day 9: RSI（基于价格变化的 MA 衍生指标）</p>
+</div>
+
+</body>
+</html>

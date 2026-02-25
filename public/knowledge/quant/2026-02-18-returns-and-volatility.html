@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-18 — 收益率计算：Simple vs Log Returns、波动率基础</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1.05em; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.9em; line-height: 1.5; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .example { background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #f0f0f0; }
+    .tag { display: inline-block; background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin: 2px; }
+  </style>
+</head>
+<body>
+
+<h1>📈 Day 3 | 收益率计算 — Simple vs Log Returns、波动率基础</h1>
+<p><span class="tag">Phase 1: Foundations</span> <span class="tag">2026-02-18</span></p>
+
+<!-- ============ CHINESE SECTION ============ -->
+<div class="zh">
+<h2>🇨🇳 中文版</h2>
+
+<h3>一、为什么收益率比价格更重要？</h3>
+<p>在量化交易中，我们几乎从不直接用价格建模，而是用<strong>收益率(Returns)</strong>。原因有三：</p>
+<ol>
+  <li><strong>标准化</strong>：$100 涨到 $110 和 $1000 涨到 $1100 是不同的价格变化，但都是 10% 收益</li>
+  <li><strong>平稳性</strong>：价格是非平稳的（不断上涨或下跌），收益率更接近平稳过程</li>
+  <li><strong>可加性</strong>：对数收益率可以跨时间直接相加（这是它最大的数学优势）</li>
+</ol>
+
+<h3>二、Simple Returns（简单收益率 / 算术收益率）</h3>
+<div class="formula">
+  R_simple = (P_t - P_{t-1}) / P_{t-1} = P_t / P_{t-1} - 1
+</div>
+<p>直觉很简单：赚了多少除以本金。</p>
+
+<div class="example">
+<strong>例子：</strong>AAPL 从 $180 涨到 $189<br>
+R_simple = (189 - 180) / 180 = 0.05 = 5%
+</div>
+
+<p><strong>关键性质 — 跨资产可加：</strong></p>
+<p>如果你有一个投资组合，持有 60% 的 A 和 40% 的 B，组合收益率是：</p>
+<div class="formula">
+  R_portfolio = w_A × R_A + w_B × R_B = 0.6 × 5% + 0.4 × 3% = 4.2%
+</div>
+<p>这就是简单收益率的杀手级特性：<strong>组合收益 = 权重加权平均</strong>。</p>
+
+<h3>三、Log Returns（对数收益率 / 连续复合收益率）</h3>
+<div class="formula">
+  r_log = ln(P_t / P_{t-1}) = ln(P_t) - ln(P_{t-1})
+</div>
+
+<div class="example">
+<strong>同一例子：</strong>AAPL $180 → $189<br>
+r_log = ln(189/180) = ln(1.05) ≈ 0.04879 = 4.879%
+</div>
+
+<p><strong>关键性质 — 跨时间可加：</strong></p>
+<p>如果你想算多天的累计收益：</p>
+<div class="formula">
+  r_cumulative = r_1 + r_2 + r_3 + ... + r_n
+</div>
+<p>直接相加！不需要 (1+R₁)(1+R₂)... 这种连乘。这在编程中极其方便。</p>
+
+<h3>四、Simple vs Log：何时用哪个？</h3>
+<table>
+  <tr><th>场景</th><th>用哪个</th><th>原因</th></tr>
+  <tr><td>组合收益计算</td><td>Simple</td><td>跨资产可加</td></tr>
+  <tr><td>多期累计收益</td><td>Log</td><td>跨时间可加</td></tr>
+  <tr><td>统计建模/回归</td><td>Log</td><td>更接近正态分布</td></tr>
+  <tr><td>绩效报告给客户</td><td>Simple</td><td>直觉上好理解</td></tr>
+  <tr><td>高频/日内</td><td>都行</td><td>小收益率时两者近似相等</td></tr>
+</table>
+
+<div class="insight">
+<strong>💡 关键洞察：</strong>当收益率很小（< 5%）时，简单收益率和对数收益率非常接近。这就是为什么日度数据中两者差异不大，但月度或年度数据中差异明显。<br><br>
+数学上：ln(1+x) ≈ x（当 x 很小时，泰勒展开的一阶近似）
+</div>
+
+<h3>五、波动率基础</h3>
+<p>波动率是量化交易的核心概念之一——它度量了价格变动的不确定性。</p>
+
+<h4>5.1 历史波动率（Realized Volatility）</h4>
+<div class="formula">
+  σ_daily = std(r_1, r_2, ..., r_n)<br><br>
+  σ_annual = σ_daily × √252
+</div>
+<p>252 是美股一年的交易日数。这个 √T 的缩放基于一个假设：收益率是独立同分布的（i.i.d.），方差可以线性叠加。</p>
+
+<div class="warning">
+<strong>⚠️ 注意：</strong>√252 年化只在 i.i.d. 假设下成立。现实中，收益率有自相关性（尤其是波动率有 clustering 效应），这意味着年化波动率可能被低估或高估。这就是为什么后面我们会学 GARCH 模型。
+</div>
+
+<h4>5.2 波动率的直觉</h4>
+<table>
+  <tr><th>资产</th><th>典型年化波动率</th><th>描述</th></tr>
+  <tr><td>美国国债 (短期)</td><td>1-3%</td><td>极低波动</td></tr>
+  <tr><td>S&P 500</td><td>15-20%</td><td>中等波动</td></tr>
+  <tr><td>个股 (大盘)</td><td>25-40%</td><td>较高波动</td></tr>
+  <tr><td>Bitcoin</td><td>60-80%</td><td>极高波动</td></tr>
+  <tr><td>Meme Stocks</td><td>100%+</td><td>疯狂波动</td></tr>
+</table>
+
+<h4>5.3 波动率聚类（Volatility Clustering）</h4>
+<p>这是金融市场最重要的"程式化事实"之一：<strong>大波动后面跟着大波动，小波动后面跟着小波动</strong>。直觉上，恐慌不会在一天内结束。</p>
+<p>这个现象由 Mandelbrot (1963) 首次观察到，后来催生了 ARCH/GARCH 族模型。</p>
+
+<h4>5.4 为什么量化交易者痴迷于波动率？</h4>
+<ul>
+  <li><strong>仓位管理</strong>：波动率越高 → 仓位越小（波动率平价策略的核心思想）</li>
+  <li><strong>风险度量</strong>：VaR = μ - z × σ</li>
+  <li><strong>期权定价</strong>：Black-Scholes 公式的核心输入就是 σ</li>
+  <li><strong>策略选择</strong>：高波动适合趋势策略，低波动适合均值回归</li>
+</ul>
+
+</div>
+
+<!-- ============ ENGLISH SECTION ============ -->
+<div class="en">
+<h2>🇺🇸 English Version</h2>
+
+<h3>1. Why Returns Over Prices?</h3>
+<p>In quantitative finance, we almost never model raw prices. We use <strong>returns</strong> because they are: (1) normalized — comparable across assets with different price levels, (2) more stationary — closer to a mean-reverting process, and (3) additive — log returns sum across time.</p>
+
+<h3>2. Simple (Arithmetic) Returns</h3>
+<div class="formula">
+  R = (P_t - P_{t-1}) / P_{t-1}
+</div>
+<p><strong>Killer feature:</strong> Portfolio return = weighted sum of component returns. This makes simple returns essential for cross-sectional analysis (e.g., factor models, portfolio optimization).</p>
+
+<h3>3. Logarithmic (Continuously Compounded) Returns</h3>
+<div class="formula">
+  r = ln(P_t / P_{t-1})
+</div>
+<p><strong>Killer feature:</strong> Multi-period return = sum of single-period returns. No compounding math needed. Also, log returns are symmetric: a +5% log return followed by -5% brings you back to the start (not true for simple returns!).</p>
+
+<div class="insight">
+<strong>💡 The symmetry argument:</strong><br>
+Simple returns: $100 × (1+0.5) × (1-0.5) = $75 (you LOST money!)<br>
+Log returns: $100 × exp(0.5) × exp(-0.5) = $100 (back to even!)<br><br>
+This is why log returns are preferred for statistical modeling — they don't have the asymmetry bias that inflates large losses.
+</div>
+
+<h3>4. Conversion Between the Two</h3>
+<div class="formula">
+  r_log = ln(1 + R_simple)<br>
+  R_simple = exp(r_log) - 1
+</div>
+
+<h3>5. Volatility: The Most Important Number in Finance</h3>
+
+<h4>5.1 Historical (Realized) Volatility</h4>
+<div class="formula">
+  σ = std(r_1, ..., r_n) × √252
+</div>
+<p>The √252 annualization assumes i.i.d. returns (variance scales linearly with time under independence). This assumption is convenient but wrong — volatility clusters.</p>
+
+<h4>5.2 Volatility Clustering</h4>
+<p>Mandelbrot (1963) observed that "large changes tend to be followed by large changes." This is the most robust stylized fact of financial markets. It motivates GARCH models and stochastic volatility models.</p>
+
+<h4>5.3 Why Quants Obsess Over Volatility</h4>
+<ul>
+  <li><strong>Position sizing:</strong> Vol targeting — risk budget / σ = position size</li>
+  <li><strong>Risk management:</strong> VaR, CVaR all depend on σ</li>
+  <li><strong>Options:</strong> σ is THE input to Black-Scholes</li>
+  <li><strong>Strategy regime:</strong> High vol → trend following works better; Low vol → mean reversion</li>
+</ul>
+
+<h4>5.4 Realized vs Implied Volatility</h4>
+<p><strong>Realized volatility</strong> = backward-looking (what happened).<br>
+<strong>Implied volatility</strong> = forward-looking (what the options market expects).<br>
+The difference between them is the <strong>Volatility Risk Premium (VRP)</strong> — one of the most persistent sources of alpha in options trading.</p>
+</div>
+
+<!-- ============ CODE SECTION ============ -->
+<h2>💻 Python 实战 / Implementation</h2>
+
+<pre class="code">
+import numpy as np
+import pandas as pd
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+# 1. 获取数据 / Fetch data
+ticker = "AAPL"
+df = yf.download(ticker, start="2024-01-01", end="2026-02-18")
+
+# 2. 计算收益率 / Calculate returns
+df['simple_return'] = df['Adj Close'].pct_change()
+df['log_return'] = np.log(df['Adj Close'] / df['Adj Close'].shift(1))
+
+# 3. 对比两种收益率 / Compare
+print("=== Simple vs Log Returns ===")
+print(f"Mean daily simple return: {df['simple_return'].mean():.6f}")
+print(f"Mean daily log return:    {df['log_return'].mean():.6f}")
+print(f"Difference:               {(df['simple_return'].mean() - df['log_return'].mean()):.6f}")
+
+# 4. 累计收益对比 / Cumulative returns
+cumulative_simple = (1 + df['simple_return']).cumprod() - 1
+cumulative_log = np.exp(df['log_return'].cumsum()) - 1
+# 两者结果完全一致！验证了数学等价性
+
+# 5. 波动率计算 / Volatility
+daily_vol = df['log_return'].std()
+annual_vol = daily_vol * np.sqrt(252)
+print(f"\nDaily volatility:  {daily_vol:.4f} ({daily_vol*100:.2f}%)")
+print(f"Annual volatility: {annual_vol:.4f} ({annual_vol*100:.2f}%)")
+
+# 6. 滚动波动率 / Rolling volatility (观察 clustering)
+df['rolling_vol_20'] = df['log_return'].rolling(20).std() * np.sqrt(252)
+df['rolling_vol_60'] = df['log_return'].rolling(60).std() * np.sqrt(252)
+
+# 7. 波动率聚类可视化 / Visualize clustering
+fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+
+axes[0].plot(df.index, df['Adj Close'], color='#2c3e50')
+axes[0].set_title(f'{ticker} Price')
+
+axes[1].bar(df.index, df['log_return'], color=['#e74c3c' if r < 0 else '#27ae60' 
+            for r in df['log_return'].fillna(0)], width=1)
+axes[1].set_title('Daily Log Returns (notice the clustering!)')
+
+axes[2].plot(df.index, df['rolling_vol_20'], label='20-day', alpha=0.8)
+axes[2].plot(df.index, df['rolling_vol_60'], label='60-day', alpha=0.8)
+axes[2].set_title('Rolling Annualized Volatility')
+axes[2].legend()
+
+plt.tight_layout()
+plt.savefig('returns_and_volatility.png', dpi=150)
+plt.show()
+
+# 8. 实用函数 / Utility functions
+def simple_to_log(simple_returns):
+    """Convert simple returns to log returns."""
+    return np.log(1 + simple_returns)
+
+def log_to_simple(log_returns):
+    """Convert log returns to simple returns."""
+    return np.exp(log_returns) - 1
+
+def annualize_vol(daily_returns, periods=252):
+    """Annualize daily volatility."""
+    return daily_returns.std() * np.sqrt(periods)
+
+def rolling_sharpe(returns, window=252, rf=0.04):
+    """Rolling annualized Sharpe ratio."""
+    excess = returns - rf / 252
+    return (excess.rolling(window).mean() * 252) / (returns.rolling(window).std() * np.sqrt(252))
+</pre>
+
+<!-- ============ FORMULAS SUMMARY ============ -->
+<h2>📐 核心公式速查 / Formula Cheat Sheet</h2>
+<div class="formula">
+<strong>Simple Return:</strong>     R = P_t/P_{t-1} - 1<br>
+<strong>Log Return:</strong>        r = ln(P_t/P_{t-1})<br>
+<strong>Conversion:</strong>        r = ln(1+R),  R = exp(r)-1<br>
+<strong>Portfolio (simple):</strong> R_p = Σ(w_i × R_i)<br>
+<strong>Cumulative (log):</strong>   r_cum = Σ(r_i)<br>
+<strong>Daily Vol:</strong>          σ_d = std(r_1,...,r_n)<br>
+<strong>Annual Vol:</strong>         σ_a = σ_d × √252<br>
+<strong>Taylor approx:</strong>     ln(1+x) ≈ x  (when |x| << 1)
+</div>
+
+<!-- ============ REFERENCES ============ -->
+<h2>📖 参考文献 / References</h2>
+<div class="references">
+<ol>
+  <li>Campbell, Lo, MacKinlay — <em>The Econometrics of Financial Markets</em> (1997), Ch. 1: 收益率定义与性质的经典教材</li>
+  <li>Ernest Chan — <em>Quantitative Trading</em> (2009), Ch. 2: 日志收益率在回测中的使用</li>
+  <li>Mandelbrot, B. — "The Variation of Certain Speculative Prices" (1963): 波动率聚类的首次发现</li>
+  <li>Marcos López de Prado — <em>Advances in Financial Machine Learning</em> (2018), Ch. 2: 金融数据结构与收益率计算</li>
+  <li>Hull, J.C. — <em>Options, Futures, and Other Derivatives</em> (2018): 连续复合收益率与波动率</li>
+</ol>
+</div>
+
+<!-- ============ KNOWLEDGE GRAPH ============ -->
+<h2>🔗 知识网络 / Knowledge Graph</h2>
+<div class="insight">
+<p><strong>Day 1</strong> (量化概览) → 了解了量化交易的全貌<br>
+<strong>Day 2</strong> (数据基础) → 学会了获取和清洗 OHLCV 数据<br>
+<strong>Day 3</strong> (今天!) → 将原始价格转化为可分析的收益率，理解波动率<br>
+<strong>→ Day 4</strong> (统计基础) → 收益率的分布是正态的吗？Fat tails 如何影响策略？<br>
+<strong>→ Day 5</strong> (时间序列) → 收益率的时序依赖性，为 GARCH 建模打基础</p>
+</div>
+
+</body>
+</html>
