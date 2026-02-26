@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-26 — Chain-of-Thought Prompting & Self-Consistency</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 960px; margin: 0 auto; padding: 24px; line-height: 1.7; color: #2d2d2d; }
+    h1 { color: #1a1a2e; border-bottom: 3px solid #f9ab00; padding-bottom: 10px; }
+    h2 { color: #16213e; margin-top: 36px; }
+    h3 { color: #0f3460; }
+    .meta { color: #666; font-size: 0.9em; margin-bottom: 30px; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
+    .zh { border-left: 4px solid #f9ab00; padding-left: 16px; background: #fffdf0; border-radius: 0 8px 8px 0; padding: 12px 16px; }
+    .en { border-left: 4px solid #1a73e8; padding-left: 16px; background: #f0f6ff; border-radius: 0 8px 8px 0; padding: 12px 16px; }
+    .architecture { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #e0e0e0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 18px; border-radius: 10px; overflow-x: auto; font-size: 0.88em; line-height: 1.5; }
+    code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    .highlight { background: #fff3cd; padding: 14px 18px; border-radius: 8px; margin: 14px 0; border-left: 4px solid #f9ab00; }
+    .highlight.blue { background: #e8f4fd; border-left-color: #1a73e8; }
+    .highlight.green { background: #e8f5e9; border-left-color: #34a853; }
+    .highlight.red { background: #fce8e6; border-left-color: #ea4335; }
+    .diagram { background: #1e1e1e; color: #a8ff78; padding: 18px; border-radius: 10px; font-family: monospace; font-size: 0.9em; margin: 20px 0; white-space: pre; overflow-x: auto; }
+    .interview { background: #1a1a2e; color: #e2e8f0; padding: 20px; border-radius: 10px; margin: 24px 0; }
+    .interview h3 { color: #f9ab00; }
+    .interview .q { color: #68d391; font-weight: bold; }
+    .interview .a { color: #bee3f8; margin-left: 16px; margin-bottom: 12px; }
+    .phase-badge { display: inline-block; background: #1a73e8; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; }
+    .new-badge { display: inline-block; background: #34a853; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th { background: #1a1a2e; color: white; padding: 10px 14px; text-align: left; }
+    td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .follow-up { margin-top: 36px; padding: 18px; border: 2px dashed #dadce0; border-radius: 10px; }
+    .tip { background: #e8f5e9; border-left: 4px solid #34a853; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+    .warning { background: #fce8e6; border-left: 4px solid #ea4335; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .box { background: #f8f9fa; border-radius: 8px; padding: 14px; border: 1px solid #e0e0e0; }
+    .box h4 { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+<h1>🧠 Chain-of-Thought Prompting & Self-Consistency
+  <span class="new-badge">Phase 1.1 开始！</span>
+</h1>
+<p class="meta">📅 2026-02-26 · Prompt Engineering 系列 Day 1 · <a href="#">查看课程进度</a></p>
+
+<h2>📖 今日主题概览 / Overview</h2>
+<div class="bilingual">
+  <div class="zh">
+    <strong>你是否想过：</strong>为什么 GPT-4 能解数学题，但 GPT-3.5 却经常算错？答案不是模型大小，而是<strong>提示词设计</strong>。
+
+    <br><br>Chain-of-Thought (CoT) 是 2022 年 Google Brain 提出的突破性技术：通过在 prompt 中加入"推理步骤"，让模型一步步思考，而不是直接跳到答案。这一技巧将复杂推理任务的准确率提升了 <strong>40-60%</strong>。
+
+    <br><br>今天我们深入剖析 CoT 的原理、变体、以及实际工程应用。
+  </div>
+  <div class="en">
+    <strong>Have you wondered:</strong> why GPT-4 can solve math problems but GPT-3.5 often fails? The answer isn't just model size — it's <strong>prompt design</strong>.
+
+    <br><br>Chain-of-Thought (CoT) was introduced by Google Brain in 2022: by adding "reasoning steps" to the prompt, the model thinks step-by-step instead of jumping to an answer. This technique improved complex reasoning accuracy by <strong>40-60%</strong>.
+
+    <br><br>Today we'll deeply analyze CoT's principles, variants, and real engineering applications.
+  </div>
+</div>
+
+<h2>🔬 为什么 LLM 需要"慢思考"？</h2>
+
+<div class="highlight">
+  <strong>核心洞察：</strong>LLM 生成 token 时，每个 token 的计算量是固定的。对于需要多步推理的问题，<strong>一步到位的答案</strong>意味着把复杂推理压缩进单次 forward pass，容易出错。CoT 让模型在中间 token 上"外化"推理过程，相当于给模型提供了"草稿纸"。
+</div>
+
+<div class="diagram">
+Standard Prompt:
+  User: "Roger has 5 tennis balls. He buys 2 more cans of 3 balls each. How many?"
+  GPT:  "11"  ✗ (jumped to wrong answer)
+
+Chain-of-Thought Prompt:
+  User: "Roger has 5 tennis balls. He buys 2 cans of 3 balls each.
+         Think step by step. How many tennis balls does he have now?"
+  GPT:  "Roger starts with 5 balls.
+         2 cans × 3 balls/can = 6 new balls.
+         5 + 6 = 11 balls total.
+         Answer: 11" ✓
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <strong>为什么 CoT 有效？</strong>
+    <ul>
+      <li><strong>分解复杂度</strong>：把 N 步推理问题拆成 N 个简单子任务</li>
+      <li><strong>注意力引导</strong>：中间步骤让 attention 聚焦在相关信息上</li>
+      <li><strong>可验证性</strong>：中间步骤可以被检测和纠错</li>
+      <li><strong>涌现能力</strong>：在 ~100B+ 参数模型上效果最显著</li>
+    </ul>
+  </div>
+  <div class="en">
+    <strong>Why does CoT work?</strong>
+    <ul>
+      <li><strong>Decompose complexity</strong>: Break N-step reasoning into N simple subtasks</li>
+      <li><strong>Attention guidance</strong>: Intermediate steps focus attention on relevant information</li>
+      <li><strong>Verifiability</strong>: Intermediate steps can be detected and corrected</li>
+      <li><strong>Emergent ability</strong>: Most effective on ~100B+ parameter models</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🗂️ CoT 的三大变体</h2>
+
+<h3>1. Few-Shot CoT (原始论文方案)</h3>
+<div class="highlight blue">
+  在 prompt 中提供 3-8 个含推理步骤的示例。模型学会模仿推理格式。适合有稳定推理模式的任务。
+</div>
+
+<pre><code class="language-python"># Few-Shot CoT Prompt
+FEW_SHOT_COT = """
+Solve each problem step by step.
+
+Q: There are 15 trees. Loggers cut 5, then plant 3.
+   How many trees are there?
+A: Start: 15 trees.
+   After cutting: 15 - 5 = 10 trees.
+   After planting: 10 + 3 = 13 trees.
+   Answer: 13
+
+Q: Sara has 12 apples. She gives 4 to Tom and 2 to Jane.
+   How many does she have left?
+A: Sara starts with 12 apples.
+   Gives 4 to Tom: 12 - 4 = 8 apples.
+   Gives 2 to Jane: 8 - 2 = 6 apples.
+   Answer: 6
+
+Q: {user_question}
+A:"""
+</code></pre>
+
+<h3>2. Zero-Shot CoT ("Let's think step by step")</h3>
+<div class="highlight blue">
+  2022年 Tokyo Institute 发现：仅添加 <code>"Let's think step by step."</code> 就能大幅提升推理准确率。无需准备示例，适合快速部署。
+</div>
+
+<pre><code class="language-python">ZERO_SHOT_COT_TEMPLATES = {
+    # 经典版 (Google Brain)
+    "classic": "Let's think step by step.",
+    
+    # 分解版（更结构化）
+    "decompose": "Let's break this down step by step:",
+    
+    # 面向代码/逻辑
+    "logical": "Let's trace through the logic carefully:",
+    
+    # 面向数学
+    "math": "Let's solve this methodically, showing all calculations:",
+    
+    # Claude 偏好（更 XML 结构化）
+    "claude": """<thinking>
+Let me work through this step by step.
+</thinking>""",
+    
+    # 关键步骤提示（减少冗余）
+    "concise": "Think through the key steps, then give a final answer:"
+}
+
+def zero_shot_cot(question: str, style: str = "classic") -> str:
+    template = ZERO_SHOT_COT_TEMPLATES[style]
+    return f"{question}\n\n{template}"
+</code></pre>
+
+<h3>3. Auto-CoT（自动生成示例）</h3>
+<div class="highlight blue">
+  当没有人工标注的推理示例时，用 LLM 自动生成 CoT 示例，然后用于 Few-Shot CoT。这是生产中最实用的方案！
+</div>
+
+<pre><code class="language-typescript">// Auto-CoT Pipeline (TypeScript)
+async function buildAutoCoT(
+  taskDescription: string,
+  sampleQuestions: string[],
+  llm: LLMClient
+): Promise<string> {
+  
+  // Step 1: 自动生成 CoT 示例
+  const examples: string[] = [];
+  
+  for (const question of sampleQuestions.slice(0, 5)) {
+    const cot = await llm.complete(`
+      Question: ${question}
+      
+      Let's think step by step and provide a detailed solution:
+    `);
+    examples.push(`Q: ${question}\nA: ${cot}`);
+  }
+  
+  // Step 2: 组装 Few-Shot Prompt
+  const fewShotPrompt = `
+    ${taskDescription}
+    
+    Here are some examples with step-by-step reasoning:
+    
+    ${examples.join('\n\n---\n\n')}
+    
+    Now solve the following:
+    Q: {question}
+    A:
+  `;
+  
+  return fewShotPrompt;
+}
+</code></pre>
+
+<h2>⚡ Self-Consistency：从单次推理到多数投票</h2>
+
+<div class="highlight red">
+  <strong>CoT 的问题：</strong>单次推理有随机性，同一个问题问两次可能得到不同答案。特别是在 temperature > 0 时，不同推理路径可能导向不同结论。
+</div>
+
+<div class="diagram">
+Self-Consistency = Chain-of-Thought × Majority Voting
+
+                    ┌── CoT Path 1 → Answer: 42 ──┐
+                    │                              │
+Question ──────────── CoT Path 2 → Answer: 42 ──┼──► Majority Vote → 42 ✓
+(Sample N times)    │                              │
+                    └── CoT Path 3 → Answer: 39 ──┘
+                                                 (2/3 votes for 42)
+</div>
+
+<pre><code class="language-python">import asyncio
+from collections import Counter
+from typing import Any
+
+async def self_consistency(
+    question: str,
+    llm,
+    n_samples: int = 10,
+    temperature: float = 0.7,
+    extract_answer_fn=None
+) -> dict:
+    """
+    Self-Consistency: 采样多条 CoT 推理路径，取多数结果
+    
+    Args:
+        n_samples: 采样次数，一般 5-20 次
+        temperature: 温度越高，路径越多样
+        extract_answer_fn: 从 CoT 文本中提取最终答案
+    """
+    
+    # 并发采样 N 条推理路径
+    tasks = [
+        llm.complete(
+            f"{question}\n\nLet's think step by step:",
+            temperature=temperature
+        )
+        for _ in range(n_samples)
+    ]
+    
+    cot_responses = await asyncio.gather(*tasks)
+    
+    # 提取答案（默认取最后一行）
+    if extract_answer_fn is None:
+        extract_answer_fn = lambda r: r.strip().split('\n')[-1]
+    
+    answers = [extract_answer_fn(r) for r in cot_responses]
+    
+    # 多数投票
+    vote_counts = Counter(answers)
+    winner, count = vote_counts.most_common(1)[0]
+    confidence = count / n_samples
+    
+    return {
+        "answer": winner,
+        "confidence": confidence,         # 0.0 ~ 1.0
+        "vote_distribution": dict(vote_counts),
+        "reasoning_paths": cot_responses  # 可用于 debug
+    }
+
+# 使用示例
+result = await self_consistency(
+    question="A bat and a ball cost $1.10. The bat costs $1 more than the ball. How much does the ball cost?",
+    llm=my_llm,
+    n_samples=10
+)
+# → {"answer": "$0.05", "confidence": 0.8, ...}
+</code></pre>
+
+<div class="comparison">
+  <div class="box">
+    <h4>📊 效果提升</h4>
+    <ul>
+      <li>GSM8K (小学数学): <strong>+17.9%</strong></li>
+      <li>SVAMP (复杂数学): <strong>+11.0%</strong></li>
+      <li>StrategyQA (策略推理): <strong>+6.4%</strong></li>
+      <li>AQuA (代数): <strong>+12.2%</strong></li>
+    </ul>
+    <small>来源: Wang et al., 2023</small>
+  </div>
+  <div class="box">
+    <h4>💰 成本权衡</h4>
+    <ul>
+      <li>成本 = 单次 × N 倍</li>
+      <li>N=5: 较好的准确率提升</li>
+      <li>N=10: 边际收益递减</li>
+      <li>N=20+: 极少见额外提升</li>
+      <li><strong>建议</strong>: 高风险决策用 N=10，一般场景用 N=5</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🏗️ 生产级 CoT 架构设计</h2>
+
+<div class="architecture">
+<pre>
+                        ┌─────────────────────────────────┐
+                        │        CoT Prompt Router        │
+                        │                                 │
+  User Query ──────────►│  分类：是否需要 CoT?             │
+                        │  • 简单问答: Direct Answer       │
+                        │  • 多步推理: CoT                 │
+                        │  • 高风险决策: Self-Consistency  │
+                        └──────────┬──────────────────────┘
+                                   │
+                   ┌───────────────┼───────────────┐
+                   ▼               ▼               ▼
+            Direct Answer        CoT         Self-Consistency
+                                              (N=5-10)
+                   │               │               │
+                   └───────────────┼───────────────┘
+                                   ▼
+                        ┌─────────────────────┐
+                        │  Answer Extractor   │
+                        │  + Confidence Score │
+                        └──────────┬──────────┘
+                                   ▼
+                           Final Answer + 
+                         Reasoning Trace
+</pre>
+</div>
+
+<pre><code class="language-typescript">// 生产级 CoT Router (TypeScript)
+type ReasoningStrategy = 'direct' | 'cot' | 'self-consistency';
+
+interface CoTConfig {
+  strategy: ReasoningStrategy;
+  nSamples?: number;   // for self-consistency
+  temperature?: number;
+  extractAnswer?: (response: string) => string;
+}
+
+function selectStrategy(query: string, context: {
+  isHighStakes: boolean;
+  queryType: 'factual' | 'reasoning' | 'calculation' | 'creative';
+  latencyBudgetMs: number;
+}): CoTConfig {
+  
+  // 简单事实查询 → 直接回答
+  if (context.queryType === 'factual' && !context.isHighStakes) {
+    return { strategy: 'direct' };
+  }
+  
+  // 高风险 + 推理 → Self-Consistency
+  if (context.isHighStakes && context.queryType !== 'creative') {
+    return {
+      strategy: 'self-consistency',
+      nSamples: context.latencyBudgetMs > 5000 ? 10 : 5,
+      temperature: 0.7
+    };
+  }
+  
+  // 一般推理/计算 → Standard CoT
+  return { strategy: 'cot', temperature: 0.3 };
+}
+
+async function reasonWithCot(
+  query: string,
+  config: CoTConfig,
+  llm: LLMClient
+): Promise<{ answer: string; reasoning: string; confidence: number }> {
+  
+  if (config.strategy === 'direct') {
+    const response = await llm.complete(query);
+    return { answer: response, reasoning: '', confidence: 1.0 };
+  }
+  
+  const cotPrompt = `${query}
+
+Let's think step by step:`;
+  
+  if (config.strategy === 'cot') {
+    const response = await llm.complete(cotPrompt, { temperature: config.temperature });
+    const answer = extractFinalAnswer(response);
+    return { answer, reasoning: response, confidence: 0.85 };
+  }
+  
+  // Self-Consistency
+  const result = await selfConsistency(cotPrompt, llm, config.nSamples!);
+  return {
+    answer: result.answer,
+    reasoning: result.reasoningPaths[0],  // 取第一条代表路径
+    confidence: result.confidence
+  };
+}
+</code></pre>
+
+<h2>✨ 设计亮点 / Design Highlights</h2>
+
+<div class="highlight green">
+  <h4>亮点 1: CoT 不是免费的午餐</h4>
+  <p>CoT 对 <strong>逻辑推理、数学、代码</strong> 效果显著，但对 <strong>简单事实查询、创意写作、情感分析</strong> 反而可能有损准确率（模型过度推理，绕路走）。生产中一定要做<strong>分类路由</strong>！</p>
+</div>
+
+<div class="highlight green">
+  <h4>亮点 2: XML 结构化思考（Claude 最佳实践）</h4>
+  <p>对于 Claude，用 <code>&lt;thinking&gt;</code> 标签比自然语言 CoT 更稳定。Claude 3.5 Sonnet 及以上版本原生支持扩展思考（Extended Thinking），直接开启比手动 CoT 效果更好。</p>
+</div>
+
+<div class="highlight green">
+  <h4>亮点 3: 置信度信号</h4>
+  <p>Self-Consistency 的投票分布本身就是置信度指标。若 10 次采样中只有 5 票支持最高答案，说明问题本身含糊，应当澄清问题而非强行输出答案。</p>
+</div>
+
+<div class="warning">
+  <h4>⚠️ 常见陷阱：Sycophancy（讨好性错误）</h4>
+  <p>如果 prompt 中暗示了答案方向（"很多人认为答案是 X，你怎么看？"），CoT 仍然可能顺着走。<strong>解决方案</strong>：在 system prompt 中明确要求"不要被问题中的暗示影响"。</p>
+</div>
+
+<h2>📐 进阶变体：Tree of Thoughts 预览</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    CoT 是一条线性推理路径。2023 年 Princeton/Google 提出 <strong>Tree of Thoughts (ToT)</strong>：让模型探索多条分支路径，并用 BFS/DFS 搜索最优路径。
+
+    <br><br>适合：数学证明、策略规划、复杂问题分解。成本高（N倍采样 × 深度），一般只用于高价值任务。
+  </div>
+  <div class="en">
+    CoT is linear reasoning. In 2023, Princeton/Google proposed <strong>Tree of Thoughts (ToT)</strong>: letting the model explore multiple branching paths and using BFS/DFS to find the best one.
+
+    <br><br>Best for: math proofs, strategic planning, complex problem decomposition. High cost (N-samples × depth), usually only for high-value tasks.
+  </div>
+</div>
+
+<div class="diagram">
+Chain-of-Thought:         Tree of Thoughts:
+
+Q → Step1 → Step2 → A    Q → Branch A → A1 → A2 → ✓ Answer
+                             Branch B → B1 → ✗ Dead end
+                             Branch C → C1 → C2 → C3 → (explore)
+                          
+                          评估器 (Evaluator) 剪枝无望分支
+</div>
+
+<h2>💻 Claude Extended Thinking：原生 CoT</h2>
+
+<pre><code class="language-python">import anthropic
+
+client = anthropic.Anthropic()
+
+# Claude 3.7 Sonnet: 原生扩展思考
+response = client.messages.create(
+    model="claude-3-7-sonnet-20250219",
+    max_tokens=16000,
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 10000  # 控制思考深度 (1024 ~ 100K+)
+    },
+    messages=[{
+        "role": "user",
+        "content": """
+        A company has 3 factories. Factory A produces 200 units/day at $5/unit cost.
+        Factory B produces 150 units/day at $4/unit cost.  
+        Factory C produces 180 units/day at $6/unit cost.
+        
+        Demand is 400 units/day. What's the optimal production allocation
+        to minimize cost while meeting demand?
+        """
+    }]
+)
+
+# 输出包含 thinking block + text block
+for block in response.content:
+    if block.type == "thinking":
+        print(f"Reasoning: {block.thinking[:200]}...")  # 内部推理
+    elif block.type == "text":
+        print(f"Answer: {block.text}")  # 最终答案
+</code></pre>
+
+<div class="tip">
+  <strong>📌 实践建议：</strong>budget_tokens 设置：简单推理 1K-4K，复杂问题 8K-32K，数学/代码 32K+。预算未用完时模型会提前停止，不会浪费。
+</div>
+
+<h2>📊 技术对比表</h2>
+
+<table>
+  <tr>
+    <th>方法</th>
+    <th>适用场景</th>
+    <th>成本</th>
+    <th>准确率</th>
+    <th>延迟</th>
+  </tr>
+  <tr>
+    <td>Direct</td>
+    <td>简单事实、创意</td>
+    <td>1x</td>
+    <td>基准</td>
+    <td>最低</td>
+  </tr>
+  <tr>
+    <td>Zero-Shot CoT</td>
+    <td>中等推理</td>
+    <td>1.5-2x (更多 tokens)</td>
+    <td>+15-30%</td>
+    <td>低</td>
+  </tr>
+  <tr>
+    <td>Few-Shot CoT</td>
+    <td>固定推理模式</td>
+    <td>2-3x</td>
+    <td>+20-40%</td>
+    <td>中</td>
+  </tr>
+  <tr>
+    <td>Self-Consistency (N=5)</td>
+    <td>高准确率需求</td>
+    <td>5x</td>
+    <td>+30-50%</td>
+    <td>高</td>
+  </tr>
+  <tr>
+    <td>Extended Thinking</td>
+    <td>复杂推理/数学</td>
+    <td>3-10x</td>
+    <td>最高</td>
+    <td>高</td>
+  </tr>
+  <tr>
+    <td>Tree of Thoughts</td>
+    <td>搜索型问题</td>
+    <td>10-50x</td>
+    <td>最高+</td>
+    <td>最高</td>
+  </tr>
+</table>
+
+<h2>📚 可学习的 Patterns</h2>
+
+<div class="highlight">
+  <h4>Pattern 1: 推理-答案分离</h4>
+  <p>让模型先输出完整推理过程，再输出结构化答案。在代码中解析答案时更稳定：</p>
+  <pre><code>prompt += "\n\nProvide your reasoning, then end with:\nFINAL_ANSWER: [your answer]"</code></pre>
+</div>
+
+<div class="highlight">
+  <h4>Pattern 2: 验证步骤（反向检查）</h4>
+  <p>在 CoT 末尾加入："Now verify your answer by checking each step." 让模型自我核查，类似人做数学题后验算。</p>
+</div>
+
+<div class="highlight">
+  <h4>Pattern 3: 置信度声明</h4>
+  <p>要求模型在答案后声明置信度："On a scale of 1-10, how confident are you?" 可以作为是否触发 Self-Consistency 的决策信号。</p>
+</div>
+
+<div class="highlight">
+  <h4>Pattern 4: 结构化 CoT（面向解析）</h4>
+  <pre><code>Think through this problem using this structure:
+GIVEN: [list what we know]
+FIND: [what we need]
+STEPS:
+  1. [first step]
+  2. [second step]
+  ...
+ANSWER: [final answer]
+CHECK: [verify the answer makes sense]</code></pre>
+</div>
+
+<div class="interview">
+  <h3>🎯 面试高频问题</h3>
+  
+  <div class="q">Q1: 什么时候用 CoT，什么时候不用？</div>
+  <div class="a">
+    用 CoT：多步推理、数学计算、逻辑判断、代码调试。不用 CoT：简单事实查询、创意写作、分类任务（可能过度推理反而出错）。
+    关键原则：<strong>任务需要中间步骤时用 CoT，中间步骤反而添乱时不用</strong>。
+  </div>
+  
+  <div class="q">Q2: Self-Consistency 的成本太高，如何优化？</div>
+  <div class="a">
+    三个优化方向：① <strong>小模型采样，大模型验证</strong>：用 GPT-3.5 采样 N 条路径，用 GPT-4 判断最优路径（比直接 GPT-4 × N 便宜）；
+    ② <strong>早停</strong>：若前 3 次全部一致，停止采样（无需 10 次）；
+    ③ <strong>缓存</strong>：相似问题的 CoT 推理路径可以复用（Semantic Cache）。
+  </div>
+  
+  <div class="q">Q3: 如何评估 CoT Prompt 的质量？</div>
+  <div class="a">
+    建立评测集（Ground Truth 答案）→ 对比 Direct vs CoT 准确率。
+    除准确率外，看：① 推理一致性（10 次采样的 agreement rate）；② 推理正确但答案错误的比例（中间步骤 grounding 问题）；
+    ③ Faithfulness（最终答案是否真的来自推理，而非推理是事后合理化）。
+  </div>
+  
+  <div class="q">Q4: 如何让 CoT 输出更适合解析（结构化输出）？</div>
+  <div class="a">
+    两种方案：① <strong>结构化 CoT</strong>：在 prompt 中明确格式（GIVEN/STEPS/ANSWER），然后用正则或 LLM 提取；
+    ② <strong>Two-step</strong>：Step 1 用高温度做 CoT 推理（自由格式），Step 2 用低温度提取结构化答案（"Based on your reasoning, output JSON: {...}"）。
+    避免在 CoT 推理中要求 JSON，这会干扰推理质量。
+  </div>
+</div>
+
+<h2>💡 今日思考题</h2>
+
+<div class="highlight" style="background: #e8f5e9; border-left-color: #34a853;">
+  <strong>你在 OpenClaw 上构建了 Agent 系统。</strong>
+  
+  <br><br>问题：你的 Agent 需要做一个决策："用户说'把文件移到备份'，应该 mv 还是 cp？" 这是一个有风险的操作。
+  
+  <br><br>你会如何设计这个 Agent 的推理模块？
+  <ul>
+    <li>用 Direct、CoT、还是 Self-Consistency？</li>
+    <li>如果选 CoT，推理步骤应该包含什么？</li>
+    <li>如何决定"置信度够了"再执行？</li>
+  </ul>
+  
+  <em>提示：考虑操作可逆性、用户意图模糊性、以及 Human-in-the-Loop 的触发条件。</em>
+</div>
+
+<div class="follow-up">
+  <h3>💬 后续讨论 / Follow-up Discussion</h3>
+  <p>明天：<strong>Few-Shot vs Zero-Shot 最佳实践</strong> —— 什么时候写示例值得，示例质量 vs 数量的权衡，动态示例选择（RAG + CoT）。</p>
+  <p>有问题随时问！</p>
+</div>
+
+</body>
+</html>

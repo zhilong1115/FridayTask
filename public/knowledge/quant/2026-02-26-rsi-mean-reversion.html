@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-26 — RSI 与超买超卖：构建 Mean Reversion 信号</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 30px 20px; line-height: 1.9; color: #2c3e50; }
+    h1 { color: #c0392b; border-bottom: 3px solid #c0392b; padding-bottom: 10px; }
+    h2 { color: #2980b9; margin-top: 40px; }
+    h3 { color: #27ae60; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
+    .zh { border-left: 4px solid #c41e3a; padding-left: 16px; }
+    .en { border-left: 4px solid #1a73e8; padding-left: 16px; }
+    .formula { background: #f4f6f8; padding: 16px 20px; border-radius: 8px; margin: 16px 0; font-family: 'Courier New', monospace; font-size: 0.95em; overflow-x: auto; white-space: pre-wrap; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 0.88em; line-height: 1.6; }
+    .insight { background: #eaf2f8; padding: 16px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2980b9; }
+    .warning { background: #fdecea; padding: 16px 20px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 16px 20px; border-radius: 8px; }
+    .kg { background: #eafaf1; padding: 16px 20px; border-radius: 8px; border-left: 4px solid #27ae60; margin: 20px 0; }
+    .think { background: #fdf6ec; padding: 16px 20px; border-radius: 8px; border-left: 4px solid #f39c12; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th { background: #2980b9; color: white; padding: 10px; }
+    td { border: 1px solid #ddd; padding: 9px 12px; }
+    tr:nth-child(even) { background: #f8f9fa; }
+    code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    .tag { display: inline-block; background: #c0392b; color: white; font-size: 0.8em; padding: 2px 8px; border-radius: 12px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+
+<h1>📈 量化交易日推 Day 9 — 2026-02-26</h1>
+<p><span class="tag">Phase 2</span><span class="tag">Technical Indicators</span><span class="tag">RSI</span><span class="tag">Mean Reversion</span></p>
+<h1>RSI 与超买超卖：构建 Mean Reversion 信号</h1>
+<h2 style="color:#1a73e8">RSI &amp; Overbought/Oversold: Building Mean Reversion Signals</h2>
+
+<hr>
+
+<h2>1. 什么是 RSI？ / What is RSI?</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>中文</h3>
+    <p><strong>相对强弱指数（RSI）</strong>由 J. Welles Wilder 于 1978 年在其著作《技术交易系统中的新概念》中提出。它是量化领域最著名的动量振荡器之一，用于衡量最近 N 天内<strong>上涨力度与下跌力度的相对强弱</strong>。</p>
+    <p>RSI 的核心思想是：价格不能无限制地单方向运动。当买方力量耗尽（RSI 过高），价格有均值回归的倾向；同样，当卖方力量耗尽（RSI 过低），反弹往往随之而来。</p>
+    <p>RSI 的数值范围是 <strong>0 到 100</strong>：
+    <ul>
+      <li><strong>RSI > 70</strong>：超买区间，可能即将下跌</li>
+      <li><strong>RSI &lt; 30</strong>：超卖区间，可能即将反弹</li>
+      <li><strong>RSI = 50</strong>：多空均衡</li>
+    </ul>
+    </p>
+  </div>
+  <div class="en">
+    <h3>English</h3>
+    <p>The <strong>Relative Strength Index (RSI)</strong> was introduced by J. Welles Wilder in his 1978 book <em>New Concepts in Technical Trading Systems</em>. It is one of the most well-known momentum oscillators in quant finance, measuring the <strong>relative strength of recent gains vs. losses</strong> over N periods.</p>
+    <p>The core idea: prices cannot move in one direction indefinitely. When buying power is exhausted (RSI too high), mean reversion tends to follow. When selling pressure is depleted (RSI too low), a bounce typically occurs.</p>
+    <p>RSI ranges from <strong>0 to 100</strong>:
+    <ul>
+      <li><strong>RSI > 70</strong>: Overbought — potential reversal down</li>
+      <li><strong>RSI &lt; 30</strong>: Oversold — potential bounce up</li>
+      <li><strong>RSI = 50</strong>: Equilibrium between bulls and bears</li>
+    </ul>
+    </p>
+  </div>
+</div>
+
+<h2>2. 数学原理 / Mathematical Derivation</h2>
+
+<p>RSI 的计算是一个两步过程，Wilder 采用了一种<strong>指数平滑（EMA-like）</strong>的方式而不是简单平均：</p>
+
+<div class="formula">Step 1: 分离上涨和下跌（以 14 日为例）
+——————————————————————————
+对于每一天 t，计算日收益率：
+  Δt = Close_t - Close_{t-1}
+
+上涨收益（Gain）: U_t = max(Δt, 0)
+下跌损失（Loss）: D_t = max(-Δt, 0)
+
+初始平均（前 14 天）:
+  AvgGain_14 = mean(U_1 ... U_14)
+  AvgLoss_14 = mean(D_1 ... D_14)
+
+Step 2: Wilder's Smoothing（后续每天）
+——————————————————————————
+  AvgGain_t = (AvgGain_{t-1} × 13 + U_t) / 14
+  AvgLoss_t = (AvgLoss_{t-1} × 13 + D_t) / 14
+
+Step 3: 计算 RS 和 RSI
+——————————————————————————
+  RS  = AvgGain_t / AvgLoss_t
+  RSI = 100 - 100 / (1 + RS)
+
+特殊情况：
+  若 AvgLoss = 0 → RSI = 100
+  若 AvgGain = 0 → RSI = 0</div>
+
+<div class="insight">
+  <strong>💡 为什么用 Wilder Smoothing，而不是 SMA？</strong><br>
+  Wilder 的平滑法等价于 EMA with α = 1/N，赋予最近数据更高权重，使 RSI 对近期价格变动更敏感。标准库（如 pandas-ta）默认使用此方法。
+</div>
+
+<h2>3. Python 实现 / Python Implementation</h2>
+
+<pre class="code">import pandas as pd
+import numpy as np
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+def compute_rsi(series: pd.Series, period: int = 14) -> pd.Series:
+    """
+    Compute RSI using Wilder's smoothing (equivalent to EMA alpha=1/period).
+    """
+    delta = series.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    # Wilder's smoothing: use ewm with adjust=False, alpha=1/period
+    avg_gain = gain.ewm(alpha=1/period, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1/period, adjust=False).mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+
+def rsi_signal(df: pd.DataFrame,
+               period: int = 14,
+               overbought: float = 70,
+               oversold: float = 30) -> pd.DataFrame:
+    """
+    Generate mean-reversion trading signals from RSI.
+    
+    Long signal:  RSI crosses UP through oversold threshold (30)
+    Short signal: RSI crosses DOWN through overbought threshold (70)
+    """
+    df = df.copy()
+    df['RSI'] = compute_rsi(df['Close'], period)
+    
+    # Crossover signals
+    df['prev_RSI'] = df['RSI'].shift(1)
+    
+    # Long: RSI crosses above oversold
+    df['signal'] = 0
+    df.loc[(df['prev_RSI'] < oversold) & (df['RSI'] >= oversold), 'signal'] = 1
+    # Short: RSI crosses below overbought  
+    df.loc[(df['prev_RSI'] > overbought) & (df['RSI'] <= overbought), 'signal'] = -1
+    
+    return df
+
+
+# ─── Example: SPY RSI backtest ────────────────────────────────────────────────
+ticker = yf.Ticker("SPY")
+df = ticker.history(start="2020-01-01", end="2025-12-31")
+df = rsi_signal(df)
+
+# Simple backtest: hold for 5 days after signal
+holding_period = 5
+df['fwd_return'] = df['Close'].pct_change(holding_period).shift(-holding_period)
+
+long_signals  = df[df['signal'] == 1]['fwd_return']
+short_signals = df[df['signal'] == -1]['fwd_return']
+
+print(f"Long signals  (oversold bounces): {len(long_signals)}")
+print(f"  Avg {holding_period}-day fwd return: {long_signals.mean():.2%}")
+print(f"  Win rate: {(long_signals > 0).mean():.1%}")
+print()
+print(f"Short signals (overbought fade): {len(short_signals)}")
+print(f"  Avg {holding_period}-day fwd return: {(-short_signals).mean():.2%}")  # Short = negative return
+print(f"  Win rate: {(short_signals < 0).mean():.1%}")
+</pre>
+
+<h2>4. 策略变体：RSI 均值回归策略 / RSI Mean Reversion Variants</h2>
+
+<table>
+  <tr>
+    <th>策略变体</th>
+    <th>信号条件</th>
+    <th>适用场景</th>
+    <th>风险</th>
+  </tr>
+  <tr>
+    <td>经典超买超卖</td>
+    <td>RSI &lt; 30 → Long；RSI > 70 → Short</td>
+    <td>震荡市场</td>
+    <td>趋势行情连续亏损</td>
+  </tr>
+  <tr>
+    <td>RSI 回穿信号</td>
+    <td>RSI 从 &lt;30 回穿 30 → Long</td>
+    <td>确认反转，减少假信号</td>
+    <td>信号滞后</td>
+  </tr>
+  <tr>
+    <td>RSI 2 极短线</td>
+    <td>RSI(2) &lt; 10 → Long（Larry Connors）</td>
+    <td>极短线（1-3 天）</td>
+    <td>频繁交易，手续费高</td>
+  </tr>
+  <tr>
+    <td>RSI 背离</td>
+    <td>价格新高但 RSI 未创新高</td>
+    <td>中期趋势顶部识别</td>
+    <td>主观性强，难以量化</td>
+  </tr>
+  <tr>
+    <td>RSI + 趋势过滤</td>
+    <td>RSI &lt; 30 AND 200-SMA 上升 → Long</td>
+    <td>趋势中的回调买点</td>
+    <td>漏掉逆势反弹机会</td>
+  </tr>
+</table>
+
+<h2>5. 实战案例：ConnorsRSI / ConnorsRSI in Practice</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>ConnorsRSI 组合指标</h3>
+    <p>Larry Connors 在 RSI(2) 的基础上，开发了 <strong>ConnorsRSI</strong>，通过三个子指标的平均来增强信号质量：</p>
+    <ul>
+      <li><strong>RSI(3)</strong>：短期价格动量</li>
+      <li><strong>连续涨跌天数的 RSI</strong>：持续性指标（streak RSI）</li>
+      <li><strong>ROC 百分位数</strong>：短期涨幅在过去 100 天中的排名</li>
+    </ul>
+    <p>CRSI = (RSI(3) + StreakRSI + PercentRank) / 3</p>
+    <p>研究显示在 ETF 和大盘股上，CRSI &lt; 10 时买入、> 90 时卖出，历史表现优于简单 RSI 策略。</p>
+  </div>
+  <div class="en">
+    <h3>ConnorsRSI Composite</h3>
+    <p>Larry Connors built on RSI(2) to create <strong>ConnorsRSI</strong>, averaging three sub-indicators for better signal quality:</p>
+    <ul>
+      <li><strong>RSI(3)</strong>: Short-term price momentum</li>
+      <li><strong>Streak RSI</strong>: RSI of the consecutive up/down days count</li>
+      <li><strong>Percent Rank</strong>: 2-day ROC ranked over past 100 days</li>
+    </ul>
+    <p>CRSI = (RSI(3) + StreakRSI + PercentRank) / 3</p>
+    <p>Research shows CRSI &lt; 10 buy / > 90 sell historically outperforms simple RSI on large-cap ETFs.</p>
+  </div>
+</div>
+
+<pre class="code">def streak_rsi(close: pd.Series, period: int = 2) -> pd.Series:
+    """Calculate RSI of the streak (consecutive up/down days)."""
+    delta = close.diff()
+    streak = pd.Series(0.0, index=close.index)
+    
+    for i in range(1, len(delta)):
+        if delta.iloc[i] > 0:
+            streak.iloc[i] = max(streak.iloc[i-1], 0) + 1
+        elif delta.iloc[i] < 0:
+            streak.iloc[i] = min(streak.iloc[i-1], 0) - 1
+        else:
+            streak.iloc[i] = 0
+    
+    return compute_rsi(streak, period)
+
+
+def percent_rank(series: pd.Series, lookback: int = 100) -> pd.Series:
+    """Rolling percentile rank of 2-day ROC."""
+    roc2 = series.pct_change(2)
+    return roc2.rolling(lookback).rank(pct=True) * 100
+
+
+def connors_rsi(close: pd.Series) -> pd.Series:
+    rsi3 = compute_rsi(close, period=3)
+    srsi  = streak_rsi(close, period=2)
+    prank = percent_rank(close, lookback=100)
+    return (rsi3 + srsi + prank) / 3
+</pre>
+
+<h2>6. RSI 的局限性与常见陷阱 / Pitfalls</h2>
+
+<div class="warning">
+  <strong>⚠️ 五大陷阱，量化实战中必须注意</strong>
+  <ol>
+    <li><strong>趋势市中的"价值陷阱"</strong>：强趋势行情中，RSI 可以长期维持在 70+ 或 30- 区间，做空/做多会持续亏损。需要趋势过滤（如 200-SMA）。</li>
+    <li><strong>Look-ahead Bias</strong>：计算 RSI 时使用当日收盘价，信号只能在 <strong>次日开盘</strong> 执行，不能在当日收盘时立即建仓。</li>
+    <li><strong>过优化（Curve Fitting）</strong>：将 overbought/oversold 阈值从 70/30 调至 80/20 以提高回测，在样本外往往失效。使用固定参数（14 天，70/30）。</li>
+    <li><strong>Wilder Smoothing 的"热身期"</strong>：RSI 需要至少 period × 2 天数据才能稳定（14 周期需约 28 天）。前期数值不可靠。</li>
+    <li><strong>忽略成交量</strong>：高 RSI 伴随放量突破与高 RSI 伴随缩量是完全不同的含义，纯 RSI 无法区分。</li>
+  </ol>
+</div>
+
+<h2>7. 与移动平均线的组合 / Combining with MA (Day 8 Connection)</h2>
+
+<pre class="code">def rsi_ma_filter_strategy(df, rsi_period=14, ma_period=200,
+                            oversold=30, overbought=70):
+    """
+    RSI + 200-SMA trend filter:
+    - Only go LONG when price is above 200-SMA (uptrend)
+    - Only go SHORT when price is below 200-SMA (downtrend)
+    This avoids catching falling knives in bear markets.
+    """
+    df = df.copy()
+    df['RSI'] = compute_rsi(df['Close'], rsi_period)
+    df['MA200'] = df['Close'].rolling(ma_period).mean()
+    df['above_ma'] = df['Close'] > df['MA200']
+    
+    df['signal'] = 0
+    # Long only in uptrend
+    df.loc[(df['RSI'] < oversold) & df['above_ma'], 'signal'] = 1
+    # Short only in downtrend
+    df.loc[(df['RSI'] > overbought) & ~df['above_ma'], 'signal'] = -1
+    
+    return df
+</pre>
+
+<div class="kg">
+  <strong>🔗 知识网络 / Knowledge Graph</strong>
+  <ul>
+    <li><strong>← Day 8 (移动平均线)</strong>：SMA/EMA 作为趋势过滤器，与 RSI 配合构建更稳健的信号</li>
+    <li><strong>← Day 3 (收益率与波动率)</strong>：RSI 本质是对收益率序列的非线性变换，高 RSI 期往往对应高近期回报</li>
+    <li><strong>← Day 5 (时间序列)</strong>：RSI 是有界振荡器，天然在 [0,100] 之间均值回归，适合平稳性分析</li>
+    <li><strong>→ Day 11 (布林带)</strong>：同为均值回归指标，但布林带基于价格绝对水平，RSI 基于相对强弱</li>
+    <li><strong>→ Day 16 (Pairs Trading)</strong>：RSI 用于识别对冲比率偏离的时机</li>
+  </ul>
+</div>
+
+<div class="references">
+  <h3>📖 参考文献 / References</h3>
+  <ul>
+    <li>Wilder, J.W. (1978). <em>New Concepts in Technical Trading Systems</em>. Trend Research.</li>
+    <li>Connors, L., Alvarez, C. (2009). <em>Short Term Trading Strategies That Work</em>. TradingMarkets Publishing.</li>
+    <li>Chan, E. (2013). <em>Algorithmic Trading: Winning Strategies and Their Rationale</em>. Wiley. (Chapter 3: Mean Reverting Strategies)</li>
+    <li>López de Prado, M. (2018). <em>Advances in Financial Machine Learning</em>. Wiley. (Chapter 17: Structural Breaks)</li>
+    <li>Aronson, D. (2007). <em>Evidence-Based Technical Analysis</em>. Wiley. (Statistical testing of RSI signals)</li>
+    <li>AQR Capital (2013). "Value and Momentum Everywhere." <em>Journal of Finance</em>.</li>
+  </ul>
+</div>
+
+<div class="think">
+  <strong>💭 思考题 / Think About It</strong>
+  <p><strong>中文</strong>：RSI(14) 在 SPY 上的 "RSI &lt; 30 → 买入" 策略，2010–2020 的历史回测可能非常漂亮。但为什么 2022 年熊市中这个策略会遭遇持续亏损？如果你要设计一个"自适应阈值"，在牛市时使用 70/30，在熊市时改用 80/20（或者完全不做空），你会用什么指标来判断市场当前处于哪种状态？</p>
+  <p><strong>English</strong>: An RSI &lt; 30 buy strategy on SPY might look great during 2010–2020 backtesting. But why would it bleed money during the 2022 bear market? If you wanted an "adaptive threshold" system — using 70/30 in bull markets vs. 80/20 (or no shorts) in bear markets — what indicator(s) would you use to determine the current market regime?</p>
+</div>
+
+<hr>
+<p style="color:#888; font-size:0.85em; text-align:center;">
+  量化交易日推 Day 9 | 2026-02-26 | Phase 2: Technical Indicators<br>
+  Scholar 📚 × OpenClaw
+</p>
+</body>
+</html>
