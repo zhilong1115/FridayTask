@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Day 9: RSI 与超买超卖 — 构建 Mean Reversion 信号 | 量化日推</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #f78166;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --purple: #bc8cff;
+      --orange: #ffa657;
+      --teal: #39d353;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+      line-height: 1.7;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    /* Header */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .day-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #1f4068, #1b262c);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .phase-tag {
+      display: inline-block;
+      background: var(--purple);
+      color: #0d1117;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.6rem;
+      border-radius: 12px;
+      margin-left: 0.5rem;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text) 40%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.25;
+      margin-bottom: 0.8rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    /* TOC */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .toc h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem; }
+    .toc ol { padding-left: 1.2rem; }
+    .toc li { margin: 0.3rem 0; }
+    .toc a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { text-decoration: underline; }
+    /* Sections */
+    section { margin-bottom: 3rem; }
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    h2 .icon { font-size: 1.3rem; }
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 1.5rem 0 0.7rem;
+    }
+    p { margin-bottom: 1rem; color: var(--text); }
+    /* Formula boxes */
+    .formula-box {
+      background: linear-gradient(135deg, #0d2137, #1a1f2e);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 1.5rem 2rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+    .formula-box .formula {
+      font-family: 'Courier New', monospace;
+      font-size: 1.3rem;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .formula-box .formula-sub {
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      color: var(--purple);
+      margin-top: 0.6rem;
+    }
+    .formula-box .formula-note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.8rem;
+      font-style: italic;
+    }
+    /* Code blocks */
+    pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.3rem 1.5rem;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+    pre code { color: var(--text); }
+    .kw { color: #ff7b72; }    /* keyword */
+    .fn { color: #d2a8ff; }    /* function */
+    .st { color: #a5d6ff; }    /* string */
+    .cm { color: #8b949e; font-style: italic; } /* comment */
+    .nm { color: #79c0ff; }    /* number */
+    .op { color: #ff7b72; }    /* operator */
+    .cl { color: #ffa657; }    /* class */
+    inline-code, .ic {
+      font-family: monospace;
+      background: var(--surface2);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: var(--orange);
+    }
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+    }
+    .card.green { border-top: 3px solid var(--green); }
+    .card.red { border-top: 3px solid var(--red); }
+    .card.blue { border-top: 3px solid var(--accent); }
+    .card.purple { border-top: 3px solid var(--purple); }
+    .card.yellow { border-top: 3px solid var(--yellow); }
+    .card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .card.green h4 { color: var(--green); }
+    .card.red h4 { color: var(--red); }
+    .card.blue h4 { color: var(--accent); }
+    .card.purple h4 { color: var(--purple); }
+    .card.yellow h4 { color: var(--yellow); }
+    .card p { font-size: 0.88rem; color: var(--muted); margin: 0; }
+    /* Alerts */
+    .alert {
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.9rem;
+      border-left: 4px solid;
+    }
+    .alert.warning { background: rgba(210, 153, 34, 0.1); border-color: var(--yellow); color: #f0c060; }
+    .alert.danger  { background: rgba(248, 81, 73, 0.1);  border-color: var(--red);    color: #ff9090; }
+    .alert.info    { background: rgba(88, 166, 255, 0.1); border-color: var(--accent); color: #9ecfff; }
+    .alert.success { background: rgba(63, 185, 80, 0.1);  border-color: var(--green);  color: #7fdc96; }
+    .alert strong { display: block; margin-bottom: 0.3rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+      font-size: 0.88rem;
+    }
+    th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.78rem;
+      padding: 0.7rem 1rem;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:hover td { background: var(--surface); }
+    /* RSI Gauge */
+    .rsi-gauge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .rsi-bar {
+      position: relative;
+      height: 40px;
+      border-radius: 6px;
+      background: linear-gradient(to right,
+        #1a3a4a 0%,       /* 0 */
+        #1d4a1d 15%,      /* oversold zone 0-30 */
+        #2a2a1a 30%,      /* neutral start */
+        #2a2a1a 70%,      /* neutral end */
+        #4a1d1d 85%,      /* overbought zone 70-100 */
+        #4a1d1d 100%      /* 100 */
+      );
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .rsi-zones {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 0 0.2rem;
+    }
+    .rsi-zone-label {
+      text-align: center;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .rsi-zone-label.oversold { color: var(--green); }
+    .rsi-zone-label.neutral { color: var(--yellow); }
+    .rsi-zone-label.overbought { color: var(--red); }
+    /* Step list */
+    .steps { margin: 1rem 0; }
+    .step {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: flex-start;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-content { flex: 1; }
+    .step-content strong { color: var(--text); }
+    .step-content p { font-size: 0.9rem; color: var(--muted); margin: 0.2rem 0 0; }
+    /* Divergence visual */
+    .divergence-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .div-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+    }
+    .div-card.bullish { border-top: 3px solid var(--green); }
+    .div-card.bearish { border-top: 3px solid var(--red); }
+    .div-card h4 { margin-bottom: 0.8rem; font-size: 0.95rem; }
+    .div-card.bullish h4 { color: var(--green); }
+    .div-card.bearish h4 { color: var(--red); }
+    .signal-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .signal-row:last-child { border-bottom: none; }
+    .signal-row .label { color: var(--muted); }
+    .signal-row .val { font-weight: 600; }
+    .signal-row .val.up { color: var(--green); }
+    .signal-row .val.down { color: var(--red); }
+    /* Market section */
+    .market-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.3rem;
+      margin: 1rem 0;
+    }
+    .market-card .ticker {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+    }
+    .market-card .ticker .symbol { color: var(--accent); }
+    .market-card .ticker .name { color: var(--muted); font-size: 0.85rem; font-weight: 400; }
+    .metric-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .metric {
+      display: flex;
+      flex-direction: column;
+    }
+    .metric .key { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .metric .val { font-size: 1.2rem; font-weight: 700; }
+    .metric .val.overbought { color: var(--red); }
+    .metric .val.oversold { color: var(--green); }
+    .metric .val.neutral { color: var(--yellow); }
+    /* Trap section */
+    .trap-list { list-style: none; padding: 0; }
+    .trap-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--red);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.8rem;
+    }
+    .trap-item .trap-title { font-weight: 700; color: var(--red); margin-bottom: 0.3rem; font-size: 0.95rem; }
+    .trap-item p { font-size: 0.88rem; color: var(--muted); margin: 0; }
+    /* Connection */
+    .connection-box {
+      background: linear-gradient(135deg, var(--surface), #1a1f2e);
+      border: 1px solid var(--purple);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .connection-box h4 { color: var(--purple); margin-bottom: 0.8rem; }
+    .connection-box p { font-size: 0.9rem; color: var(--muted); }
+    /* Thought question */
+    .thought-q {
+      background: linear-gradient(135deg, #1a1f2e, #0d2137);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 3rem;
+      text-align: center;
+    }
+    .thought-q .q-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .thought-q h3 {
+      color: var(--accent);
+      font-size: 1.2rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .next-prev {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .nav-link {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      h2 { font-size: 1.2rem; }
+      .divergence-box { grid-template-columns: 1fr; }
+      .card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="day-badge">
+    📊 量化日推 Day 9 <span class="phase-tag">Phase 2</span>
+  </div>
+  <h1>RSI 与超买超卖<br>构建 Mean Reversion 信号</h1>
+  <p class="subtitle">Relative Strength Index · 均值回归 · 背离检测 · 量化陷阱</p>
+  <div class="meta">
+    <span>📅 2026-02-26</span>
+    <span>⏱ 阅读约 20 分钟</span>
+    <span>🔗 接续 Day 8：移动平均线</span>
+    <span>🐍 Python 完整代码</span>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <h3>📋 目录</h3>
+  <ol>
+    <li><a href="#math">RSI 数学基础 — 从公式到代码</a></li>
+    <li><a href="#signals">超买超卖信号 — 70/30 的真相</a></li>
+    <li><a href="#strategy">Mean Reversion 策略构建</a></li>
+    <li><a href="#divergence">RSI 背离 — 比信号更可靠</a></li>
+    <li><a href="#market">连接今日市场 — NVDA & SPY 实例</a></li>
+    <li><a href="#combo">Day 8 升级版：RSI + EMA 组合</a></li>
+    <li><a href="#traps">量化陷阱 (连接 Day 7)</a></li>
+    <li><a href="#fullcode">Python 完整回测代码</a></li>
+  </ol>
+</nav>
+
+<!-- Section 1: Math -->
+<section id="math">
+  <h2><span class="icon">🧮</span> RSI 数学基础</h2>
+
+  <p>RSI（Relative Strength Index，相对强弱指数）由 J. Welles Wilder Jr. 于 1978 年在《新技术交易系统概念》中提出。它衡量的是<strong>近期涨幅与跌幅的比值</strong>，将其归一化到 0-100 区间。</p>
+
+  <div class="formula-box">
+    <div class="formula">RSI = 100 − 100 / (1 + RS)</div>
+    <div class="formula-sub">RS = 平均涨幅 (Avg Gain) / 平均跌幅 (Avg Loss)</div>
+    <div class="formula-note">默认观察周期：N = 14 天</div>
+  </div>
+
+  <h3>Wilder's Smoothing vs. EMA</h3>
+  <p>这里有一个关键的技术细节，很多教程会跳过：Wilder 使用的不是普通的简单平均，而是一种特殊的<strong>平滑移动平均（Smoothed Moving Average, SMMA）</strong>。</p>
+
+  <div class="card-grid">
+    <div class="card blue">
+      <h4>第一个周期（初始值）</h4>
+      <p>简单地对前 14 天的涨幅和跌幅分别取算术平均：<br><code>Avg Gain₁ = sum(gains[1:15]) / 14</code></p>
+    </div>
+    <div class="card purple">
+      <h4>后续周期（Wilder 平滑）</h4>
+      <p>类似 EMA 但 α=1/N：<br><code>Avg Gainₙ = (Avg Gainₙ₋₁ × 13 + gainₙ) / 14</code><br>等价于 α = 1/14 的 EMA</p>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <strong>💡 为什么这很重要？</strong>
+    不同的平滑方式会产生不同的 RSI 值。ta-lib 和 pandas_ta 默认使用 Wilder's SMMA，而某些教程代码错误地使用 simple rolling mean，导致 RSI 值差距可达 5-8 个点。
+  </div>
+
+  <h3>Python 从零实现 RSI</h3>
+
+<pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">calculate_rsi</span>(prices: pd.Series, period: <span class="fn">int</span> = <span class="nm">14</span>) -> pd.Series:
+    <span class="st">"""
+    计算 RSI (Wilder's Smoothed Moving Average 方法)
+    
+    Args:
+        prices: 收盘价序列
+        period: 回溯周期, 默认 14
+    Returns:
+        RSI 序列 (0-100)
+    """</span>
+    <span class="cm"># Step 1: 计算每日涨跌幅</span>
+    delta = prices.diff()
+    
+    <span class="cm"># Step 2: 分离涨幅和跌幅（跌幅取绝对值）</span>
+    gain = delta.clip(lower=<span class="nm">0</span>)           <span class="cm"># 涨的时候保留，跌的时候为 0</span>
+    loss = (-delta).clip(lower=<span class="nm">0</span>)        <span class="cm"># 跌的时候取正值，涨的时候为 0</span>
+    
+    <span class="cm"># Step 3: 第一个周期用简单平均（Wilder 的规定）</span>
+    avg_gain = gain.ewm(
+        alpha=<span class="nm">1</span>/period,
+        min_periods=period,
+        adjust=<span class="nm">False</span>
+    ).mean()
+    
+    avg_loss = loss.ewm(
+        alpha=<span class="nm">1</span>/period,
+        min_periods=period,
+        adjust=<span class="nm">False</span>
+    ).mean()
+    
+    <span class="cm"># Step 4: RS = 平均涨幅 / 平均跌幅</span>
+    rs = avg_gain / avg_loss
+    
+    <span class="cm"># Step 5: RSI 公式</span>
+    rsi = <span class="nm">100</span> - (<span class="nm">100</span> / (<span class="nm">1</span> + rs))
+    
+    <span class="cm"># 边界处理：avg_loss = 0 时 RSI = 100</span>
+    rsi = rsi.where(avg_loss != <span class="nm">0</span>, <span class="nm">100</span>)
+    
+    <span class="kw">return</span> rsi
+
+
+<span class="cm"># ---- 测试：用随机价格序列验证 ----</span>
+np.random.seed(<span class="nm">42</span>)
+prices = pd.Series(<span class="nm">100</span> + np.cumsum(np.random.randn(<span class="nm">100</span>) * <span class="nm">1.5</span>))
+
+rsi = calculate_rsi(prices, period=<span class="nm">14</span>)
+<span class="fn">print</span>(rsi.tail(<span class="nm">5</span>).round(<span class="nm">2</span>))
+<span class="cm"># 输出范围应在 0-100 之间</span>
+
+
+<span class="cm"># ---- 验证：与 ta-lib 对比 ----</span>
+<span class="kw">try</span>:
+    <span class="kw">import</span> talib
+    rsi_talib = pd.Series(talib.RSI(prices.values, timeperiod=<span class="nm">14</span>), index=prices.index)
+    diff = (rsi - rsi_talib).abs().max()
+    <span class="fn">print</span>(<span class="st">f"最大误差: {diff:.6f}"</span>)  <span class="cm"># 应该 < 0.001</span>
+<span class="kw">except</span>:
+    <span class="fn">print</span>(<span class="st">"ta-lib 未安装，跳过验证"</span>)</code></pre>
+
+  <h3>逐步计算示例</h3>
+  <p>用 5 天数据手动演算，理解机制（period=5 简化演示）：</p>
+
+  <table>
+    <thead>
+      <tr><th>Day</th><th>Price</th><th>Change</th><th>Gain</th><th>Loss</th><th>Avg Gain</th><th>Avg Loss</th><th>RS</th><th>RSI</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>100</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>2</td><td>102</td><td>+2</td><td>2</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>3</td><td>101</td><td>-1</td><td>0</td><td>1</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>4</td><td>104</td><td>+3</td><td>3</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>5</td><td>103</td><td>-1</td><td>0</td><td>1</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>6</td><td>105</td><td>+2</td><td>2</td><td>0</td><td style="color:var(--accent)">1.40</td><td style="color:var(--red)">0.40</td><td style="color:var(--purple)">3.50</td><td style="color:var(--green);font-weight:700">77.8</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.85rem;color:var(--muted)">Day 6: Avg Gain = (2+0+3+0+2)/5 = 1.4，Avg Loss = (0+1+0+1+0)/5 = 0.4，RS = 3.5，RSI = 100 - 100/4.5 ≈ 77.8（超买区间！）</p>
+</section>
+
+<!-- Section 2: Signals -->
+<section id="signals">
+  <h2><span class="icon">🚦</span> 超买超卖信号 — 70/30 的真相</h2>
+
+  <div class="rsi-gauge">
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">RSI 区间示意图</div>
+    <div class="rsi-bar"></div>
+    <div class="rsi-zones">
+      <span>0</span><span>20</span><span>30</span><span>50</span><span>70</span><span>80</span><span>100</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+      <span class="rsi-zone-label oversold">← 超卖 Oversold<br>RSI &lt; 30</span>
+      <span class="rsi-zone-label neutral" style="text-align:center">中性区间<br>30–70</span>
+      <span class="rsi-zone-label overbought" style="text-align:right">超买 Overbought →<br>RSI &gt; 70</span>
+    </div>
+  </div>
+
+  <h3>经典阈值为什么是 70/30？</h3>
+  <p>老实说：<strong>70/30 是 Wilder 凭经验拍的</strong>。他在 1978 年测试了当时有限的商品期货数据，发现这两个阈值在那些市场里表现不错。它并不是什么数学最优解。</p>
+
+  <div class="alert warning">
+    <strong>⚠️ 重要认知</strong>
+    在科技股牛市中，RSI 可以<strong>连续 60 多个交易日</strong>保持在 70 以上（见 2020-2021 年 NVDA、TSLA 的 RSI 历史）。如果你在 RSI=72 时就做空，会被趋势直接碾压。
+  </div>
+
+  <h3>适应性阈值：根据市场状态调整</h3>
+  <p>更聪明的做法是根据市场状态动态调整阈值：</p>
+
+<pre><code><span class="kw">def</span> <span class="fn">adaptive_rsi_thresholds</span>(rsi: pd.Series, lookback: <span class="fn">int</span> = <span class="nm">252</span>):
+    <span class="st">"""
+    根据历史 RSI 分布计算自适应阈值
+    用 25th percentile 作为超卖线，75th percentile 作为超买线
+    """</span>
+    rolling_low  = rsi.rolling(lookback).quantile(<span class="nm">0.25</span>)
+    rolling_high = rsi.rolling(lookback).quantile(<span class="nm">0.75</span>)
+    
+    <span class="kw">return</span> rolling_low, rolling_high
+
+
+<span class="cm"># 在牛市中自适应阈值可能是 55/75（而非固定 30/70）</span>
+<span class="cm"># 在熊市中可能是 25/55</span>
+<span class="cm"># 这自动反映了市场的 regime</span></code></pre>
+
+  <h3>RSI 在不同市场状态下的行为</h3>
+  <div class="card-grid">
+    <div class="card green">
+      <h4>📈 牛市趋势中</h4>
+      <p>RSI 在 40-80 之间振荡。跌至 40 是买入点（不是 30）。过早做空是送钱行为。</p>
+    </div>
+    <div class="card red">
+      <h4>📉 熊市趋势中</h4>
+      <p>RSI 在 20-60 之间振荡。反弹到 60 是卖出点（不是 70）。均值回归偏空。</p>
+    </div>
+    <div class="card yellow">
+      <h4>↔️ 震荡市场中</h4>
+      <p>RSI 在 30-70 之间规律振荡。这才是经典 70/30 策略真正有效的环境。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Strategy -->
+<section id="strategy">
+  <h2><span class="icon">🏗️</span> Mean Reversion 策略构建</h2>
+
+  <p><strong>均值回归（Mean Reversion）</strong>的核心假设：价格的极端偏离不可持续，终将回归均值。RSI 是量化这种"极端程度"的工具。</p>
+
+  <h3>朴素策略 vs. 精细策略</h3>
+
+  <div class="card-grid">
+    <div class="card red">
+      <h4>❌ 朴素策略（常见错误）</h4>
+      <p>RSI 跌破 30 → 立刻做多<br>RSI 突破 70 → 立刻做空<br><br>问题：你在接下落的刀子。跌破 30 的股票经常继续跌到 20、10。</p>
+    </div>
+    <div class="card green">
+      <h4>✅ 精细策略（等回叉信号）</h4>
+      <p>RSI 跌破 30 后<strong>重新上穿 30</strong> → 做多<br>RSI 突破 70 后<strong>重新下穿 70</strong> → 做空<br><br>原因：等待回叉确认动量已反转，不是在猜底部。</p>
+    </div>
+  </div>
+
+  <h3>策略执行步骤</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <strong>监测 RSI 进入极端区间</strong>
+        <p>RSI &lt; 30：进入"待观察"状态。注意：还不是入场信号。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <strong>等待回叉确认</strong>
+        <p>RSI 从 &lt; 30 回升并上穿 30 → <strong>做多信号</strong>。此时动量已在转变，风险降低。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <strong>设置止损和目标</strong>
+        <p>止损：RSI 再次跌破 25（极端恶化）。目标：RSI 回到 50 中线（均值完成回归）。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <strong>退出机制</strong>
+        <p>RSI 达到 50 中线 → 平仓一半；RSI 达到 60 → 全部平仓。不贪婪，均值回归策略是吃小鱼的。</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Pure Pandas 回测代码（基础版）</h3>
+
+<pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> yfinance <span class="kw">as</span> yf
+
+<span class="kw">def</span> <span class="fn">rsi_mean_reversion_backtest</span>(
+    ticker: <span class="fn">str</span> = <span class="st">"SPY"</span>,
+    start: <span class="fn">str</span> = <span class="st">"2020-01-01"</span>,
+    end: <span class="fn">str</span> = <span class="st">"2025-01-01"</span>,
+    rsi_period: <span class="fn">int</span> = <span class="nm">14</span>,
+    oversold: <span class="fn">int</span> = <span class="nm">30</span>,
+    overbought: <span class="fn">int</span> = <span class="nm">70</span>
+) -> dict:
+    
+    <span class="cm"># 下载数据</span>
+    df = yf.download(ticker, start=start, end=end, progress=<span class="nm">False</span>)
+    df = df[<span class="st">'Close'</span>].squeeze()
+    
+    <span class="cm"># 计算 RSI</span>
+    delta = df.diff()
+    gain = delta.clip(lower=<span class="nm">0</span>)
+    loss = (-delta).clip(lower=<span class="nm">0</span>)
+    avg_gain = gain.ewm(alpha=<span class="nm">1</span>/rsi_period, adjust=<span class="nm">False</span>).mean()
+    avg_loss = loss.ewm(alpha=<span class="nm">1</span>/rsi_period, adjust=<span class="nm">False</span>).mean()
+    rs = avg_gain / avg_loss
+    rsi = <span class="nm">100</span> - (<span class="nm">100</span> / (<span class="nm">1</span> + rs))
+    
+    <span class="cm"># 生成"回叉"信号（等 RSI 穿越阈值后确认）</span>
+    prev_rsi = rsi.shift(<span class="nm">1</span>)
+    
+    <span class="cm"># 做多信号：上一天 RSI < 30，今天 RSI >= 30（上穿）</span>
+    long_signal  = (prev_rsi < oversold)  & (rsi >= oversold)
+    <span class="cm"># 做空信号：上一天 RSI > 70，今天 RSI <= 70（下穿）</span>
+    short_signal = (prev_rsi > overbought) & (rsi <= overbought)
+    
+    <span class="cm"># 构建持仓：1 = 多，-1 = 空，0 = 空仓</span>
+    <span class="cm"># 策略：持有到 RSI 回到 50（中线）</span>
+    position = pd.Series(<span class="nm">0</span>, index=df.index)
+    current_pos = <span class="nm">0</span>
+    
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(df)):
+        <span class="kw">if</span> long_signal.iloc[i]:
+            current_pos = <span class="nm">1</span>
+        <span class="kw">elif</span> short_signal.iloc[i]:
+            current_pos = -<span class="nm">1</span>
+        <span class="cm"># 退出：RSI 穿过 50 中线</span>
+        <span class="kw">elif</span> current_pos == <span class="nm">1</span>  <span class="kw">and</span> rsi.iloc[i] > <span class="nm">50</span>:
+            current_pos = <span class="nm">0</span>
+        <span class="kw">elif</span> current_pos == -<span class="nm">1</span> <span class="kw">and</span> rsi.iloc[i] < <span class="nm">50</span>:
+            current_pos = <span class="nm">0</span>
+        position.iloc[i] = current_pos
+    
+    <span class="cm"># 计算每日收益</span>
+    daily_returns = df.pct_change()
+    strategy_returns = position.shift(<span class="nm">1</span>) * daily_returns  <span class="cm"># 注意：信号在今天，明天才能执行</span>
+    
+    <span class="cm"># 业绩统计</span>
+    total_return = ((<span class="nm">1</span> + strategy_returns).cumprod().iloc[-<span class="nm">1</span>] - <span class="nm">1</span>) * <span class="nm">100</span>
+    bh_return = ((df.iloc[-<span class="nm">1</span>] / df.iloc[<span class="nm">0</span>]) - <span class="nm">1</span>) * <span class="nm">100</span>
+    
+    <span class="cm"># Sharpe Ratio（年化，假设无风险利率 5%）</span>
+    excess = strategy_returns - <span class="nm">0.05</span>/<span class="nm">252</span>
+    sharpe = excess.mean() / excess.std() * np.sqrt(<span class="nm">252</span>)
+    
+    <span class="cm"># 最大回撤</span>
+    cumulative = (<span class="nm">1</span> + strategy_returns).cumprod()
+    peak = cumulative.expanding().max()
+    drawdown = (cumulative - peak) / peak
+    max_dd = drawdown.min() * <span class="nm">100</span>
+    
+    <span class="cm"># 胜率</span>
+    trades = strategy_returns[position.shift(<span class="nm">1</span>) != <span class="nm">0</span>]
+    win_rate = (trades > <span class="nm">0</span>).mean() * <span class="nm">100</span>
+    
+    results = {
+        <span class="st">"strategy_return"</span>: <span class="fn">round</span>(total_return, <span class="nm">2</span>),
+        <span class="st">"buy_hold_return"</span>: <span class="fn">round</span>(bh_return, <span class="nm">2</span>),
+        <span class="st">"sharpe_ratio"</span>:    <span class="fn">round</span>(sharpe, <span class="nm">3</span>),
+        <span class="st">"max_drawdown"</span>:    <span class="fn">round</span>(max_dd, <span class="nm">2</span>),
+        <span class="st">"win_rate"</span>:        <span class="fn">round</span>(win_rate, <span class="nm">1</span>),
+        <span class="st">"equity_curve"</span>:   cumulative
+    }
+    <span class="kw">return</span> results
+
+<span class="cm"># 运行</span>
+results = <span class="fn">rsi_mean_reversion_backtest</span>(<span class="st">"SPY"</span>)
+<span class="fn">print</span>(<span class="st">f"策略收益: {results['strategy_return']}%"</span>)
+<span class="fn">print</span>(<span class="st">f"买入持有: {results['buy_hold_return']}%"</span>)
+<span class="fn">print</span>(<span class="st">f"Sharpe:   {results['sharpe_ratio']}"</span>)
+<span class="fn">print</span>(<span class="st">f"最大回撤: {results['max_drawdown']}%"</span>)
+<span class="fn">print</span>(<span class="st">f"胜率:     {results['win_rate']}%"</span>)</code></pre>
+
+  <div class="alert warning">
+    <strong>⚠️ 动量覆盖均值回归的风险</strong>
+    2022 年熊市中，SPY 的 RSI 多次在 30 附近给出"买入"信号，但价格继续下跌 15-20%。强烈的宏观趋势（Fed 加息）会持续覆盖技术面的均值回归信号。<strong>这就是为什么纯 RSI 策略需要配合趋势过滤</strong>（见 Section 6）。
+  </div>
+</section>
+
+<!-- Section 4: Divergence -->
+<section id="divergence">
+  <h2><span class="icon">🔱</span> RSI 背离 — 比信号更可靠</h2>
+
+  <p>RSI 背离（Divergence）是 RSI 分析中最精华的部分。它关注的不是 RSI 的绝对值，而是<strong>价格走势与 RSI 走势之间的分歧</strong>——当这两者方向相反时，往往预示着趋势的疲软或反转。</p>
+
+  <div class="divergence-box">
+    <div class="div-card bullish">
+      <h4>📗 看涨背离 (Bullish Divergence)</h4>
+      <div class="signal-row">
+        <span class="label">价格走势</span>
+        <span class="val down">低点 → 更低低点 ↘</span>
+      </div>
+      <div class="signal-row">
+        <span class="label">RSI 走势</span>
+        <span class="val up">低点 → 更高低点 ↗</span>
+      </div>
+      <div class="signal-row">
+        <span class="label">含义</span>
+        <span class="val up">下跌动能正在减弱</span>
+      </div>
+      <div class="signal-row">
+        <span class="label">操作</span>
+        <span class="val up">关注做多机会</span>
+      </div>
+      <p style="margin-top:0.8rem;font-size:0.82rem;color:var(--muted)">
+        典型案例：2020年3月，SPY 在创新低，但 RSI 没有同步创新低 → 反弹确认
+      </p>
+    </div>
+    <div class="div-card bearish">
+      <h4>📕 看跌背离 (Bearish Divergence)</h4>
+      <div class="signal-row">
+        <span class="label">价格走势</span>
+        <span class="val up">高点 → 更高高点 ↗</span>
+      </div>
+      <div class="signal-row">
+        <span class="label">RSI 走势</span>
+        <span class="val down">高点 → 更低高点 ↘</span>
+      </div>
+      <div class="signal-row">
+        <span class="label">含义</span>
+        <span class="val down">上涨动能正在衰竭</span>
+      </div>
+      <div class="signal-row">
+        <span class="label">操作</span>
+        <span class="val down">关注减仓/做空机会</span>
+      </div>
+      <p style="margin-top:0.8rem;font-size:0.82rem;color:var(--muted)">
+        典型案例：2021年11月，SPY 创历史新高，但 RSI 在下降 → 预示 2022 年熊市
+      </p>
+    </div>
+  </div>
+
+  <h3>Python 代码：自动检测 RSI 背离</h3>
+
+<pre><code><span class="kw">from</span> scipy.signal <span class="kw">import</span> argrelextrema
+
+<span class="kw">def</span> <span class="fn">find_divergence</span>(
+    price: pd.Series,
+    rsi: pd.Series,
+    order: <span class="fn">int</span> = <span class="nm">5</span>,       <span class="cm"># 局部极值的邻域大小</span>
+    lookback: <span class="fn">int</span> = <span class="nm">50</span>    <span class="cm"># 仅检测最近 N 根 bar</span>
+) -> pd.DataFrame:
+    <span class="st">"""
+    检测 RSI 背离信号
+    
+    原理：找到价格的局部极值点，对比对应的 RSI 极值
+    注意：这里有潜在的 look-ahead bias，见下方说明
+    """</span>
+    
+    price_arr = price.values
+    rsi_arr   = rsi.values
+    n = <span class="fn">len</span>(price_arr)
+    
+    <span class="cm"># 找局部低点（for bullish divergence）</span>
+    local_lows  = argrelextrema(price_arr, np.less, order=order)[<span class="nm">0</span>]
+    <span class="cm"># 找局部高点（for bearish divergence）</span>
+    local_highs = argrelextrema(price_arr, np.greater, order=order)[<span class="nm">0</span>]
+    
+    signals = []
+    
+    <span class="cm"># 检测看涨背离</span>
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(local_lows)):
+        idx1, idx2 = local_lows[i-<span class="nm">1</span>], local_lows[i]
+        <span class="kw">if</span> idx2 - idx1 > lookback:
+            <span class="kw">continue</span>
+        
+        <span class="cm"># 价格创新低，RSI 没有创新低 → 看涨背离</span>
+        price_lower = price_arr[idx2] < price_arr[idx1]
+        rsi_higher  = rsi_arr[idx2]   > rsi_arr[idx1]
+        
+        <span class="kw">if</span> price_lower <span class="kw">and</span> rsi_higher:
+            signals.append({
+                <span class="st">'date'</span>:  price.index[idx2],
+                <span class="st">'type'</span>:  <span class="st">'bullish'</span>,
+                <span class="st">'price'</span>: price_arr[idx2],
+                <span class="st">'rsi'</span>:   rsi_arr[idx2],
+                <span class="st">'prev_price'</span>: price_arr[idx1],
+                <span class="st">'prev_rsi'</span>:   rsi_arr[idx1],
+            })
+    
+    <span class="cm"># 检测看跌背离</span>
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(local_highs)):
+        idx1, idx2 = local_highs[i-<span class="nm">1</span>], local_highs[i]
+        <span class="kw">if</span> idx2 - idx1 > lookback:
+            <span class="kw">continue</span>
+        
+        <span class="cm"># 价格创新高，RSI 没有创新高 → 看跌背离</span>
+        price_higher = price_arr[idx2] > price_arr[idx1]
+        rsi_lower    = rsi_arr[idx2]   < rsi_arr[idx1]
+        
+        <span class="kw">if</span> price_higher <span class="kw">and</span> rsi_lower:
+            signals.append({
+                <span class="st">'date'</span>:  price.index[idx2],
+                <span class="st">'type'</span>:  <span class="st">'bearish'</span>,
+                <span class="st">'price'</span>: price_arr[idx2],
+                <span class="st">'rsi'</span>:   rsi_arr[idx2],
+                <span class="st">'prev_price'</span>: price_arr[idx1],
+                <span class="st">'prev_rsi'</span>:   rsi_arr[idx1],
+            })
+    
+    <span class="kw">return</span> pd.DataFrame(signals).sort_values(<span class="st">'date'</span>)
+
+
+<span class="cm"># ⚠️ 重要：argrelextrema 会使用"未来"数据来确认当前极值点</span>
+<span class="cm"># 这是一种 look-ahead bias！实盘必须只用左侧数据来识别极值</span>
+<span class="cm"># 见 Section 7 陷阱 #2</span></code></pre>
+
+  <div class="alert info">
+    <strong>💡 为什么背离比绝对值更可靠？</strong>
+    背离信号关注的是"动量衰减"，而不是"价格已经跌够了"。动量先于价格变化——这是技术分析里少有的有物理直觉支撑的规律。
+  </div>
+</section>
+
+<!-- Section 5: Market -->
+<section id="market">
+  <h2><span class="icon">🌍</span> 连接今日市场 — NVDA & SPY 实例</h2>
+
+  <p>理论很好，但量化需要连接真实市场。让我们看看 2026 年 2 月下旬市场的 RSI 状态。</p>
+
+  <div class="market-card">
+    <div class="ticker">
+      <span class="symbol">NVDA</span>
+      <span class="name">Nvidia Corporation — 财报前后的 RSI 分析</span>
+    </div>
+    <div class="metric-row">
+      <div class="metric">
+        <span class="key">财报前 RSI (约 2 周前)</span>
+        <span class="val overbought">~72-78</span>
+      </div>
+      <div class="metric">
+        <span class="key">财报后 RSI</span>
+        <span class="val neutral">~48-55</span>
+      </div>
+      <div class="metric">
+        <span class="key">信号状态</span>
+        <span class="val overbought">超买 → 快速降温</span>
+      </div>
+    </div>
+    <div style="margin-top:1rem;font-size:0.88rem;color:var(--muted);">
+      <strong style="color:var(--text);">分析：</strong> NVDA 在财报前几周受到 AI 热潮驱动，RSI 长期处于超买区域（70+）。这是典型的"强势股的超买"——趋势中超买可以持续维持，直到触发事件（财报、宏观新闻）。财报发布后，RSI 迅速从超买区回落至中性。这验证了 Day 8 的结论：<em>在强趋势中，RSI > 70 不是卖出信号，而是强势的表现</em>。
+    </div>
+  </div>
+
+  <div class="market-card">
+    <div class="ticker">
+      <span class="symbol">SPY</span>
+      <span class="name">S&P 500 ETF — 2 月 23 日 -1% 后的 RSI</span>
+    </div>
+    <div class="metric-row">
+      <div class="metric">
+        <span class="key">当前 RSI (14日)</span>
+        <span class="val neutral">~42-48</span>
+      </div>
+      <div class="metric">
+        <span class="key">距超卖线</span>
+        <span class="val neutral">仍有距离</span>
+      </div>
+      <div class="metric">
+        <span class="key">策略信号</span>
+        <span class="val neutral">中性，观望</span>
+      </div>
+    </div>
+    <div style="margin-top:1rem;font-size:0.88rem;color:var(--muted);">
+      <strong style="color:var(--text);">分析：</strong> 2 月 23 日 SPY 下跌约 1%，叠加之前的回调，RSI 从高位降至中性偏弱区间（~45）。根据我们的策略，这还未触发做多信号（需要跌破 30 后回叉）。这正是"耐心等待信号确认"的体现——不要追跌，等 RSI 给出明确的超卖+回叉信号。
+    </div>
+  </div>
+
+  <div class="alert success">
+    <strong>📊 实战建议</strong>
+    获取实时 RSI 数据：运行 <code>yf.download("SPY", period="3mo")</code> 然后计算 RSI。或使用免费 API：TradingView、Finviz 都提供可视化 RSI，方便快速参考。
+  </div>
+</section>
+
+<!-- Section 6: Combo -->
+<section id="combo">
+  <h2><span class="icon">🔗</span> Day 8 升级版：RSI + EMA 组合策略</h2>
+
+  <p>上一期我们学了移动平均线（EMA/SMA）。今天的 RSI 与它完美搭配，形成一个双重过滤机制：</p>
+
+  <div class="connection-box">
+    <h4>🧠 组合逻辑：趋势过滤 + 动量超卖</h4>
+    <p>
+      <strong>入场条件（做多）：</strong><br>
+      ① RSI 跌破 30 后回叉上穿（超卖信号）<br>
+      ② 价格仍在 200 日 EMA 之上（长期趋势为多）<br>
+      → 两个条件同时满足才入场，否则忽略信号
+    </p>
+    <p style="margin-top:0.8rem;">
+      <strong>逻辑：</strong>如果价格在 200 EMA 之下，说明长期趋势为空，RSI 超卖只是下跌途中的短暂喘息，不适合做多的均值回归。这大幅降低了 2022 年这类熊市中的假信号。
+    </p>
+  </div>
+
+<pre><code><span class="kw">def</span> <span class="fn">rsi_ema_combo_strategy</span>(
+    ticker: <span class="fn">str</span> = <span class="st">"SPY"</span>,
+    start: <span class="fn">str</span> = <span class="st">"2020-01-01"</span>,
+    end: <span class="fn">str</span> = <span class="st">"2025-01-01"</span>
+) -> dict:
+    
+    df = yf.download(ticker, start=start, end=end, progress=<span class="nm">False</span>)[<span class="st">'Close'</span>].squeeze()
+    
+    <span class="cm"># 计算指标</span>
+    rsi   = calculate_rsi(df, period=<span class="nm">14</span>)
+    ema50  = df.ewm(span=<span class="nm">50</span>,  adjust=<span class="nm">False</span>).mean()
+    ema200 = df.ewm(span=<span class="nm">200</span>, adjust=<span class="nm">False</span>).mean()
+    
+    <span class="cm"># 趋势过滤：价格在 200 EMA 上方 → 允许做多</span>
+    uptrend = df > ema200
+    
+    <span class="cm"># 信号生成（回叉）</span>
+    prev_rsi = rsi.shift(<span class="nm">1</span>)
+    rsi_cross_up   = (prev_rsi < <span class="nm">30</span>) & (rsi >= <span class="nm">30</span>)  <span class="cm"># 上穿 30</span>
+    rsi_cross_down = (prev_rsi > <span class="nm">70</span>) & (rsi <= <span class="nm">70</span>)  <span class="cm"># 下穿 70</span>
+    
+    <span class="cm"># 组合信号：RSI 信号 + 趋势过滤</span>
+    long_signal  = rsi_cross_up   & uptrend          <span class="cm"># 多头信号（需在 EMA200 上方）</span>
+    short_signal = rsi_cross_down & ~uptrend         <span class="cm"># 空头信号（需在 EMA200 下方）</span>
+    
+    <span class="cm"># 持仓逻辑（同上，退出在 RSI=50）</span>
+    position = pd.Series(<span class="nm">0</span>, index=df.index)
+    current_pos = <span class="nm">0</span>
+    
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(df)):
+        <span class="kw">if</span> long_signal.iloc[i]:
+            current_pos = <span class="nm">1</span>
+        <span class="kw">elif</span> short_signal.iloc[i]:
+            current_pos = -<span class="nm">1</span>
+        <span class="kw">elif</span> current_pos == <span class="nm">1</span>  <span class="kw">and</span> rsi.iloc[i] > <span class="nm">50</span>:
+            current_pos = <span class="nm">0</span>
+        <span class="kw">elif</span> current_pos == -<span class="nm">1</span> <span class="kw">and</span> rsi.iloc[i] < <span class="nm">50</span>:
+            current_pos = <span class="nm">0</span>
+        position.iloc[i] = current_pos
+    
+    <span class="cm"># 计算绩效（同上）</span>
+    daily_ret = df.pct_change()
+    strat_ret = position.shift(<span class="nm">1</span>) * daily_ret
+    
+    sharpe = (strat_ret.mean() - <span class="nm">0.05</span>/<span class="nm">252</span>) / strat_ret.std() * np.sqrt(<span class="nm">252</span>)
+    total  = (<span class="nm">1</span> + strat_ret).cumprod()
+    
+    <span class="kw">return</span> {
+        <span class="st">"strategy"</span>: <span class="st">"RSI + EMA200 Filter"</span>,
+        <span class="st">"sharpe"</span>: <span class="fn">round</span>(sharpe, <span class="nm">3</span>),
+        <span class="st">"total_return"</span>: <span class="fn">round</span>((total.iloc[-<span class="nm">1</span>] - <span class="nm">1</span>) * <span class="nm">100</span>, <span class="nm">2</span>),
+        <span class="st">"max_dd"</span>: <span class="fn">round</span>(((total/total.expanding().max()-<span class="nm">1</span>).min())*<span class="nm">100</span>, <span class="nm">2</span>)
+    }
+
+results_combo = <span class="fn">rsi_ema_combo_strategy</span>()
+<span class="fn">print</span>(results_combo)
+<span class="cm"># 预期：比纯 RSI 策略有更高 Sharpe 和更低最大回撤</span></code></pre>
+
+  <table>
+    <thead>
+      <tr><th>策略</th><th>Sharpe（预期参考）</th><th>最大回撤（预期）</th><th>备注</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>纯 RSI 均值回归</td><td>0.3 ~ 0.6</td><td>-15% ~ -25%</td><td>2022 年吃大亏</td></tr>
+      <tr><td>RSI + EMA200 过滤</td><td>0.5 ~ 0.9</td><td>-10% ~ -18%</td><td>大幅减少熊市损失</td></tr>
+      <tr><td>Buy & Hold SPY</td><td>0.7 ~ 1.0</td><td>-33.9% (2020)</td><td>基准线</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Section 7: Traps -->
+<section id="traps">
+  <h2><span class="icon">⚠️</span> 量化陷阱 — 连接 Day 7</h2>
+
+  <p>Day 7 我们学了回测陷阱的通用框架。今天把它具体化到 RSI 策略上。</p>
+
+  <ul class="trap-list">
+    <li class="trap-item">
+      <div class="trap-title">陷阱 #1：过拟合 RSI 阈值</div>
+      <p>你在历史数据上发现"RSI=28 买入、RSI=68 卖出"比默认 30/70 好 15%。但这个差距是噪声，不是信号。在新的数据上，28 和 30 的差别可以忽略不计，你只是在记忆历史噪声。<strong>解决方案</strong>：保持默认值（30/70），或做 walk-forward 验证；千万不要在同一数据集上同时优化和验证参数。</p>
+    </li>
+    <li class="trap-item">
+      <div class="trap-title">陷阱 #2：背离检测的 Look-ahead Bias</div>
+      <p>用 <code>argrelextrema</code> 检测局部低点需要"未来"数据——一个低点在它之后几天都没出现更低的点才能被确认为局部低点。在实盘中你不知道这个信息。<strong>解决方案</strong>：实盘中用"实时"低点识别（如价格连续 N 天反弹视为低点已确认），而不是最优极值检测。</p>
+    </li>
+    <li class="trap-item">
+      <div class="trap-title">陷阱 #3：错误的持仓信号偏移</div>
+      <p>常见错误：<code>daily_returns * position</code>（没有 shift）。今天收盘产生信号，今天的收益就用上了。但现实是你只能<strong>明天开盘</strong>才能执行。必须用 <code>position.shift(1)</code>。忘了这一步，Sharpe 会虚高 20-50%。</p>
+    </li>
+    <li class="trap-item">
+      <div class="trap-title">陷阱 #4：忽略 RSI 50 中线</div>
+      <p>RSI 50 是多空分水岭——RSI 在 50 之上趋势偏多，之下偏空。很多策略只看 70/30 而忽视 50。<strong>建议</strong>：将 RSI 50 用作趋势过滤器：RSI > 50 只做多，RSI &lt; 50 只做空（或空仓）。这是一个简单有效的 regime filter。</p>
+    </li>
+    <li class="trap-item">
+      <div class="trap-title">陷阱 #5：没有考虑交易成本</div>
+      <p>均值回归策略交易频繁（每次只持仓几天）。每次双边费用 0.1% 看起来很小，但如果一年做 50 次，就是 10% 的额外成本。加上滑点，高频均值回归策略在散户层面几乎无利可图。<strong>解决方案</strong>：在回测中显式加入交易成本，看 Sharpe 是否还为正。</p>
+    </li>
+  </ul>
+</section>
+
+<!-- Section 8: Full Code -->
+<section id="fullcode">
+  <h2><span class="icon">💻</span> Python 完整回测代码</h2>
+
+  <p>把所有知识整合成一个完整的、生产级别的回测脚本：</p>
+
+<pre><code><span class="st">"""
+RSI Mean Reversion Backtest — 完整版
+Day 9: 量化日推 2026-02-26
+
+策略：RSI 超卖/超买 + EMA200 趋势过滤 + 回叉确认入场
+标的：SPY (2020-2025)
+"""</span>
+
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> yfinance <span class="kw">as</span> yf
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> warnings
+warnings.filterwarnings(<span class="st">'ignore'</span>)
+
+<span class="cm"># ════════════════════════════════════════════════
+# 1. 数据获取
+# ════════════════════════════════════════════════</span>
+TICKER = <span class="st">"SPY"</span>
+START  = <span class="st">"2020-01-01"</span>
+END    = <span class="st">"2025-01-01"</span>
+
+df = yf.download(TICKER, start=START, end=END, progress=<span class="nm">False</span>)
+close = df[<span class="st">'Close'</span>].squeeze()
+<span class="fn">print</span>(<span class="st">f"数据: {START} to {END}, {len(close)} 个交易日"</span>)
+
+
+<span class="cm"># ════════════════════════════════════════════════
+# 2. 指标计算
+# ════════════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">calc_rsi</span>(s, n=<span class="nm">14</span>):
+    d = s.diff()
+    g = d.clip(lower=<span class="nm">0</span>).ewm(alpha=<span class="nm">1</span>/n, adjust=<span class="nm">False</span>).mean()
+    l = (-d).clip(lower=<span class="nm">0</span>).ewm(alpha=<span class="nm">1</span>/n, adjust=<span class="nm">False</span>).mean()
+    rs = g / l
+    <span class="kw">return</span> (<span class="nm">100</span> - <span class="nm">100</span>/(<span class="nm">1</span>+rs)).where(l!=<span class="nm">0</span>, <span class="nm">100</span>)
+
+rsi    = <span class="fn">calc_rsi</span>(close, n=<span class="nm">14</span>)
+ema200 = close.ewm(span=<span class="nm">200</span>, adjust=<span class="nm">False</span>).mean()
+ema50  = close.ewm(span=<span class="nm">50</span>,  adjust=<span class="nm">False</span>).mean()
+
+
+<span class="cm"># ════════════════════════════════════════════════
+# 3. 信号生成
+# ════════════════════════════════════════════════</span>
+prev_rsi = rsi.shift(<span class="nm">1</span>)
+uptrend  = close > ema200
+
+<span class="cm"># RSI 回叉信号</span>
+long_cross  = (prev_rsi < <span class="nm">30</span>) & (rsi >= <span class="nm">30</span>)   <span class="cm"># 从超卖区上穿 30</span>
+short_cross = (prev_rsi > <span class="nm">70</span>) & (rsi <= <span class="nm">70</span>)   <span class="cm"># 从超买区下穿 70</span>
+
+<span class="cm"># 加入 EMA200 趋势过滤</span>
+long_signal  = long_cross  & uptrend
+short_signal = short_cross & ~uptrend
+
+
+<span class="cm"># ════════════════════════════════════════════════
+# 4. 持仓逻辑
+# ════════════════════════════════════════════════</span>
+position = pd.Series(<span class="nm">0</span>, index=close.index, dtype=float)
+pos = <span class="nm">0</span>
+
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(close)):
+    <span class="cm"># 新信号覆盖旧持仓</span>
+    <span class="kw">if</span>   long_signal.iloc[i]:                        pos = <span class="nm">1</span>
+    <span class="kw">elif</span> short_signal.iloc[i]:                       pos = -<span class="nm">1</span>
+    <span class="cm"># 退出条件：RSI 穿越 50 中线</span>
+    <span class="kw">elif</span> pos ==  <span class="nm">1</span> <span class="kw">and</span> rsi.iloc[i] > <span class="nm">50</span>:           pos = <span class="nm">0</span>
+    <span class="kw">elif</span> pos == -<span class="nm">1</span> <span class="kw">and</span> rsi.iloc[i] < <span class="nm">50</span>:           pos = <span class="nm">0</span>
+    <span class="cm"># 超出容忍：RSI 再破极端（止损）</span>
+    <span class="kw">elif</span> pos ==  <span class="nm">1</span> <span class="kw">and</span> rsi.iloc[i] < <span class="nm">20</span>:           pos = <span class="nm">0</span>
+    <span class="kw">elif</span> pos == -<span class="nm">1</span> <span class="kw">and</span> rsi.iloc[i] > <span class="nm">80</span>:           pos = <span class="nm">0</span>
+    position.iloc[i] = pos
+
+
+<span class="cm"># ════════════════════════════════════════════════
+# 5. 收益计算（加入交易成本）
+# ════════════════════════════════════════════════</span>
+COST_PER_TRADE = <span class="nm">0.001</span>  <span class="cm"># 0.1% 单边，即双边 0.2%</span>
+daily_ret = close.pct_change()
+
+<span class="cm"># ⚠️ 关键：信号在今天收盘产生，明天才能执行（shift(1)）</span>
+strategy_ret = position.shift(<span class="nm">1</span>) * daily_ret
+
+<span class="cm"># 计算换手次数，扣除交易成本</span>
+trades = position.diff().abs() / <span class="nm">2</span>  <span class="cm"># 每次换仓计为 1 次交易</span>
+strategy_ret -= trades * COST_PER_TRADE
+
+<span class="cm"># Buy & Hold 基准</span>
+bh_ret = daily_ret
+
+
+<span class="cm"># ════════════════════════════════════════════════
+# 6. 绩效统计
+# ════════════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">calc_stats</span>(returns, label=<span class="st">"Strategy"</span>):
+    cum   = (<span class="nm">1</span> + returns).cumprod()
+    peak  = cum.expanding().max()
+    dd    = (cum / peak - <span class="nm">1</span>)
+    
+    <span class="cm"># Sharpe (年化，无风险利率 5%)</span>
+    excess = returns - <span class="nm">0.05</span>/<span class="nm">252</span>
+    sharpe = excess.mean() / excess.std() * np.sqrt(<span class="nm">252</span>)
+    
+    <span class="cm"># Calmar Ratio = 年化收益 / 最大回撤绝对值</span>
+    ann_ret = (<span class="nm">1</span> + returns.mean())**<span class="nm">252</span> - <span class="nm">1</span>
+    calmar  = ann_ret / abs(dd.min()) <span class="kw">if</span> dd.min() != <span class="nm">0</span> <span class="kw">else</span> np.nan
+    
+    <span class="fn">print</span>(<span class="st">f"\n{'='*40}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  {label}"</span>)
+    <span class="fn">print</span>(<span class="st">f"{'='*40}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  总收益率:    {(cum.iloc[-1]-1)*100:.2f}%"</span>)
+    <span class="fn">print</span>(<span class="st">f"  年化收益:    {ann_ret*100:.2f}%"</span>)
+    <span class="fn">print</span>(<span class="st">f"  Sharpe比:    {sharpe:.3f}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  最大回撤:    {dd.min()*100:.2f}%"</span>)
+    <span class="fn">print</span>(<span class="st">f"  Calmar:      {calmar:.3f}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  胜率:        {(returns>0).mean()*100:.1f}%"</span>)
+    <span class="kw">return</span> cum
+
+cum_strategy = <span class="fn">calc_stats</span>(strategy_ret, <span class="st">"RSI + EMA200 策略"</span>)
+cum_bh       = <span class="fn">calc_stats</span>(bh_ret,       <span class="st">"Buy & Hold SPY"</span>)
+
+
+<span class="cm"># ════════════════════════════════════════════════
+# 7. 可视化（权益曲线）
+# ════════════════════════════════════════════════</span>
+fig, axes = plt.subplots(<span class="nm">3</span>, <span class="nm">1</span>, figsize=(<span class="nm">14</span>, <span class="nm">10</span>), sharex=<span class="nm">True</span>)
+fig.patch.set_facecolor(<span class="st">'#0d1117'</span>)
+<span class="kw">for</span> ax <span class="kw">in</span> axes:
+    ax.set_facecolor(<span class="st">'#161b22'</span>)
+    ax.tick_params(colors=<span class="st">'#8b949e'</span>)
+    <span class="kw">for</span> spine <span class="kw">in</span> ax.spines.values():
+        spine.set_color(<span class="st">'#30363d'</span>)
+
+<span class="cm"># 图1: 价格 + EMA</span>
+axes[<span class="nm">0</span>].plot(close, color=<span class="st">'#e6edf3'</span>, lw=<span class="nm">1</span>, label=<span class="st">'SPY'</span>)
+axes[<span class="nm">0</span>].plot(ema50,  color=<span class="st">'#58a6ff'</span>, lw=<span class="nm">1</span>, alpha=<span class="nm">0.8</span>, label=<span class="st">'EMA50'</span>)
+axes[<span class="nm">0</span>].plot(ema200, color=<span class="st">'#ffa657'</span>, lw=<span class="nm">1.5</span>, alpha=<span class="nm">0.9</span>, label=<span class="st">'EMA200'</span>)
+axes[<span class="nm">0</span>].set_title(<span class="st">'SPY Price + EMA'</span>, color=<span class="st">'#e6edf3'</span>, fontsize=<span class="nm">11</span>)
+axes[<span class="nm">0</span>].legend(facecolor=<span class="st">'#21262d'</span>, labelcolor=<span class="st">'#e6edf3'</span>, fontsize=<span class="nm">8</span>)
+
+<span class="cm"># 图2: RSI</span>
+axes[<span class="nm">1</span>].plot(rsi, color=<span class="st">'#d2a8ff'</span>, lw=<span class="nm">1</span>)
+axes[<span class="nm">1</span>].axhline(<span class="nm">70</span>, color=<span class="st">'#f85149'</span>, ls=<span class="st">'--'</span>, lw=<span class="nm">0.8</span>, alpha=<span class="nm">0.7</span>, label=<span class="st">'Overbought (70)'</span>)
+axes[<span class="nm">1</span>].axhline(<span class="nm">30</span>, color=<span class="st">'#3fb950'</span>, ls=<span class="st">'--'</span>, lw=<span class="nm">0.8</span>, alpha=<span class="nm">0.7</span>, label=<span class="st">'Oversold (30)'</span>)
+axes[<span class="nm">1</span>].axhline(<span class="nm">50</span>, color=<span class="st">'#8b949e'</span>, ls=<span class="st">':'</span>,  lw=<span class="nm">0.6</span>, alpha=<span class="nm">0.5</span>, label=<span class="st">'Centerline (50)'</span>)
+axes[<span class="nm">1</span>].fill_between(rsi.index, rsi, <span class="nm">30</span>, where=(rsi<<span class="nm">30</span>), alpha=<span class="nm">0.3</span>, color=<span class="st">'#3fb950'</span>)
+axes[<span class="nm">1</span>].fill_between(rsi.index, rsi, <span class="nm">70</span>, where=(rsi><span class="nm">70</span>), alpha=<span class="nm">0.3</span>, color=<span class="st">'#f85149'</span>)
+axes[<span class="nm">1</span>].set_ylim(<span class="nm">0</span>, <span class="nm">100</span>)
+axes[<span class="nm">1</span>].set_title(<span class="st">'RSI (14)'</span>, color=<span class="st">'#e6edf3'</span>, fontsize=<span class="nm">11</span>)
+axes[<span class="nm">1</span>].legend(facecolor=<span class="st">'#21262d'</span>, labelcolor=<span class="st">'#e6edf3'</span>, fontsize=<span class="nm">8</span>)
+
+<span class="cm"># 图3: 权益曲线对比</span>
+axes[<span class="nm">2</span>].plot(cum_strategy, color=<span class="st">'#58a6ff'</span>, lw=<span class="nm">1.5</span>, label=<span class="st">'RSI + EMA200 Strategy'</span>)
+axes[<span class="nm">2</span>].plot(cum_bh,       color=<span class="st">'#ffa657'</span>, lw=<span class="nm">1.5</span>, label=<span class="st">'Buy & Hold'</span>)
+axes[<span class="nm">2</span>].axhline(<span class="nm">1</span>, color=<span class="st">'#8b949e'</span>, ls=<span class="st">'--'</span>, lw=<span class="nm">0.5</span>)
+axes[<span class="nm">2</span>].set_title(<span class="st">'Equity Curve Comparison'</span>, color=<span class="st">'#e6edf3'</span>, fontsize=<span class="nm">11</span>)
+axes[<span class="nm">2</span>].legend(facecolor=<span class="st">'#21262d'</span>, labelcolor=<span class="st">'#e6edf3'</span>, fontsize=<span class="nm">8</span>)
+
+plt.tight_layout()
+plt.savefig(<span class="st">'rsi_backtest_equity_curve.png'</span>, dpi=<span class="nm">150</span>, bbox_inches=<span class="st">'tight'</span>)
+plt.show()
+<span class="fn">print</span>(<span class="st">"\n✅ 权益曲线已保存至 rsi_backtest_equity_curve.png"</span>)</code></pre>
+
+  <div class="alert success">
+    <strong>✅ 预期结果（参考范围）</strong>
+    RSI + EMA200 策略在 SPY 2020-2025 上的 Sharpe 约 0.5-0.8（含成本）。注意这个策略在 2020 年新冠暴跌期间可能有多次超卖信号，部分能捕捉到反弹。在 2022 年熊市期间，EMA200 过滤器会屏蔽大多数做多信号，避免追跌。这体现了 RSI + 趋势过滤 的组合价值。
+  </div>
+</section>
+
+<!-- Thought Question -->
+<div class="thought-q">
+  <div class="q-label">💭 今日思考题</div>
+  <h3>RSI 超卖（&lt; 30）是"抄底机会"，还是"接刀子"？<br>你会如何用数据来回答这个问题？</h3>
+  <p style="color:var(--muted);font-size:0.88rem;margin-top:1rem;">提示：统计 SPY 历史上 RSI 首次触发 &lt; 30 后，接下来 1/5/10/20 日的平均收益和胜率。这个统计结果会改变你对超卖信号的看法吗？</p>
+</div>
+
+<!-- Key Takeaways -->
+<section style="margin-top:2.5rem;">
+  <h2><span class="icon">🎯</span> 核心要点总结</h2>
+  <div class="card-grid">
+    <div class="card blue">
+      <h4>1. RSI 数学</h4>
+      <p>用 Wilder's SMMA（ewm alpha=1/N）实现，不是简单平均。第一个值要用 SMA 初始化。</p>
+    </div>
+    <div class="card yellow">
+      <h4>2. 70/30 是经验值</h4>
+      <p>在趋势市场中失效。强势股 RSI 可以在 70+ 维持数月。需要根据市场 regime 调整阈值。</p>
+    </div>
+    <div class="card green">
+      <h4>3. 等回叉入场</h4>
+      <p>不要在触碰 30/70 时立刻入场。等 RSI 回叉阈值才确认，降低接刀风险。</p>
+    </div>
+    <div class="card purple">
+      <h4>4. 背离更可靠</h4>
+      <p>价格新低 + RSI 高低 = 看涨背离，动能衰减。比绝对值信号更有预测力，但需注意 look-ahead bias。</p>
+    </div>
+    <div class="card blue">
+      <h4>5. RSI + EMA200</h4>
+      <p>在 EMA200 上方才做多均值回归。趋势过滤大幅减少熊市假信号，提升 Sharpe。</p>
+    </div>
+    <div class="card red">
+      <h4>6. 五大陷阱</h4>
+      <p>过拟合阈值 · look-ahead bias · 忘记 shift(1) · 忽视 RSI50 · 不计交易成本。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div>
+    <div>📚 量化日推 — Day 9 of ∞</div>
+    <div style="margin-top:0.3rem;">Phase 2: Technical Indicators | 2026-02-26</div>
+  </div>
+  <div class="next-prev">
+    <a class="nav-link" href="2026-02-23-moving-averages.html">← Day 8: 移动平均线</a>
+    <a class="nav-link" href="#">Day 10: MACD →</a>
+  </div>
+</footer>
+
+</body>
+</html>

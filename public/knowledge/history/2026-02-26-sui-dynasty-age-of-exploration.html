@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>历史日推 Day 12 | 隋朝大运河与速亡 · 大航海时代</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card: #21253a;
+      --accent-china: #c9363a;
+      --accent-world: #2e7de9;
+      --gold: #e8b84b;
+      --text: #e2e4ef;
+      --muted: #8b8fa8;
+      --border: #2e3250;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Georgia', 'Noto Serif SC', serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+    header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+    .day-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 0.3rem 1rem;
+      border-radius: 2rem;
+      margin-bottom: 1rem;
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+    header h1 {
+      font-size: 2rem;
+      line-height: 1.3;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+    header .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-family: sans-serif;
+    }
+    .section {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 2.5rem;
+      border: 1px solid var(--border);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid;
+    }
+    .china .section-header { border-color: var(--accent-china); }
+    .world .section-header { border-color: var(--accent-world); }
+    .section-header .icon { font-size: 2rem; }
+    .section-header h2 { font-size: 1.5rem; }
+    .china .section-header h2 { color: var(--accent-china); }
+    .world .section-header h2 { color: var(--accent-world); }
+    .section-header .en-title { font-size: 0.85rem; color: var(--muted); font-family: sans-serif; display: block; margin-top: 0.2rem; }
+
+    .timeline {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .timeline-item {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      font-family: sans-serif;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .timeline-item strong { color: var(--text); }
+
+    .narrative-block { margin-bottom: 2rem; }
+    .narrative-block h3 {
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      font-family: sans-serif;
+    }
+    .narrative-block p {
+      margin-bottom: 1rem;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    .narrative-block .en {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-style: italic;
+      border-left: 3px solid var(--border);
+      padding-left: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .highlight-box {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      border-left: 4px solid var(--gold);
+    }
+    .china .highlight-box { border-color: var(--accent-china); }
+    .world .highlight-box { border-color: var(--accent-world); }
+    .highlight-box .label {
+      font-size: 0.72rem;
+      font-family: sans-serif;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .highlight-box p { font-size: 0.95rem; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .stat-card .num {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--gold);
+      font-family: sans-serif;
+      display: block;
+    }
+    .stat-card .desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: sans-serif;
+      margin-top: 0.25rem;
+    }
+
+    .sources {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-top: 2rem;
+    }
+    .sources h4 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-family: sans-serif;
+      margin-bottom: 0.75rem;
+    }
+    .sources ul { list-style: none; padding: 0; }
+    .sources li {
+      font-size: 0.88rem;
+      color: var(--muted);
+      padding: 0.3rem 0;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    .sources li::before { content: "📖"; position: absolute; left: 0; font-size: 0.8rem; }
+
+    .insight {
+      background: linear-gradient(135deg, rgba(232,184,75,0.1), rgba(232,184,75,0.05));
+      border: 1px solid rgba(232,184,75,0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .insight .key { font-size: 0.75rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; font-family: sans-serif; margin-bottom: 0.5rem; }
+    .insight p { font-size: 1.05rem; }
+
+    .question-box {
+      background: var(--surface);
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 3rem;
+      text-align: center;
+    }
+    .question-box .q-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .question-box h3 { color: var(--gold); font-size: 1.1rem; margin-bottom: 1rem; font-family: sans-serif; }
+    .question-box p { font-size: 1.05rem; line-height: 1.9; }
+    .question-box .en-q { font-size: 0.9rem; color: var(--muted); margin-top: 1rem; font-style: italic; }
+
+    .nav-bar {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-family: sans-serif;
+    }
+    .phase-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: sans-serif;
+      color: var(--muted);
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="day-badge">📜 历史日推 · DAY 12</div>
+    <h1>隋朝大运河与速亡<br>大航海时代的黎明</h1>
+    <div class="subtitle">2026-02-26 &nbsp;·&nbsp; Phase 3: 魏晋南北朝隋唐 &amp; Early Modern</div>
+  </header>
+
+  <!-- ═══════════════════════════ 中国史 ═══════════════════════════ -->
+  <section class="section china">
+    <div class="section-header">
+      <span class="icon">🏮</span>
+      <div>
+        <h2>隋朝：大运河与速亡（581–618）</h2>
+        <span class="en-title">The Sui Dynasty: Grand Canal and Swift Collapse</span>
+      </div>
+      <span class="phase-tag">Phase 3</span>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item"><strong>581</strong> 杨坚建隋</div>
+      <div class="timeline-item"><strong>589</strong> 灭陈，统一南北</div>
+      <div class="timeline-item"><strong>604</strong> 隋炀帝即位</div>
+      <div class="timeline-item"><strong>605</strong> 大运河动工</div>
+      <div class="timeline-item"><strong>612–614</strong> 三征高句丽</div>
+      <div class="timeline-item"><strong>617</strong> 李渊起兵</div>
+      <div class="timeline-item"><strong>618</strong> 隋亡，唐立</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><span class="num">37年</span><div class="desc">隋朝国祚</div></div>
+      <div class="stat-card"><span class="num">2,700 km</span><div class="desc">大运河总长度</div></div>
+      <div class="stat-card"><span class="num">300年</span><div class="desc">南北分裂之后统一</div></div>
+      <div class="stat-card"><span class="num">100万+</span><div class="desc">三征高句丽兵力</div></div>
+      <div class="stat-card"><span class="num">1300年</span><div class="desc">三省六部制延续</div></div>
+      <div class="stat-card"><span class="num">2014</span><div class="desc">大运河列入UNESCO</div></div>
+    </div>
+
+    <div class="narrative-block">
+      <h3>一、杨坚统一天下：结束三百年的碎片化</h3>
+      <p>公元581年，北周外戚杨坚废幼主自立，建国号"隋"，年号开皇——中国历史上最短命却影响最深远的朝代之一就此登场。彼时天下分裂已近三百年：北方五胡乱华、十六国混战，南方则经历了宋、齐、梁、陈四朝更替。杨坚（隋文帝）以雷霆手段兼并北方，又于589年以大军南下，仅用数月便灭陈统一江南。《隋书·高祖纪》记载，平陈之后，文帝诏告天下："天下大定，隽功茂绩，可谓盛矣。"三百年的分裂就此画上句号——这是自西晋以来中国首次真正的大一统。</p>
+      <p>隋文帝的成就不只是军事上的统一，更是制度上的再造。他推行<strong>三省六部制</strong>：中书省（决策）、门下省（审议）、尚书省（执行）三权分立，六部分管吏、户、礼、兵、刑、工。这套权力制衡机制有效压制了权臣专权，且被唐、宋、元、明、清历代沿用，前后长达一千三百年。他更是开创<strong>科举制度</strong>，废除九品中正制——这一延续了四百年的贵族垄断选官体系。科举让寒门子弟可凭才学入仕，是中国历史上最深刻的社会革命之一，也是现代文官制度的雏形。</p>
+      <div class="en">
+        <strong>In 581 CE,</strong> Yang Jian (Emperor Wen of Sui) seized power from the Northern Zhou dynasty and reunified a China that had been fractured for nearly 300 years — the longest period of division in Chinese history since the Zhou. His conquest of the Chen dynasty in 589 brought the entire country under single rule for the first time since the Western Jin. Beyond military conquest, Emperor Wen's institutional reforms were even more enduring: the Three Departments and Six Ministries (三省六部) system created a checks-and-balances structure that survived for 1,300 years across every subsequent Chinese dynasty. His establishment of the imperial examination (科举) system shattered the aristocracy's monopoly on government office, allowing talented commoners to rise through merit — a radical social revolution whose echoes still shape Chinese society today.
+      </div>
+    </div>
+
+    <div class="narrative-block">
+      <h3>二、隋炀帝：从英才太子到亡国之君</h3>
+      <p>604年，杨广以不光彩的手段（史书记载弑父、矫诏）登基，是为隋炀帝。历史对他的评价极为两极：他是有雄心、有才情的皇帝，亲作《春江花月夜》原型之诗；他也是毫无节制的暴君，在位14年将一个富强王朝败光。炀帝即位伊始便迁都洛阳，征发数十万民工建造宏伟宫殿。《资治通鉴》卷一八一载，营建东都洛阳时"每月役丁二百万人"，民力之耗可想而知。</p>
+      <p>然而炀帝最宏大的工程，也是最具争议的遗产，是<strong>大运河</strong>。他整合前朝已有水道，先后开凿通济渠、邗沟、永济渠、江南河，将北方政治中心（涿郡，今北京）与南方经济重心（余杭，今杭州）贯通，全长约2700公里。运河的战略目的清晰：军粮北运、军队调动、南北物资交流。然而代价同样清晰——《隋书·食货志》记载征发民夫超过三百六十万人，加上瘟疫与劳役，死亡者不计其数，民间谣传"十里一卒，五里一营"。大运河是历史上工程奇迹与人道灾难的完美结合体。</p>
+      <div class="en">
+        <strong>Yang Guang (Emperor Yang of Sui)</strong> ascended the throne in 604, likely through patricide and forged edicts according to historical accounts. He was a man of immense ambition: a poet, military commander, and visionary administrator who nonetheless destroyed the dynasty he inherited. His greatest project — the Grand Canal — was an engineering achievement on par with the Great Wall. Stretching 2,700 km from modern Beijing to Hangzhou, it connected China's political north with its economic south, enabling grain shipments and military logistics at previously impossible scales. The Sui Shu (Official Sui History) records that over 3.6 million laborers were conscripted for its construction. Millions died from disease, exhaustion, and starvation. The Grand Canal was simultaneously the greatest infrastructure investment in Chinese history and one of its greatest human catastrophes.
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <div class="label">🛤️ 大运河 — 跨越时空的工程</div>
+      <p>大运河沟通了海河、黄河、淮河、长江、钱塘江五大水系，是人类历史上最长的人工运河。它不仅在隋唐时代发挥军事和经济作用，在宋元明清时代更是中国南北经济大动脉。今日京杭大运河部分河段仍在通航，2014年被列入联合国教科文组织世界遗产名录。一条1400年前的运河，今天仍流淌着历史的记忆。</p>
+    </div>
+
+    <div class="narrative-block">
+      <h3>三、三征高句丽：帝国的自我毁灭</h3>
+      <p>若说大运河是隋朝的建设性赌注，三征高句丽则是毁灭性的冒险。612年，炀帝亲率大军一百一十三万（号称）东征高句丽（今朝鲜半岛北部），结果在辽东城久攻不下，又在萨水（今清川江）遭遇惨败——据《隋书》，渡过辽水出发的三十万五千人，回来时仅剩两千七百。613年、614年炀帝又两度出征，均无功而返。三征高句丽的后果是毁灭性的：关中农民赋役沉重、兵源枯竭，北方边疆空虚，社会矛盾激化到临界点。</p>
+      <p>614年后，农民起义烽火遍野。翟让、李密领导的<strong>瓦岗军</strong>在中原纵横驰骋，窦建德在河北割据，杜伏威在江淮为乱。617年，太原留守<strong>李渊</strong>与子李世民起兵，以"废昏立明、拯救苍生"为名挥师南下，618年炀帝在江都被宇文化及缢杀，隋朝就此覆灭。旋即李渊建唐，是为唐高祖，而那套三省六部制与科举制度，却在唐朝得到更完善的延续。</p>
+      <div class="en">
+        <strong>The three campaigns against Goguryeo (612-614)</strong> were Emperor Yang's fatal overreach. In 612, he led an army reportedly over a million strong against the Korean kingdom — and suffered one of the most catastrophic defeats in Chinese military history. Of the 305,000 troops who crossed the Liao River, only 2,700 returned. Two subsequent campaigns were equally disastrous. This military overextension combined with the labor demands of the Grand Canal broke the peasantry: tax revolts erupted across the empire. The Wagang Army under Li Mi swept across the Central Plains; Li Yuan, the garrison commander of Taiyuan, marched on the capital in 617. In 618, Emperor Yang was strangled in his pleasure palace at Jiangdu. The Sui dynasty, which had reunified China after 300 years of division, itself lasted only 37 years — shorter than some of the reigns it replaced.
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <div class="label">⚔️ 历史平行：隋与罗马的共同命运</div>
+      <p>隋朝与西罗马帝国有惊人的相似之处：两者都在辉煌的基础设施建设后因军事过度扩张而崩溃，都为后继者（唐朝/拜占庭）奠定了深厚的文化与制度遗产。罗马的道路网络催生了罗马文明的传播，隋的大运河催生了唐宋的经济繁荣。"成就了盛世，自己却成了盛世的祭品"——这是帝国建设者的经典悲剧。</p>
+    </div>
+
+    <div class="insight">
+      <div class="key">🔑 历史启示</div>
+      <p>大运河让中国南北统一了，但建造大运河的代价让隋朝灭亡了。<br>
+      <em>基础设施投资的两面性，古今皆然：短期的民力透支，可能摧毁长期的政权合法性。</em></p>
+    </div>
+
+    <div class="sources">
+      <h4>📖 参考文献</h4>
+      <ul>
+        <li>《隋书·食货志》— 记载大运河劳役与经济影响</li>
+        <li>《资治通鉴》卷一七八至一八五 — 司马光对隋朝兴亡的系统梳理</li>
+        <li>《隋书·高祖纪》《隋书·炀帝纪》— 正史本纪</li>
+        <li>王仲荦《隋唐五代史》— 现代学术综述</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ 世界史 ═══════════════════════════ -->
+  <section class="section world">
+    <div class="section-header">
+      <span class="icon">🌍</span>
+      <div>
+        <h2>大航海时代：哥伦布、麦哲伦与全球化的黎明</h2>
+        <span class="en-title">Age of Exploration: Columbus, Magellan &amp; the World Transformed (1492–1522)</span>
+      </div>
+      <span class="phase-tag">Phase 3 · Early Modern</span>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item"><strong>1453</strong> 奥斯曼占君士坦丁堡</div>
+      <div class="timeline-item"><strong>1488</strong> 迪亚士绕好望角</div>
+      <div class="timeline-item"><strong>1492</strong> 哥伦布抵美洲</div>
+      <div class="timeline-item"><strong>1494</strong> 《托尔德西利亚斯条约》</div>
+      <div class="timeline-item"><strong>1498</strong> 达伽马抵印度</div>
+      <div class="timeline-item"><strong>1519</strong> 麦哲伦出发</div>
+      <div class="timeline-item"><strong>1522</strong> 埃尔卡诺完成环球</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><span class="num">1492</span><div class="desc">哥伦布登陆美洲</div></div>
+      <div class="stat-card"><span class="num">1,122天</span><div class="desc">麦哲伦-埃尔卡诺环球历时</div></div>
+      <div class="stat-card"><span class="num">90%</span><div class="desc">美洲原住民一世纪内死亡率</div></div>
+      <div class="stat-card"><span class="num">5千万</span><div class="desc">估算原住民死亡人数</div></div>
+      <div class="stat-card"><span class="num">270°</span><div class="desc">《托约》划分世界经度</div></div>
+      <div class="stat-card"><span class="num">1405</span><div class="desc">郑和首次下西洋（中国的选择）</div></div>
+    </div>
+
+    <div class="narrative-block">
+      <h3>一、为什么是欧洲？探索时代的背景</h3>
+      <p>15世纪的欧洲，有一个迫切的现实问题：<strong>香料贵如黄金，但路被堵死了</strong>。东方的胡椒、肉桂、丁香不只是调料，更是防腐、药用的必需品，价格堪比等重白银。传统陆路贸易经由奥斯曼帝国控制的中东地区——1453年奥斯曼攻占君士坦丁堡后，税率大幅提升，西欧商人急需寻找新航路。与此同时，造船技术正在革命：<strong>卡拉维尔帆船（Caravel）</strong>横空出世——它是15世纪的"iPhone"：轻便、可逆风行驶、适合远洋，配合改进的指南针与星盘，欧洲水手第一次有了真正的远洋工具。葡萄牙首先在亨利王子的资助下系统开展非洲西海岸探索，积累了数十年的航海数据。</p>
+      <p>在这个背景下，热那亚人克里斯托弗·哥伦布提出了一个大胆的假设：向西横渡大西洋，可以到达亚洲。他的地理计算严重错误（他低估了地球周长约三分之一），但错误的计划，加上西班牙王室的赞助，于1492年撞上了一个全新的大陆。</p>
+      <div class="en">
+        <strong>By the mid-15th century,</strong> Europe faced a practical crisis: the spice trade routes to Asia — the source of pepper, cinnamon, and cloves worth their weight in silver — were increasingly choked off by the Ottoman Empire, which had captured Constantinople in 1453 and imposed punishing transit taxes. The incentive to find an alternative sea route was enormous. Simultaneously, the caravel — a new ship design combining lateen sails (allowing upwind sailing) with a sturdy hull — gave European mariners for the first time a vessel capable of sustained ocean navigation. Portugal, under Prince Henry the Navigator, had spent decades methodically mapping the African coast. The stage was set for a geopolitical revolution. A Genoese sailor named Christopher Columbus proposed a shortcut: sail west across the Atlantic to reach Asia. His geographic calculations were badly wrong — he underestimated Earth's circumference by roughly a third — but in 1492, his miscalculation led him to an entirely unknown continent.
+      </div>
+    </div>
+
+    <div class="narrative-block">
+      <h3>二、哥伦布1492：发现美洲，与美洲毁灭的开始</h3>
+      <p>1492年10月12日，哥伦布抵达今巴哈马群岛，称当地居民为"印第安人"（因为他以为到了印度）——这个错误的称呼沿用至今。他在加勒比海建立了欧洲人在美洲的第一个永久定居点，并于1493年返回西班牙报告"发现了通往东方的新航路"。哥伦布本人直到去世都坚信自己到达了亚洲边缘——真正认识到这是一片新大陆的，是后来的亚美利哥·韦斯普奇（Amerigo Vespucci），美洲（America）由此得名。</p>
+      <p>哥伦布"发现"美洲的后果分为两个截然相反的方向。其一是<strong>哥伦布大交换（Columbian Exchange）</strong>：马铃薯、玉米、西红柿、可可、辣椒从美洲传入欧洲和亚洲，永久改变了人类的饮食结构；马匹、牛、羊、小麦、甘蔗从旧大陆传入美洲。马铃薯养活了18世纪的欧洲人口爆炸，玉米让中国明清的人口翻番——食物的迁徙改变了世界人口的面貌。其二是人类历史上最惨烈的人口灾难：<strong>天花、麻疹、流感</strong>等旧大陆疾病对没有免疫力的美洲原住民造成毁灭性打击。历史学家估计，接触后一个世纪内，美洲原住民人口从约6000万减少到600万左右——死亡率高达90%。这是历史上最大的人口崩溃，也是殖民主义最黑暗的注脚。</p>
+      <div class="en">
+        <strong>On October 12, 1492,</strong> Columbus made landfall in the Bahamas, calling the inhabitants "Indians" — a misnomer that persists today. He died believing he had reached Asia's outskirts; it was Amerigo Vespucci who recognized the "New World" as a previously unknown continent. The consequences of contact split in two directions. First, the Columbian Exchange: potatoes, maize, tomatoes, cacao, and chili peppers traveled east to Europe and Asia, permanently transforming global diets. The potato fueled Europe's 18th-century population explosion; maize doubled China's population under the Ming and Qing dynasties. Second, and catastrophically: Old World diseases — smallpox, measles, influenza — annihilated Indigenous populations who had no prior immunity. Historians estimate that within a century of contact, the Indigenous population of the Americas fell from approximately 60 million to 6 million — a death toll of roughly 90%. This was the largest demographic collapse in human history, and the darkest consequence of European expansion.
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <div class="label">🧭 达伽马与麦哲伦：完成世界的拼图</div>
+      <p>1498年，葡萄牙人<strong>瓦斯科·达伽马</strong>绕过非洲南端好望角，抵达印度卡利卡特，打通了欧洲直达亚洲的海上航路，终结了中东在香料贸易中的中间人地位，直接引发了葡萄牙商业帝国的崛起。而最终证明地球是球形的，是费尔南多·麦哲伦率领的环球航行（1519-1522）。麦哲伦本人在菲律宾被杀，但他的副手<strong>胡安·塞巴斯蒂安·埃尔卡诺</strong>率剩余18名船员，驾驶维多利亚号完成了人类第一次环球航行。出发时5艘船、265人，回来时1艘船、18人——代价是沉重的，但证明了一件永久改变人类认知的事：地球是圆的，大洋相通，世界是一个整体。</p>
+    </div>
+
+    <div class="narrative-block">
+      <h3>三、《托尔德西利亚斯条约》与全球化的黑暗孪生</h3>
+      <p>1494年，在罗马教皇亚历山大六世的仲裁下，西班牙与葡萄牙签署<strong>《托尔德西利亚斯条约》</strong>——两国在地球上画了一条经线（大西洋中部），以西归西班牙，以东归葡萄牙。这是人类历史上最傲慢的协议之一：两个欧洲国家，在非洲、亚洲、美洲人民毫不知情的情况下，瓜分了整个世界。葡萄牙得到巴西、非洲、印度；西班牙得到拉丁美洲其余部分和太平洋。这张协议是近代殖民主义的法律起点。</p>
+      <p>大航海时代开启了真正的全球化——商品、物种、技术、文化开始在全球范围内流动。但它也开启了全球化最黑暗的一面：殖民主义、大西洋奴隶贸易、原住民文明的毁灭。西班牙征服者科尔特斯以数百人征服了拥有数百万人口的阿兹特克帝国，德·托莱多在秘鲁建立了强迫印第安人在银矿劳作致死的米塔制度。全球化与剥削，从一开始就是孪生兄弟。</p>
+      <p>历史的对照：同一时期，中国的<strong>郑和七下西洋（1405-1433）</strong>规模远超哥伦布——最大宝船长达137米，舰队最多时达300艘、2.7万人。但郑和的航行以朝贡贸易为目标，不建殖民地，不寻金银，最终在1433年被保守派文官叫停，历史从此走向了不同的方向。为什么中国停止了探索？这是历史学家至今争论的问题：儒家反商文化、宦官集团与文官集团的政治斗争、财政压力、北方蒙古威胁。选择保守主义，让欧洲得以主导接下来500年的世界格局。</p>
+      <div class="en">
+        <strong>The Treaty of Tordesillas (1494)</strong> — brokered by Pope Alexander VI — divided the entire non-European world between Spain and Portugal along a meridian line in the Atlantic Ocean. It was perhaps the most audacious act of geopolitical hubris in history: two European kingdoms dividing continents whose inhabitants had no say in the matter. This treaty was the legal foundation of the colonial era. The Age of Exploration brought genuine globalization — the first time goods, species, technologies, and people circulated on a truly planetary scale. But its dark twin was colonialism: the systematic conquest and exploitation of the Americas, Africa, and Asia. Hernán Cortés conquered the Aztec Empire with a few hundred men (aided enormously by smallpox and Indigenous alliances), and Spain's silver mines in Peru operated through forced Indigenous labor that killed millions. The contrast with China is stark: Zheng He's voyages (1405-1433) dwarfed Columbus in scale — his flagship was 137 meters long, his fleet numbered 300 ships and 27,000 men. Yet China's voyages pursued tribute, not conquest or trade profit, and were shut down in 1433 by Confucian bureaucrats who viewed maritime commerce as wasteful. That choice — conservatism over expansion — handed Europe 500 years of global dominance.
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="key">🔑 历史启示</div>
+      <p>全球化不是自然发生的——它是技术、动机与权力结合的产物。<br>
+      <em>大航海时代开启了人类命运的第一次真正连接，但连接从来不是平等的：谁拥有技术和枪炮，谁就决定了连接的条件。</em></p>
+    </div>
+
+    <div class="sources">
+      <h4>📖 参考文献</h4>
+      <ul>
+        <li>Columbus, Christopher. <em>Journal of the First Voyage to America</em> (1492–1493) — 哥伦布本人航海日志</li>
+        <li>Pigafetta, Antonio. <em>Magellan's Voyage Around the World</em> (1519–1522) — 麦哲伦航行的第一手记录</li>
+        <li>Mann, Charles. <em>1493: Uncovering the New World Columbus Created</em> — 哥伦布大交换权威研究</li>
+        <li>《明史·郑和传》— 对照郑和下西洋与欧洲大航海的比较</li>
+        <li>Diamond, Jared. <em>Guns, Germs, and Steel</em> — 为何欧洲而非其他文明主导了探索时代</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ 思考题 ═══════════════════════════ -->
+  <div class="question-box">
+    <span class="q-icon">💭</span>
+    <h3>思考题 · Thought Question</h3>
+    <p>
+      隋炀帝的大运河与哥伦布的航海，都是"改变世界的冒险"——<br>
+      大运河连接了中国的南北，航海连接了东西半球。<br>
+      但一个导致王朝37年速亡，一个开启了欧洲500年霸权。<br><br>
+      <strong>决定性的差异在哪里？</strong><br>
+      是动机的不同（防御vs扩张）？是制度的差异（专制透支vs分散竞争）？<br>
+      还是时机与运气？
+    </p>
+    <p class="en-q">
+      Both the Grand Canal and Columbus's voyages were "world-changing gambles" — one connected North and South China, the other connected the Eastern and Western hemispheres. Yet one destroyed a dynasty in 37 years; the other launched 500 years of European dominance. What was the decisive difference? Was it motivation (defense vs. expansion)? Institutional design (centralized overextension vs. distributed competition)? Or simply timing and luck?
+    </p>
+  </div>
+
+  <div class="nav-bar">
+    <div>📚 历史日推系列 · Phase 3: 魏晋南北朝隋唐 &amp; Early Modern</div>
+    <div style="margin-top:0.5rem; color: #555;">
+      ← Day 11: 魏晋风度 · 文艺复兴 &nbsp;|&nbsp; Day 12: 隋朝大运河 · 大航海时代 &nbsp;|&nbsp; Day 13 → 唐朝盛世 · 宗教改革
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

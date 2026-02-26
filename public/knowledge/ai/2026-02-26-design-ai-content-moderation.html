@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-26 - 设计 AI 内容审核系统</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #1a1a1a; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #f9ab00; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #3c4043; border-bottom: 2px solid #e8eaed; padding-bottom: 10px; }
+    h2 { color: #1a73e8; margin-top: 40px; }
+    h3 { color: #5f6368; }
+    .architecture { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    code { font-family: 'SF Mono', Monaco, monospace; }
+    .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-blue { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-green { background: #e6f4ea; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .highlight-red { background: #fce8e6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .diagram { background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 13px; white-space: pre; overflow-x: auto; line-height: 1.4; }
+    .interview { background: #fce8e6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .tag { display: inline-block; background: #e8eaed; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .series-nav { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .metric { font-size: 24px; font-weight: bold; color: #1a73e8; }
+    .warning { background: #fef9e7; border-left: 4px solid #f39c12; padding: 15px; border-radius: 4px; margin: 15px 0; }
+    .success { background: #e6f4ea; border-left: 4px solid #34a853; padding: 15px; border-radius: 4px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+
+<div class="series-nav">
+  <strong>📋 AI System Design 面试题系列 | Phase 2.1 最终篇 🎉</strong><br>
+  <a href="2026-02-10-design-chatgpt-system.html">Day 1: 设计 ChatGPT</a> →
+  <a href="2026-02-11-design-recommendation-system.html">Day 2: 设计推荐系统</a> →
+  <a href="2026-02-12-design-semantic-search-engine.html">Day 3: 设计语义搜索引擎</a> →
+  <a href="2026-02-13-design-rag-knowledge-base.html">Day 4: 设计 RAG 知识库</a> →
+  <a href="2026-02-14-design-ai-code-review-system.html">Day 5: 设计 AI Code Review</a> →
+  <strong>Day 6: 设计 AI 内容审核系统 🎯</strong>
+</div>
+
+<h1>🛡️ 设计 AI 内容审核系统 — System Design</h1>
+<p><span class="tag">AI System Design</span> <span class="tag">Content Moderation</span> <span class="tag">Multi-Modal</span> <span class="tag">BERT</span> <span class="tag">CLIP</span> <span class="tag">Human-in-the-Loop</span> <span class="tag">面试高频</span></p>
+<p>参考产品: Meta/Facebook Content Review, YouTube Harmful Content Detection, TikTok Safety, Twitter/X Trust &amp; Safety</p>
+
+<h2>📖 题目 / Problem Statement</h2>
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>面试官：</strong>请设计一个 AI 内容审核系统，像 Facebook/Meta 那样，在平台每天 100 亿+ 条内容中，自动检测并处理违规内容（暴力、色情、仇恨言论、垃圾信息、CSAM 等）。</p>
+    <p><strong>核心需求：</strong></p>
+    <ul>
+      <li>每天处理 1000 亿+ 条内容（文字、图片、视频、音频）</li>
+      <li>上传时预审核延迟 &lt;500ms（用户感知）</li>
+      <li>多模态支持：文本、图片（1000万/天）、视频、音频</li>
+      <li>多语言支持（100+ 种语言）</li>
+      <li>支持人工复核队列 + 申诉机制</li>
+      <li>支持政策版本管理（各地区法规不同）</li>
+      <li>误判率 &lt;0.1%，召回率 &gt;99.9%（CSAM）</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Interviewer:</strong> Design an AI content moderation system like Facebook/Meta — one that can automatically detect and handle violating content (violence, nudity, hate speech, spam, CSAM, etc.) across 100B+ pieces of content per day.</p>
+    <p><strong>Core requirements:</strong></p>
+    <ul>
+      <li>100B+ pieces/day (text, image, video, audio)</li>
+      <li>Upload-gate pre-screening latency &lt;500ms</li>
+      <li>Multi-modal: text, images (10M/day), video, audio</li>
+      <li>100+ language support</li>
+      <li>Human review queue + appeals mechanism</li>
+      <li>Policy versioning (different jurisdictions)</li>
+      <li>False positive rate &lt;0.1%, recall &gt;99.9% (CSAM)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🏗️ 高层架构 / High-Level Architecture</h2>
+
+<div class="diagram">
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                           CLIENT UPLOAD LAYER                                  │
+│   Mobile App / Web Browser / Third-Party API                                   │
+└──────────────────────────────────┬─────────────────────────────────────────────┘
+                                   │ Upload Request
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                     API GATEWAY / UPLOAD SERVICE                               │
+│   Rate Limiting │ Auth │ Content Hashing (SHA-256 + pHash) │ Dedup             │
+└──────────────┬──────────────────┬─────────────────────────────────────────────┘
+               │                  │
+               ▼                  ▼
+    [Known-Bad Hash DB]    [New Content → Pipeline]
+    (PhotoDNA / CSAM)       immediate block
+               │                  │
+               │    SYNC (<500ms) ▼
+               │   ┌──────────────────────────────────────────┐
+               │   │     PRE-SCREEN GATE (Real-Time)           │
+               │   │  ┌─────────┐ ┌──────────┐ ┌──────────┐  │
+               │   │  │ Text    │ │  Image   │ │  Video   │  │
+               │   │  │ FastText│ │  CLIP /  │ │  Frame   │  │
+               │   │  │ Distil  │ │  CNN     │ │  Sample  │  │
+               │   │  │ BERT    │ │  pHash   │ │  + Audio │  │
+               │   │  └────┬────┘ └────┬─────┘ └────┬─────┘  │
+               │   │       └───────────┴─────────────┘        │
+               │   │            Combined Score                 │
+               │   │     HIGH RISK → Block / Flag              │
+               │   │     LOW RISK  → Allow (async review)      │
+               │   └─────────────────────┬────────────────────┘
+               │                         │
+               │         ASYNC ▼         │ PUBLISH TO PLATFORM
+               │   ┌──────────────────────────────────────────┐
+               │   │     DEEP ANALYSIS PIPELINE (Async)        │
+               │   │                                          │
+               │   │  Context Engine   Policy Engine          │
+               │   │  ┌─────────────┐  ┌──────────────────┐  │
+               │   │  │ User History│  │ Harm Taxonomy DB │  │
+               │   │  │ Network     │  │ Region Rules     │  │
+               │   │  │ Account Age │  │ Policy Versions  │  │
+               │   │  │ Prior Viol. │  └──────────────────┘  │
+               │   │  └─────────────┘                        │
+               │   │                                          │
+               │   │  Multi-Modal Fusion Model                │
+               │   │  (Text + Image + Context → Decision)     │
+               │   └──────────────┬───────────────────────────┘
+               │                  │
+               │          ┌───────┴──────────┐
+               │          │  Decision Engine  │
+               │          │  ┌─────────────┐  │
+               │          │  │ ALLOW       │  │
+               │          │  │ RESTRICT    │  │  ← apply label/limit reach
+               │          │  │ REMOVE      │  │
+               │          │  │ HUMAN_QUEUE │  │
+               │          │  └─────────────┘  │
+               │          └───────────────────┘
+               │                  │
+               │          ┌───────┴──────────────────────┐
+               │          │  HUMAN REVIEW SYSTEM          │
+               │          │  Priority Queue (sev × viral) │
+               │          │  Reviewer Tool UI             │
+               │          │  QA Sampling + Calibration    │
+               │          └────────────────┬──────────────┘
+               │                           │
+               │                    ┌──────┴──────┐
+               └──── APPEALS ───────│   ACTION    │
+                                    │   LOGGING   │
+                                    └─────────────┘
+</div>
+
+<div class="highlight-blue">
+  <strong>💡 面试关键开场白：</strong>先澄清场景和约束。<br>
+  "内容审核系统的核心矛盾是：误判带来的用户伤害 vs 漏判带来的平台伤害。不同内容类型有不同的容忍度——CSAM 要求接近 100% 召回（宁可错杀），而幽默与仇恨言论的边界则需要上下文判断。"
+</div>
+
+<h2>📊 容量估算 / Capacity Estimation</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>Meta 规模估算</h3>
+    <ul>
+      <li><strong>内容总量：</strong>100B 条/天 ≈ 1.16M QPS</li>
+      <li><strong>图片：</strong>10M/天 ≈ 115 QPS（深度分析）</li>
+      <li><strong>视频：</strong>1M/天 ≈ 11.5 QPS（帧抽取+分析）</li>
+      <li><strong>上传预审核 SLA：</strong>&lt;500ms P99</li>
+      <li><strong>深度异步分析：</strong>&lt;30s 完成</li>
+      <li><strong>人工审核队列：</strong>每天约 1%→100M 需要人工介入（但实际人工审核约 1500万/周）</li>
+      <li><strong>存储：</strong>每条决策记录 ~1KB → 100GB/天决策日志</li>
+    </ul>
+    <h3>机器资源</h3>
+    <ul>
+      <li>轻量 FastText 模型：1M QPS 需 ~2000 CPU 核</li>
+      <li>BERT 分类器（异步）：~1000 GPU 实例（A100）</li>
+      <li>图片 CNN/CLIP：~500 GPU 实例</li>
+      <li>视频帧抽取：CPU 密集型，~500 高核数实例</li>
+    </ul>
+  </div>
+  <div class="en">
+    <h3>Meta-Scale Estimation</h3>
+    <ul>
+      <li><strong>Total content:</strong> 100B/day ≈ 1.16M QPS</li>
+      <li><strong>Images:</strong> 10M/day ≈ 115 QPS (deep analysis)</li>
+      <li><strong>Video:</strong> 1M/day ≈ 11.5 QPS (frame extract + analysis)</li>
+      <li><strong>Upload gate SLA:</strong> &lt;500ms P99</li>
+      <li><strong>Async deep analysis:</strong> &lt;30s to complete</li>
+      <li><strong>Human review queue:</strong> ~1% flagged = 1B/day; actual human review ~15M/week</li>
+      <li><strong>Storage:</strong> ~1KB per decision record → 100GB/day decision logs</li>
+    </ul>
+    <h3>Hardware Resources</h3>
+    <ul>
+      <li>Lightweight FastText: 1M QPS → ~2000 CPU cores</li>
+      <li>BERT classifiers (async): ~1000 GPU instances (A100)</li>
+      <li>Image CNN/CLIP: ~500 GPU instances</li>
+      <li>Video frame extraction: CPU-intensive, ~500 high-core servers</li>
+    </ul>
+  </div>
+</div>
+
+<div class="diagram">
+  思考题答案：误判率 0.1% × DAU 10亿 × 每人发帖1条 = 每天 100万条内容被错误下架！
+  ↓
+  必须有高效申诉系统！否则用户流失不可避免。
+</div>
+
+<h2>🚦 多阶段审核 Pipeline / Multi-Stage Moderation Pipeline</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>三阶段设计</h3>
+    <p>内容审核不能只靠一个模型。关键是<strong>速度与准确性的分层权衡</strong>：</p>
+    <ol>
+      <li><strong>Stage 1：上传门控 (同步, &lt;500ms)</strong> — 快速轻量模型，守住明显违规</li>
+      <li><strong>Stage 2：深度异步分析 (异步, &lt;30s)</strong> — 重型模型+上下文，高精度决策</li>
+      <li><strong>Stage 3：人工复核 (异步, 按 SLA 分级)</strong> — 处理边缘案例和申诉</li>
+    </ol>
+  </div>
+  <div class="en">
+    <h3>Three-Stage Design</h3>
+    <p>Content moderation cannot rely on a single model. The key is <strong>layered speed-accuracy tradeoff</strong>:</p>
+    <ol>
+      <li><strong>Stage 1: Upload Gate (sync, &lt;500ms)</strong> — Fast lightweight models, block obvious violations</li>
+      <li><strong>Stage 2: Deep Async Analysis (async, &lt;30s)</strong> — Heavy models + context, high-precision decisions</li>
+      <li><strong>Stage 3: Human Review (async, SLA-tiered)</strong> — Edge cases and appeals</li>
+    </ol>
+  </div>
+</div>
+
+<div class="diagram">
+  Stage 1: Upload Gate (Sync, &lt;500ms)
+  ═══════════════════════════════════════
+  Input Content
+       │
+       ├─── Hash Lookup ──────► Known-Bad DB (PhotoDNA/CSAM hashes) → BLOCK immediately
+       │
+       ├─── Text FastText ───► 99 language classifier, confidence ≥ 0.95 → BLOCK
+       │
+       ├─── Image pHash ─────► Near-duplicate matching vs flagged image DB
+       │
+       └─── Image FastCNN ──► MobileNet/EfficientNet-Lite, <100ms → High-confidence NSFW/Violence
+
+  Decision matrix:
+  ┌──────────────────┬─────────────────────────────────────┐
+  │ Score            │ Action                              │
+  ├──────────────────┼─────────────────────────────────────┤
+  │ ≥ 0.95           │ BLOCK (don't publish, alert user)   │
+  │ 0.7 ~ 0.95       │ ALLOW + FLAG for async deep review  │
+  │ < 0.7            │ ALLOW (may still get async review)  │
+  └──────────────────┴─────────────────────────────────────┘
+
+  Stage 2: Deep Analysis (Async, &lt;30s)
+  ═══════════════════════════════════════
+  Content + Stage 1 Score + User Context
+       │
+       ├─── BERT Fine-tuned Classifier (multilingual)
+       │     └─ Hate Speech / Harassment / Radicalization
+       │
+       ├─── CLIP-based Image Analysis
+       │     └─ Semantic understanding: "protest sign" vs "hate symbol"
+       │
+       ├─── Multi-modal Fusion Model
+       │     └─ Cross-modal consistency: text says "recipe" but image shows violence
+       │
+       ├─── Context Engine
+       │     └─ User history, account age, network graph
+       │
+       └─── Policy Engine
+             └─ Region-specific rules, harm taxonomy lookup
+
+  Decision → { ALLOW, SOFT_RESTRICT, REMOVE, HUMAN_QUEUE, ESCALATE }
+
+  Stage 3: Human Review Queue
+  ═══════════════════════════════════════
+  Priority = Severity × Virality × Account_Risk_Score
+  ┌──────────┬─────────────────────────────────────────┐
+  │ P0       │ CSAM, terrorism incitement → 15min SLA  │
+  │ P1       │ Violence/Graphic → 2hr SLA              │
+  │ P2       │ Hate speech / Harassment → 24hr SLA     │
+  │ P3       │ Spam / General → 48hr SLA               │
+  └──────────┴─────────────────────────────────────────┘
+</div>
+
+<h2>🤖 ML 模型设计 / ML Model Architecture</h2>
+
+<h3>📝 文本审核模型</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>两级文本分类架构：</strong></p>
+    <ul>
+      <li><strong>Stage 1 (Fast)：</strong>FastText + n-gram，延迟 &lt;5ms，支持 176 种语言，用于初筛</li>
+      <li><strong>Stage 2 (Accurate)：</strong>XLM-RoBERTa Large fine-tuned，多标签分类（每条内容可同时属于多个类别）</li>
+    </ul>
+    <p><strong>关键挑战：</strong></p>
+    <ul>
+      <li>对抗性变体：leet speak（h4te），Unicode 混淆（Ηate），故意拼写错误</li>
+      <li>解决：Character-level CNN + Unicode normalization + 同义词增强</li>
+      <li>隐语和暗语随时间变化 → 持续在线学习</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>Two-tier text classification:</strong></p>
+    <ul>
+      <li><strong>Stage 1 (Fast):</strong> FastText + n-gram, &lt;5ms latency, 176 languages, initial screening</li>
+      <li><strong>Stage 2 (Accurate):</strong> XLM-RoBERTa Large fine-tuned, multi-label classification (content can belong to multiple categories simultaneously)</li>
+    </ul>
+    <p><strong>Key challenges:</strong></p>
+    <ul>
+      <li>Adversarial variants: leet speak (h4te), Unicode obfuscation (Ηate), intentional misspellings</li>
+      <li>Solution: Character-level CNN + Unicode normalization + synonym augmentation</li>
+      <li>Slang/dog-whistles evolve → continuous online learning</li>
+    </ul>
+  </div>
+</div>
+
+<pre><code># 文本分类器架构（fine-tuned XLM-RoBERTa）
+class ContentClassifier(nn.Module):
+    def __init__(self, model_name="xlm-roberta-large", num_labels=12):
+        super().__init__()
+        self.encoder = AutoModel.from_pretrained(model_name)
+        self.dropout = nn.Dropout(0.1)
+        # 多标签分类：每个标签独立 sigmoid（不互斥）
+        self.classifier = nn.Linear(self.encoder.config.hidden_size, num_labels)
+        self.harm_taxonomy = [
+            "hate_speech", "violence", "nudity_sexual",
+            "nudity_non_sexual", "harassment", "spam",
+            "misinformation", "self_harm", "terrorism",
+            "csam", "dangerous_activity", "drug_content"
+        ]
+    
+    def forward(self, input_ids, attention_mask, context_embedding=None):
+        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        pooled = outputs.last_hidden_state[:, 0, :]  # [CLS] token
+        
+        # 注入用户上下文嵌入（可选）
+        if context_embedding is not None:
+            pooled = torch.cat([pooled, context_embedding], dim=-1)
+            pooled = self.context_proj(pooled)
+        
+        logits = self.classifier(self.dropout(pooled))
+        probs = torch.sigmoid(logits)  # 多标签，各标签独立概率
+        return probs  # shape: [batch, 12]
+
+# 推理：批量处理以提高 GPU 利用率
+def batch_classify_text(texts: List[str], batch_size=64) -> List[Dict]:
+    results = []
+    for batch in chunks(texts, batch_size):
+        inputs = tokenizer(batch, truncation=True, max_length=512,
+                          padding=True, return_tensors="pt")
+        with torch.no_grad():
+            probs = model(**inputs)
+        
+        for text, prob in zip(batch, probs):
+            violations = {
+                label: float(p) 
+                for label, p in zip(model.harm_taxonomy, prob)
+                if p > 0.3  # 低阈值用于标记，高阈值用于执行
+            }
+            results.append({"text": text[:100], "violations": violations})
+    return results
+</code></pre>
+
+<h3>🖼️ 图像审核模型</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>图像三层防线：</strong></p>
+    <ol>
+      <li><strong>感知哈希 (pHash/PhotoDNA)：</strong>O(1) 查找已知违规内容，抗轻微编辑变形（压缩、裁剪）</li>
+      <li><strong>CNN 分类器 (EfficientNet-B4)：</strong>视觉内容分类，NSFW/暴力/仇恨符号</li>
+      <li><strong>CLIP-based 语义理解：</strong>理解图片语义和文字+图片的组合含义</li>
+    </ol>
+    <p><strong>CLIP 的核心价值：</strong>可以做 Zero-shot 检测新的伤害类型，无需重新训练。例如新兴的仇恨符号、政治梗图。</p>
+  </div>
+  <div class="en">
+    <p><strong>Three-layer image defense:</strong></p>
+    <ol>
+      <li><strong>Perceptual Hash (pHash/PhotoDNA):</strong> O(1) lookup for known violations, robust to minor edits (compression, cropping)</li>
+      <li><strong>CNN classifier (EfficientNet-B4):</strong> Visual content classification — NSFW/violence/hate symbols</li>
+      <li><strong>CLIP-based semantic understanding:</strong> Understand image semantics and text+image combined meaning</li>
+    </ol>
+    <p><strong>CLIP's key value:</strong> Zero-shot detection of new harm types without retraining. E.g., emerging hate symbols, political memes.</p>
+  </div>
+</div>
+
+<pre><code># CLIP-based 内容审核
+import clip
+import torch
+from PIL import Image
+
+class CLIPModerator:
+    def __init__(self):
+        self.model, self.preprocess = clip.load("ViT-L/14", device="cuda")
+        
+        # 伤害类别的文本描述（Zero-shot）
+        self.harm_prompts = {
+            "hate_symbol": [
+                "an image containing hate symbols or extremist imagery",
+                "a photo with white supremacist symbols",
+                "neo-nazi propaganda imagery"
+            ],
+            "violence": [
+                "graphic violence or gore",
+                "people fighting or being harmed",
+                "blood and injury"
+            ],
+            "safe": [
+                "a normal everyday photo",
+                "a family friendly image",
+                "a safe and appropriate picture"
+            ]
+        }
+        
+        # 预计算文本嵌入（离线，只做一次）
+        self.text_embeddings = self._precompute_text_embeddings()
+    
+    def _precompute_text_embeddings(self):
+        embeddings = {}
+        for category, prompts in self.harm_prompts.items():
+            tokens = clip.tokenize(prompts).to("cuda")
+            with torch.no_grad():
+                text_feat = self.model.encode_text(tokens)
+                text_feat /= text_feat.norm(dim=-1, keepdim=True)
+            embeddings[category] = text_feat.mean(dim=0)  # 平均多个 prompt
+        return embeddings
+    
+    def moderate(self, image: Image.Image) -> Dict[str, float]:
+        image_input = self.preprocess(image).unsqueeze(0).to("cuda")
+        
+        with torch.no_grad():
+            image_feat = self.model.encode_image(image_input)
+            image_feat /= image_feat.norm(dim=-1, keepdim=True)
+        
+        scores = {}
+        for category, text_feat in self.text_embeddings.items():
+            similarity = (100.0 * image_feat @ text_feat.unsqueeze(0).T).item()
+            scores[category] = float(torch.sigmoid(torch.tensor(similarity / 10)))
+        
+        return scores  # {"hate_symbol": 0.02, "violence": 0.85, "safe": 0.12}
+</code></pre>
+
+<h3>🎬 视频审核策略</h3>
+
+<div class="bilingual">
+  <div class="zh">
+    <p>视频 = 图像序列 + 音频。不能逐帧处理，要智能采样：</p>
+    <ul>
+      <li><strong>关键帧抽取：</strong>Scene Change Detection (余弦距离 &gt;0.3 → 新场景)，平均每30秒1帧</li>
+      <li><strong>音频分析：</strong>Whisper 转录 → 文本分类；同时做声学分析（枪声、尖叫声）</li>
+      <li><strong>时序模型：</strong>VIDEO-BERT / TimeSformer 检测跨帧的连续动作（打斗序列）</li>
+      <li><strong>实时限制：</strong>直播内容 → 强制使用轻量模型，容忍更高误判率</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p>Video = image sequence + audio. Can't process every frame — smart sampling required:</p>
+    <ul>
+      <li><strong>Keyframe extraction:</strong> Scene change detection (cosine distance &gt;0.3 = new scene), ~1 frame per 30 seconds on average</li>
+      <li><strong>Audio analysis:</strong> Whisper transcription → text classification; acoustic analysis for gunshots, screams</li>
+      <li><strong>Temporal models:</strong> VIDEO-BERT / TimeSformer for cross-frame action detection (fight sequences)</li>
+      <li><strong>Live stream constraint:</strong> Must use lightweight models, tolerate higher false positive rate</li>
+    </ul>
+  </div>
+</div>
+
+<h3>🔀 多模态融合 / Multi-Modal Fusion</h3>
+
+<div class="highlight">
+  <strong>🔑 面试亮点：文本+图片 的"语义矛盾"检测</strong><br>
+  一张正常风景图配上仇恨言论文字 → 每个模态单独看都"安全"，但组合起来就是违规内容。<br>
+  <strong>解决方案：</strong>用 Fusion Attention 层对跨模态信号做交叉注意力，检测模态间一致性分数。
+  如果文本 embedding 和图片 embedding 的余弦相似度很低（语义矛盾），则提升风险得分。
+</div>
+
+<pre><code># 多模态融合决策
+class MultiModalFusion(nn.Module):
+    def __init__(self, text_dim=768, image_dim=768, context_dim=64):
+        super().__init__()
+        # 跨模态注意力
+        self.cross_attention = nn.MultiheadAttention(
+            embed_dim=768, num_heads=8, batch_first=True
+        )
+        self.fusion_proj = nn.Linear(text_dim + image_dim + context_dim, 256)
+        self.final_classifier = nn.Linear(256, len(HARM_CATEGORIES))
+        
+    def forward(self, text_emb, image_emb, context_emb):
+        # Cross-modal attention: text attends to image
+        attended, _ = self.cross_attention(
+            query=text_emb.unsqueeze(1),
+            key=image_emb.unsqueeze(1),
+            value=image_emb.unsqueeze(1)
+        )
+        
+        # 计算模态一致性（低一致性 = 高风险）
+        consistency = F.cosine_similarity(text_emb, image_emb)
+        inconsistency_risk = torch.clamp(1.0 - consistency, min=0)
+        
+        # 融合所有信号
+        fused = torch.cat([
+            attended.squeeze(1), image_emb, context_emb
+        ], dim=-1)
+        
+        logits = self.final_classifier(self.fusion_proj(fused))
+        
+        # 不一致性 boost：提升跨模态矛盾内容的风险分
+        logits = logits * (1 + 0.3 * inconsistency_risk.unsqueeze(-1))
+        
+        return torch.sigmoid(logits)
+</code></pre>
+
+<h2>📋 伤害分类与政策引擎 / Harm Taxonomy &amp; Policy Engine</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>伤害分类层次 (Harm Taxonomy)</h3>
+    <p>伤害分类必须是分层的，面试时要展示层次结构：</p>
+  </div>
+  <div class="en">
+    <h3>Harm Taxonomy (Hierarchical)</h3>
+    <p>Harm taxonomy must be hierarchical. Show the structure in interviews:</p>
+  </div>
+</div>
+
+<div class="diagram">
+Level 0: Zero-Tolerance (Always Remove, No Appeal for Primary Content)
+  ├── CSAM (Child Sexual Abuse Material)
+  └── Terrorism / ISIS Recruitment (Active Incitement)
+
+Level 1: High Severity (Remove, Fast Human Review if Uncertain)
+  ├── Graphic Violence (real gore, torture)
+  ├── Adult Sexual Content (explicit, non-consensual imagery)
+  ├── Suicide/Self-Harm (instructional, glorifying)
+  └── Dangerous Weapons (trafficking, illegal arms sales)
+
+Level 2: Context-Dependent (Restrict / Label / Review)
+  ├── Hate Speech
+  │    ├── Slurs + Dehumanization → Remove
+  │    ├── Stereotypes + Mockery → Label + Limit Reach
+  │    └── Satire / Counter-speech → Allow with context
+  ├── Misinformation
+  │    ├── Medical misinfo (vaccine, health) → Label + Reduce distribution
+  │    ├── Election misinfo → Escalated review
+  │    └── Satire labeled as real → Label
+  └── Violence (non-graphic)
+       ├── News coverage of conflict → Allow
+       └── Glorification / Celebration → Remove
+
+Level 3: Policy-Variable (Rules Differ by Region/Platform)
+  ├── Nudity (art vs pornography, cultural context)
+  ├── Drug content (legality varies by jurisdiction)
+  ├── Political content (restricted in some regions)
+  └── Religious content (blasphemy laws vary)
+</div>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>政策引擎设计</h3>
+    <p>政策 ≠ 模型。政策是可版本化的业务规则，必须能在不重训模型的情况下更新：</p>
+    <pre><code># 政策规则示例（YAML 定义，版本化存储）
+policy_version: "2026-02-26-v3.1"
+jurisdiction: "EU"  # GDPR + DSA 合规
+rules:
+  hate_speech:
+    threshold_remove: 0.85
+    threshold_restrict: 0.60
+    context_boost:
+      - condition: "account_violations > 3"
+        multiplier: 1.3
+      - condition: "content_virality > 10000"
+        multiplier: 1.5
+    exemptions:
+      - "counter_speech_detected == true"
+      - "verified_news_organization == true"
+  nudity:
+    threshold_remove: 0.90
+    age_gate_threshold: 0.70  # 18+ label
+    exemptions:
+      - "art_museum_verified == true"
+      - "breastfeeding_context_detected == true"
+</code></pre>
+  </div>
+  <div class="en">
+    <h3>Policy Engine Design</h3>
+    <p>Policy ≠ Model. Policy is versioned business rules that must be updatable without model retraining:</p>
+    <ul>
+      <li><strong>Policy Store:</strong> Git-versioned YAML + approval workflow (legal review)</li>
+      <li><strong>Regional Rules:</strong> EU (DSA), US (Section 230), India, etc.</li>
+      <li><strong>Rollback capability:</strong> Any policy version can be rolled back in &lt;5 minutes</li>
+      <li><strong>A/B testing:</strong> New policies canary-tested on 1% traffic before full rollout</li>
+      <li><strong>Audit trail:</strong> Every decision logged with policy version used</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🌍 上下文系统 / Context System</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <p><strong>同一条内容，在不同上下文下，正确决策可以完全不同。</strong>这是内容审核最难的部分。</p>
+    <h3>用户上下文信号</h3>
+    <ul>
+      <li><strong>账号年龄：</strong>新账号（&lt;30天）+ 高风险内容 → 提升 1.4x 风险分</li>
+      <li><strong>历史违规：</strong>3次违规内账号 → 更严格阈值；反复违规 → 降级/封禁</li>
+      <li><strong>核实状态：</strong>认证新闻机构、学术账号享有豁免</li>
+      <li><strong>地理位置：</strong>同一内容在不同国家适用不同政策</li>
+      <li><strong>关系网络：</strong>私聊 vs 公开帖子，受众是否有未成年人</li>
+    </ul>
+    <h3>协同行为检测（Coordinated Inauthentic Behavior）</h3>
+    <p>检测有组织的违规活动（如信息战），需要图分析：</p>
+    <ul>
+      <li>多个账号在短时间内发布几乎相同内容 → 识别主账号，批量处理</li>
+      <li>转发网络异常密集 → 可能是机器人农场</li>
+      <li>图神经网络 (GNN) 检测社区结构异常</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p><strong>The same content can warrant completely different decisions depending on context.</strong> This is the hardest part of content moderation.</p>
+    <h3>User Context Signals</h3>
+    <ul>
+      <li><strong>Account age:</strong> New account (&lt;30 days) + high-risk content → 1.4x risk multiplier</li>
+      <li><strong>Violation history:</strong> Accounts with 3+ violations → stricter thresholds; repeat offenders → downgrade/ban</li>
+      <li><strong>Verification status:</strong> Certified news orgs, academic accounts have exemptions</li>
+      <li><strong>Geolocation:</strong> Same content, different policies in different countries</li>
+      <li><strong>Network context:</strong> Private DM vs public post; audience includes minors</li>
+    </ul>
+    <h3>Coordinated Inauthentic Behavior Detection</h3>
+    <p>Detecting organized violation campaigns (e.g., info warfare) requires graph analysis:</p>
+    <ul>
+      <li>Multiple accounts posting nearly identical content → identify lead account, batch process</li>
+      <li>Abnormally dense retweet networks → possible bot farm</li>
+      <li>Graph Neural Networks (GNN) for community structure anomaly detection</li>
+    </ul>
+  </div>
+</div>
+
+<pre><code># 用户风险上下文引擎
+class UserContextEngine:
+    def __init__(self, redis_client, graph_db):
+        self.redis = redis_client      # 热点数据缓存（账号特征）
+        self.graph_db = graph_db       # 关系图数据库（Neo4j）
+    
+    def get_user_risk_profile(self, user_id: str) -> UserRiskProfile:
+        cache_key = f"user_risk:{user_id}"
+        cached = self.redis.get(cache_key)
+        if cached:
+            return UserRiskProfile.parse_raw(cached)
+        
+        # 从多个数据源聚合用户特征
+        profile = UserRiskProfile(
+            account_age_days=self._get_account_age(user_id),
+            violation_count_90d=self._get_violations(user_id, days=90),
+            violation_severity_max=self._get_max_severity(user_id),
+            is_verified_journalist=self._check_verification(user_id, "journalist"),
+            is_verified_government=self._check_verification(user_id, "government"),
+            network_risk_score=self._get_network_risk(user_id),  # GNN score
+            geo_country=self._get_user_country(user_id),
+            coordinated_behavior_flag=self._check_coordinated(user_id)
+        )
+        
+        # 缓存 5 分钟（频繁更新的信号）
+        self.redis.setex(cache_key, 300, profile.json())
+        return profile
+    
+    def compute_context_multiplier(self, profile: UserRiskProfile) -> float:
+        multiplier = 1.0
+        
+        # 新账号高风险 boost
+        if profile.account_age_days < 30:
+            multiplier *= 1.4
+        
+        # 历史违规 boost
+        if profile.violation_count_90d >= 3:
+            multiplier *= 1.3
+        elif profile.violation_count_90d >= 1:
+            multiplier *= 1.15
+        
+        # 严重违规历史（如之前 CSAM 相关）→ 最严格阈值
+        if profile.violation_severity_max == "LEVEL_0":
+            multiplier *= 2.0
+        
+        # 协同行为 → 立即 escalate
+        if profile.coordinated_behavior_flag:
+            multiplier *= 3.0  # 直接进 P0 队列
+        
+        # 认证账号 discount
+        if profile.is_verified_journalist or profile.is_verified_government:
+            multiplier *= 0.7
+        
+        return min(multiplier, 5.0)  # cap at 5x
+</code></pre>
+
+<h2>👤 Human-in-the-Loop 设计</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>为什么人工审核不可或缺？</h3>
+    <p>ML 模型做不到的事情：</p>
+    <ul>
+      <li>讽刺/反讽：正面词汇用于贬低 → 模型误判</li>
+      <li>语境幽默：黑色幽默 vs 真实暴力威胁</li>
+      <li>文化特异性：某些词汇/手势在特定文化中的含义</li>
+      <li>新兴伤害类型：首次出现，模型未见过</li>
+      <li>申诉复核：被投诉用户的申诉必须有人工参与</li>
+    </ul>
+    <h3>人工审核的挑战</h3>
+    <ul>
+      <li><strong>认知负荷问题：</strong>审核员每天要看大量暴力/性/仇恨内容，职业创伤</li>
+      <li>Meta 每天有 ~15000 名合同审核员分布全球</li>
+      <li>平均每个审核员每小时处理 ~200 条内容</li>
+    </ul>
+  </div>
+  <div class="en">
+    <h3>Why Human Review Is Indispensable?</h3>
+    <p>Things ML models can't reliably handle:</p>
+    <ul>
+      <li>Sarcasm/irony: positive words used to belittle → model misclassifies</li>
+      <li>Contextual humor: dark humor vs real threats of violence</li>
+      <li>Cultural specificity: words/gestures with specific cultural meaning</li>
+      <li>Emerging harm types: first occurrences, unseen by model</li>
+      <li>Appeals review: human participation required for appeals</li>
+    </ul>
+    <h3>Human Review Challenges</h3>
+    <ul>
+      <li><strong>Cognitive load:</strong> Reviewers see massive amounts of violent/sexual/hateful content daily — occupational trauma</li>
+      <li>Meta employs ~15,000 contract content reviewers worldwide</li>
+      <li>Average reviewer handles ~200 pieces/hour</li>
+    </ul>
+  </div>
+</div>
+
+<div class="diagram">
+  人工审核优先级队列 (Priority Queue Design)
+  ═══════════════════════════════════════════════════════
+
+  Priority Score = Severity_Weight × log(1 + Virality) × Account_Risk_Multiplier × Time_Urgency
+
+  Severity Weights:
+  ┌──────────────────────┬────────┬──────────────────────────────────────┐
+  │ 内容类型             │ Weight │ 人工 SLA                             │
+  ├──────────────────────┼────────┼──────────────────────────────────────┤
+  │ CSAM                 │ 1000   │ 15分钟（全天候）                     │
+  │ Terrorism incitement │ 500    │ 30分钟                               │
+  │ Credible death threat│ 300    │ 1小时                                │
+  │ Graphic violence     │ 100    │ 2小时                                │
+  │ Hate speech          │ 50     │ 24小时                               │
+  │ Misinformation       │ 30     │ 48小时                               │
+  │ Spam                 │ 10     │ 72小时 / 批处理                      │
+  └──────────────────────┴────────┴──────────────────────────────────────┘
+
+  Virality Factor: 
+  - 0 shares: log(1) = 0 (viral multiplier = 1)
+  - 1K shares: log(1001) ≈ 7 
+  - 1M shares: log(1M+1) ≈ 14 (viral content always escalated)
+
+  审核员工具 UI 设计要点：
+  ┌──────────────────────────────────────────────────────┐
+  │ [Content Display]        │ [User Profile]            │
+  │ - Original text/image    │ - Account age             │
+  │ - Context (thread/page)  │ - Prior violations        │
+  │ - Translation            │ - Verification status     │
+  │                          │ - Network risk score      │
+  ├──────────────────────────┼───────────────────────────┤
+  │ [ML Signals]             │ [Policy Reference]        │
+  │ - Model scores           │ - Relevant policy         │
+  │ - Similar past cases     │ - Comparable decisions    │
+  │ - Confidence level       │ - Edge case guidance      │
+  ├──────────────────────────┴───────────────────────────┤
+  │ [Decision] ALLOW │ RESTRICT │ REMOVE │ ESCALATE      │
+  │ [Reason Code] (required) + Free text                │
+  └──────────────────────────────────────────────────────┘
+</div>
+
+<div class="highlight-red">
+  <strong>⚠️ 认知负荷缓解措施（面试必提）：</strong>
+  <ul>
+    <li>强制休息制度：每小时最多审核45分钟，不能连续审核严重内容</li>
+    <li>内容类型轮换：不让同一审核员连续处理同类型高强度内容</li>
+    <li>心理支持资源：EAP（Employee Assistance Program）随时可用</li>
+    <li>渐进式暴露：新审核员从低严重度内容开始，逐步升级</li>
+    <li>内容模糊处理：自动降低严重内容的视觉清晰度（blurring）</li>
+  </ul>
+</div>
+
+<h2>⚡ 实时 vs 异步决策 / Real-time vs Async</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>阶段</th>
+      <th>模式</th>
+      <th>延迟 SLA</th>
+      <th>使用场景</th>
+      <th>技术选型</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>上传门控</td>
+      <td>同步</td>
+      <td>&lt;500ms P99</td>
+      <td>阻止明显违规上传</td>
+      <td>FastText + pHash + Redis 缓存</td>
+    </tr>
+    <tr>
+      <td>评论/帖子发布</td>
+      <td>同步</td>
+      <td>&lt;200ms P99</td>
+      <td>发帖前快速审核</td>
+      <td>轻量 DistilBERT + 规则引擎</td>
+    </tr>
+    <tr>
+      <td>深度分析</td>
+      <td>异步</td>
+      <td>&lt;30s P95</td>
+      <td>已发布内容的精确审核</td>
+      <td>Kafka → GPU Worker Pool</td>
+    </tr>
+    <tr>
+      <td>视频分析</td>
+      <td>异步</td>
+      <td>&lt;5min P95</td>
+      <td>上传后视频逐段分析</td>
+      <td>Spark + GPU Cluster</td>
+    </tr>
+    <tr>
+      <td>人工复核</td>
+      <td>异步</td>
+      <td>分级 SLA</td>
+      <td>边缘案例 + 申诉</td>
+      <td>优先级队列 + 审核工具</td>
+    </tr>
+    <tr>
+      <td>直播内容</td>
+      <td>流式</td>
+      <td>&lt;2s per segment</td>
+      <td>直播实时检测</td>
+      <td>Flink + 轻量模型（不能用重模型）</td>
+    </tr>
+    <tr>
+      <td>历史内容重审</td>
+      <td>批量</td>
+      <td>天级</td>
+      <td>政策更新后回溯审核</td>
+      <td>MapReduce / Spark Batch</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="highlight-blue">
+  <strong>💡 政策更新的挑战：</strong>当政策变化时，需要对历史内容进行回溯审核（Retroactive Review）。
+  例如：新增一种仇恨符号到禁止列表，需要扫描过去所有图片。
+  解决方案：每天低峰期（凌晨）跑 Spark 批处理 job，处理增量变化的政策覆盖范围。
+</div>
+
+<h2>⚖️ 申诉与正当程序 / Appeals &amp; Due Process</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>申诉系统设计</h3>
+    <p>规模问题：误判率 0.1% × 100B 条/天 = <strong>每天 1 亿条内容被错误处理</strong>。
+    大多数平台只有 &lt;0.1% 的被处理用户会提起申诉，但绝对数量仍然巨大。</p>
+    <p><strong>申诉流程：</strong></p>
+    <ol>
+      <li>用户提交申诉 → 自动分类（分析申诉文字 + 原始内容）</li>
+      <li>ML 快速复核：置信度 &gt;0.9 的错误决策 → 自动恢复（无需人工）</li>
+      <li>剩余案例 → 人工复核队列（独立于原始审核员）</li>
+      <li>高影响力账号申诉 → 优先处理 + 高级审核员</li>
+    </ol>
+    <h3>减少误判的系统级策略</h3>
+    <ul>
+      <li><strong>先降级，后移除：</strong>对不确定内容先减少分发（Reduce Reach），再决定是否移除</li>
+      <li><strong>内容标签：</strong>在不移除的情况下，加警告标签（"Contains Sensitive Content"）</li>
+      <li><strong>分级处罚：</strong>首次违规 → 提示；多次违规 → 限流；严重违规 → 封禁</li>
+    </ul>
+  </div>
+  <div class="en">
+    <h3>Appeals System Design</h3>
+    <p>Scale problem: 0.1% false positive rate × 100B/day = <strong>100M pieces incorrectly actioned per day</strong>.
+    Most platforms see &lt;0.1% of actioned users filing appeals — but the absolute number is still enormous.</p>
+    <p><strong>Appeals flow:</strong></p>
+    <ol>
+      <li>User submits appeal → auto-classify (analyze appeal text + original content)</li>
+      <li>ML quick re-review: high-confidence wrong decisions (≥0.9) → auto-restore (no human needed)</li>
+      <li>Remaining cases → human review queue (different reviewer than original)</li>
+      <li>High-profile account appeals → priority processing + senior reviewer</li>
+    </ol>
+    <h3>System-Level Strategies to Reduce False Positives</h3>
+    <ul>
+      <li><strong>Downrank before remove:</strong> For uncertain content, reduce distribution first before deciding on removal</li>
+      <li><strong>Content labels:</strong> Add warning labels without removal ("Contains Sensitive Content")</li>
+      <li><strong>Graduated enforcement:</strong> First violation → notification; multiple violations → throttle; severe → ban</li>
+    </ul>
+  </div>
+</div>
+
+<div class="diagram">
+  申诉系统架构
+  ════════════════════════════════════════════════════════
+
+  User Appeal Submission
+         │
+         ▼
+  ┌─────────────────────────────────────────────────┐
+  │ Auto-Classification of Appeal                   │
+  │  - Appeal text analysis (NLP)                   │
+  │  - Original content re-scoring                  │
+  │  - Category: Wrong Label / New Context / Policy │
+  └──────────────────────┬──────────────────────────┘
+                         │
+           ┌─────────────┴─────────────┐
+           │                           │
+           ▼                           ▼
+  [High Confidence Error]      [Borderline / Unclear]
+  ML re-score &gt; 0.9 for          │
+  opposite decision               │
+           │                     ▼
+           ▼              [Human Review Queue]
+  [Auto Restore]           - Different reviewer
+  + Notify User            - Blind review (no original decision shown)
+  + Log for Model Training - Must cite specific policy
+           │                     │
+           └──────────┬──────────┘
+                      ▼
+              [Final Decision]
+              REINSTATE / UPHOLD REMOVAL
+                      │
+                      ├── User Notification (with reason)
+                      ├── Policy Education Resource
+                      └── Log to ML Training Dataset
+                          (confirmed errors improve model)
+</div>
+
+<h2>🏋️ 模型训练与持续改进</h2>
+
+<div class="bilingual">
+  <div class="zh">
+    <h3>训练数据来源</h3>
+    <ul>
+      <li><strong>人工标注（Golden Set）：</strong>专职标注团队，每类别 50K+ 样本，定期校准</li>
+      <li><strong>反馈循环：</strong>审核员决策 + 申诉结果 → 持续标注数据</li>
+      <li><strong>主动学习：</strong>模型不确定的样本（置信度 0.4-0.6）优先送人工标注</li>
+      <li><strong>合成数据：</strong>对低频伤害类别（如 CSAM 周边内容）生成合成负例</li>
+    </ul>
+    <h3>模型更新节奏</h3>
+    <ul>
+      <li><strong>Shadow Mode：</strong>新模型先在影子模式运行，对比决策差异</li>
+      <li><strong>Canary Deploy：</strong>先对 1% 流量生效，监控 FP/FN 变化</li>
+      <li><strong>Rollback Trigger：</strong>FP 率提升 &gt;0.05% 或 FN 率提升 &gt;0.01% → 自动回滚</li>
+    </ul>
+  </div>
+  <div class="en">
+    <h3>Training Data Sources</h3>
+    <ul>
+      <li><strong>Human annotation (Golden Set):</strong> Dedicated annotation teams, 50K+ samples per category, regular calibration</li>
+      <li><strong>Feedback loops:</strong> Reviewer decisions + appeal outcomes → continuous labeling data</li>
+      <li><strong>Active learning:</strong> Model-uncertain samples (confidence 0.4-0.6) prioritized for human annotation</li>
+      <li><strong>Synthetic data:</strong> Generate synthetic negative examples for rare harm categories</li>
+    </ul>
+    <h3>Model Update Cadence</h3>
+    <ul>
+      <li><strong>Shadow mode:</strong> New model runs in shadow mode first, comparing decision deltas</li>
+      <li><strong>Canary deploy:</strong> 1% traffic first, monitor FP/FN changes</li>
+      <li><strong>Rollback trigger:</strong> FP rate increase &gt;0.05% or FN rate increase &gt;0.01% → auto-rollback</li>
+    </ul>
+  </div>
+</div>
+
+<h2>📐 系统关键指标 / Key Metrics</h2>
+
+<table>
+  <thead>
+    <tr><th>指标</th><th>含义</th><th>目标值</th><th>权衡</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Prevalence</td>
+      <td>违规内容在平台的存在率</td>
+      <td>越低越好</td>
+      <td>核心业务指标，Meta 公开披露</td>
+    </tr>
+    <tr>
+      <td>Recall (Sensitivity)</td>
+      <td>实际违规内容被检出的比例</td>
+      <td>CSAM: &gt;99.9% | 仇恨: &gt;95%</td>
+      <td>越高，漏检越少</td>
+    </tr>
+    <tr>
+      <td>Precision</td>
+      <td>被标记内容中真正违规的比例</td>
+      <td>&gt;90%（降低人工负担）</td>
+      <td>越高，误判越少</td>
+    </tr>
+    <tr>
+      <td>False Positive Rate</td>
+      <td>正常内容被错误下架率</td>
+      <td>&lt;0.1%</td>
+      <td>直接影响用户体验</td>
+    </tr>
+    <tr>
+      <td>Proactive Rate</td>
+      <td>在用户举报前主动发现的比例</td>
+      <td>&gt;97%（暴力）/ &gt;99%（CSAM）</td>
+      <td>Meta 2023年：暴力内容97%主动发现</td>
+    </tr>
+    <tr>
+      <td>Upload Gate Latency</td>
+      <td>上传预审核延迟</td>
+      <td>&lt;500ms P99</td>
+      <td>用户体验 vs 安全</td>
+    </tr>
+    <tr>
+      <td>Human Review SLA</td>
+      <td>人工审核完成时间</td>
+      <td>P0: 15min / P1: 2h</td>
+      <td>资源成本 vs 内容危害时间</td>
+    </tr>
+    <tr>
+      <td>Appeal Overturn Rate</td>
+      <td>申诉后被推翻的决策比例</td>
+      <td>&lt;5%（模型改进信号）</td>
+      <td>越高说明模型越差</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>🎯 4道面试高频问题 / Top Interview Q&amp;A</h2>
+
+<div class="interview">
+  <h3>Q1: 如何在毫秒级延迟内实现图片审核？</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>模型答案（分三层回答）：</strong></p>
+      <p><strong>第一层：哈希查找（&lt;1ms）</strong><br>
+      对所有图片计算 pHash（感知哈希），与已知违规图片库比对。只需一次 Redis lookup，无需任何推理。这能处理掉 ~80% 的重复违规图片（违规者往往复用相同图片）。
+      PhotoDNA 就是 Microsoft 专门为这个问题开发的工业级方案。</p>
+      <p><strong>第二层：轻量 CNN（&lt;100ms）</strong><br>
+      MobileNet 或 EfficientNet-Lite，模型 &lt;10MB，可以部署在 CPU 上。这层处理新图片的高置信度违规检测。</p>
+      <p><strong>第三层：不要求同步（设计转变）</strong><br>
+      关键洞察：上传门控不需要"100% 准确"，只需要挡住明显违规。不确定的内容先放过，异步跑重型模型，发现问题再执行。这样用户看到的延迟是 Stage 1 的延迟，而非最终决策的延迟。</p>
+    </div>
+    <div class="en">
+      <p><strong>Model Answer (three layers):</strong></p>
+      <p><strong>Layer 1: Hash lookup (&lt;1ms)</strong><br>
+      Compute pHash for all images, compare against known-violation image DB. Just one Redis lookup, no inference needed. Handles ~80% of repeat violating images (bad actors reuse images).
+      PhotoDNA is Microsoft's industrial solution for exactly this.</p>
+      <p><strong>Layer 2: Lightweight CNN (&lt;100ms)</strong><br>
+      MobileNet or EfficientNet-Lite, &lt;10MB model, CPU-deployable. Handles high-confidence violation detection for new images.</p>
+      <p><strong>Layer 3: Don't require synchronous (design shift)</strong><br>
+      Key insight: the upload gate doesn't need "100% accuracy" — it just needs to block obvious violations. Let uncertain content through, run heavy models async, act when found. Users perceive Stage 1 latency, not final decision latency.</p>
+    </div>
+  </div>
+</div>
+
+<div class="interview">
+  <h3>Q2: CSAM 检测系统如何设计？为什么它与其他内容类别不同？</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>CSAM 的特殊性（关键要说明）：</strong></p>
+      <ul>
+        <li><strong>法律义务：</strong>在美国，NCMEC（国家失踪和受剥削儿童中心）是法定报告方。发现 CSAM 必须立即报告，不是选择题。</li>
+        <li><strong>零容忍：</strong>没有"置信度阈值"问题——一旦发现，立即行动（移除内容、封禁账号、报告当局）。宁可大量误报，不能漏报。</li>
+        <li><strong>哈希数据库：</strong>NCMEC 维护全球 CSAM 哈希数据库（PhotoDNA）。上传时所有图片与该数据库比对，O(1) 检测。</li>
+        <li><strong>主动检测：</strong>不仅检测已知 CSAM，还要检测未知的（可能是新生成的）。需要年龄估计模型 + NSFW 模型的组合。</li>
+        <li><strong>审核员保护：</strong>自动模糊化 CSAM，严格限制查看权限（只有经过特别培训的审核员），保护他们免受职业创伤。</li>
+      </ul>
+    </div>
+    <div class="en">
+      <p><strong>Why CSAM is different (must state this):</strong></p>
+      <ul>
+        <li><strong>Legal obligation:</strong> In the US, NCMEC is the statutory reporting entity. Discovered CSAM must be immediately reported — not optional.</li>
+        <li><strong>Zero tolerance:</strong> No confidence threshold debate — once detected, immediate action (remove, ban, report authorities). False positives are acceptable; false negatives are not.</li>
+        <li><strong>Hash database:</strong> NCMEC maintains a global CSAM hash database (PhotoDNA). All images checked on upload, O(1) detection.</li>
+        <li><strong>Proactive detection:</strong> Must detect unknown CSAM (potentially newly generated), not just known hashes. Requires age estimation + NSFW model combination.</li>
+        <li><strong>Reviewer protection:</strong> Auto-blur CSAM, strict access controls (only specially trained reviewers), protecting from occupational trauma.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="interview">
+  <h3>Q3: 政策在不同地区不同时，如何管理系统复杂度？</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>关键设计：政策与模型解耦</strong></p>
+      <p>模型输出的是"置信度分数"（content-level signal），政策引擎负责将分数转化为"决策"（action）。政策可以随时更改而不需要重训模型。</p>
+      <pre><code># 地区路由设计
+def get_policy_for_content(user_country: str, content_type: str) -> Policy:
+    # 政策优先级：账号归属地 > 内容发布地 > 平台默认
+    policy_key = f"policy:{user_country}:{content_type}"
+    policy = policy_store.get(policy_key) 
+    return policy or policy_store.get(f"policy:default:{content_type}")
+
+# EU DSA 要求：对重要平台每季度报告 Prevalence
+# 印度：要求 24hr 内响应政府删帖请求
+# 德国 NetzDG：特定内容 24hr 内必须删除（违者罚款）
+      </code></pre>
+      <p><strong>Policy-as-Code 架构：</strong>所有政策以 YAML 定义，存储在 Git 仓库，通过 CI/CD 部署，支持按国家、平台产品线、用户群体分层。每次政策变更都有审计日志和法务审批。</p>
+    </div>
+    <div class="en">
+      <p><strong>Key design: Decouple policy from models</strong></p>
+      <p>Models output "confidence scores" (content-level signals). The policy engine translates scores into "decisions" (actions). Policies can change anytime without model retraining.</p>
+      <p><strong>Policy-as-Code architecture:</strong> All policies defined in YAML, stored in Git, deployed via CI/CD, supporting layering by country, product line, user segment. Every policy change has audit logs and legal approval workflow.</p>
+      <p><strong>Jurisdictional examples:</strong></p>
+      <ul>
+        <li>EU DSA: Quarterly prevalence reports required for VLOPs</li>
+        <li>India: 24hr government takedown response required</li>
+        <li>Germany NetzDG: Specific content must be removed within 24hrs (heavy fines otherwise)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="interview">
+  <h3>Q4: 如何检测和应对"打哑谜"的违规者？（对抗性绕过）</h3>
+  <div class="bilingual">
+    <div class="zh">
+      <p><strong>常见绕过手法和应对策略：</strong></p>
+      <table>
+        <tr><th>绕过手法</th><th>检测策略</th></tr>
+        <tr><td>leet speak: "h4te j3ws"</td><td>Character normalization + n-gram matching</td></tr>
+        <tr><td>Unicode 混淆: "Ηate"（希腊Η）</td><td>Unicode NFKC 标准化</td></tr>
+        <tr><td>图片文字嵌入违规词</td><td>OCR（Tesseract/PaddleOCR）提取图片文字</td></tr>
+        <tr><td>截图规避</td><td>图片+OCR 联合分析</td></tr>
+        <tr><td>暗语/代词（"13"=SS，"88"=HH）</td><td>Dog-whistle 词典 + 账号网络分析</td></tr>
+        <tr><td>多语言混用绕过</td><td>多语言模型（XLM-RoBERTa）</td></tr>
+        <tr><td>视频文字字幕</td><td>视频 OCR + 音频转录</td></tr>
+        <tr><td>轻微变形图片（加噪声）</td><td>pHash robust hashing（容忍小扰动）</td></tr>
+      </table>
+      <p><strong>军备竞赛应对：</strong>维护专门的"对抗性绕过"研究团队，持续追踪违规者社区的新手法，将发现的新手法加入训练集（通常以月为单位迭代）。</p>
+    </div>
+    <div class="en">
+      <p><strong>Common bypass techniques and countermeasures:</strong></p>
+      <table>
+        <tr><th>Bypass Technique</th><th>Detection Strategy</th></tr>
+        <tr><td>Leet speak: "h4te j3ws"</td><td>Character normalization + n-gram matching</td></tr>
+        <tr><td>Unicode obfuscation: "Ηate" (Greek Η)</td><td>Unicode NFKC normalization</td></tr>
+        <tr><td>Text embedded in images</td><td>OCR (Tesseract/PaddleOCR) on images</td></tr>
+        <tr><td>Screenshot evasion</td><td>Image + OCR joint analysis</td></tr>
+        <tr><td>Dog whistles ("13"=SS, "88"=HH)</td><td>Dog-whistle lexicon + network analysis</td></tr>
+        <tr><td>Multi-language mixing</td><td>Multilingual models (XLM-RoBERTa)</td></tr>
+        <tr><td>Video text/subtitles</td><td>Video OCR + audio transcription</td></tr>
+        <tr><td>Perturbed images (noise)</td><td>pHash robust hashing (tolerates small perturbations)</td></tr>
+      </table>
+      <p><strong>Arms race response:</strong> Maintain dedicated "adversarial evasion" research team, continuously track new techniques in violator communities, add discovered techniques to training set (typically monthly iteration cycles).</p>
+    </div>
+  </div>
+</div>
+
+<h2>🔑 面试总结框架 / Interview Summary Framework</h2>
+
+<div class="highlight-green">
+  <h3>内容审核系统 = 5个核心矛盾的平衡</h3>
+  <table>
+    <tr><th>矛盾</th><th>左端</th><th>右端</th><th>平衡点</th></tr>
+    <tr>
+      <td>速度 vs 精度</td>
+      <td>快速门控（保体验）</td>
+      <td>深度分析（保准确）</td>
+      <td>两阶段：同步轻量 + 异步重型</td>
+    </tr>
+    <tr>
+      <td>误判 vs 漏判</td>
+      <td>宁可漏判（用户优先）</td>
+      <td>宁可误判（安全优先）</td>
+      <td>按内容类别差异化：CSAM 宁可误判；幽默内容宁可漏判</td>
+    </tr>
+    <tr>
+      <td>自动化 vs 人工</td>
+      <td>全自动（规模化）</td>
+      <td>全人工（准确）</td>
+      <td>ML 处理 99%，人工处理边缘+申诉</td>
+    </tr>
+    <tr>
+      <td>统一政策 vs 本地化</td>
+      <td>全球统一规则</td>
+      <td>完全本地化</td>
+      <td>Policy-as-Code：模型统一，规则按地区配置</td>
+    </tr>
+    <tr>
+      <td>开放平台 vs 安全</td>
+      <td>最大化言论自由</td>
+      <td>最大化内容安全</td>
+      <td>分级处罚（先降权，再移除）+ 申诉机制</td>
+    </tr>
+  </table>
+</div>
+
+<div class="series-nav">
+  <strong>🎉 Phase 2.1 AI System Design 面试题系列 — 完结！</strong><br>
+  6道经典面试题全部覆盖：
+  ChatGPT → 推荐系统 → 语义搜索 → RAG知识库 → AI Code Review → <strong>AI内容审核</strong><br><br>
+  <strong>下一阶段预告：</strong>Phase 2 完整完成！接下来进入面试实战模拟和系统复习。
+</div>
+
+<hr>
+<p style="color: #5f6368; font-size: 14px;">
+  📚 AI知识日推 | 2026-02-26 | Phase 2.1 最终篇 🎉<br>
+  <a href="https://friday.zhilongzheng.com/knowledge/ai/2026-02-26-design-ai-content-moderation.html">在线阅读</a>
+</p>
+
+</body>
+</html>
