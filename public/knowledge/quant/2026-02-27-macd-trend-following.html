@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-27 - MACD：趋势跟踪的经典指标</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; line-height: 2; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; line-height: 1.5; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .keyword { color: #569cd6; }
+    .string { color: #ce9178; }
+    .comment { color: #6a9955; }
+    .number { color: #b5cea8; }
+    .func { color: #dcdcaa; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f8f9fa; }
+    .graph { text-align: center; font-family: monospace; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; white-space: pre; line-height: 1.3; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<h1>📈 Day 10 | MACD — 趋势跟踪的经典指标</h1>
+<p><em>2026-02-27 | Phase 2: Technical Indicators</em></p>
+
+<div class="bilingual">
+<div class="zh">
+<h2>🇨🇳 中文版</h2>
+
+<h3>一、MACD 是什么？</h3>
+<p>MACD（Moving Average Convergence Divergence，移动平均收敛散度）由 Gerald Appel 在 1970 年代发明，是技术分析中最经典的<strong>趋势跟踪+动量</strong>指标之一。它本质上衡量的是两条不同周期 EMA 之间的"距离变化"——当快线远离慢线时，趋势在加速；当两者靠近时，趋势在减弱。</p>
+
+<h3>二、三个核心组件</h3>
+<p><strong>1. MACD Line（DIF 线）</strong>：快速 EMA 与慢速 EMA 的差值</p>
+<p><strong>2. Signal Line（DEA/信号线）</strong>：MACD Line 的 EMA 平滑</p>
+<p><strong>3. Histogram（柱状图）</strong>：MACD Line 与 Signal Line 的差值</p>
+
+<h3>三、数学公式</h3>
+<div class="formula">
+EMA(t) = α × Price(t) + (1 - α) × EMA(t-1)<br>
+其中 α = 2 / (N + 1)<br><br>
+MACD Line = EMA(12) - EMA(26)<br>
+Signal Line = EMA(9, of MACD Line)<br>
+Histogram = MACD Line - Signal Line
+</div>
+
+<p>默认参数 (12, 26, 9) 是 Appel 原始推荐的，对应约 2 周、1 个月、1.5 周的交易日。但这些参数<strong>并非神圣不可变的</strong>——不同市场、不同时间框架可能需要不同参数。</p>
+
+<h3>四、四种经典交易信号</h3>
+
+<table>
+<tr><th>信号类型</th><th>条件</th><th>含义</th><th>可靠度</th></tr>
+<tr><td>金叉 (Bullish Cross)</td><td>MACD Line 上穿 Signal Line</td><td>上升动量增强</td><td>⭐⭐⭐</td></tr>
+<tr><td>死叉 (Bearish Cross)</td><td>MACD Line 下穿 Signal Line</td><td>下降动量增强</td><td>⭐⭐⭐</td></tr>
+<tr><td>零轴穿越 (Zero Cross)</td><td>MACD Line 穿越零线</td><td>中期趋势反转</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td>背离 (Divergence)</td><td>价格与 MACD 方向相反</td><td>趋势可能反转</td><td>⭐⭐⭐⭐⭐</td></tr>
+</table>
+
+<h3>五、MACD 背离 — 最有价值的信号</h3>
+<p><strong>看涨背离</strong>：价格创新低，但 MACD 没有创新低 → 下跌动能衰竭<br>
+<strong>看跌背离</strong>：价格创新高，但 MACD 没有创新高 → 上涨动能衰竭</p>
+
+<div class="insight">
+<strong>💡 关键洞察</strong>：背离信号通常需要其他确认（如成交量、支撑/阻力位），单独使用背离进行交易是危险的。市场可以在极端趋势中长期保持"背离"状态——想想 2020-2021 的科技股。
+</div>
+
+<h3>六、MACD 的局限性</h3>
+<div class="warning">
+<strong>⚠️ 重要警告</strong><br>
+1. <strong>滞后性</strong>：MACD 基于 EMA，本质是滞后指标。等你看到金叉时，趋势可能已经走了一大段。<br>
+2. <strong>震荡市假信号</strong>：在横盘整理中，MACD 会频繁产生金叉/死叉，造成大量假信号（whipsaw）。<br>
+3. <strong>参数敏感性</strong>：(12,26,9) 不是万能的。用历史数据优化参数？小心过拟合。<br>
+4. <strong>无绝对水平</strong>：与 RSI 不同，MACD 没有固定的超买/超卖水平。
+</div>
+
+<h3>七、量化实战：MACD + 趋势过滤</h3>
+<p>纯 MACD 金叉/死叉策略在回测中表现一般。专业做法是加入<strong>趋势过滤器</strong>：</p>
+<ul>
+<li>只在价格高于 200 日 MA 时执行 MACD 做多信号</li>
+<li>只在价格低于 200 日 MA 时执行 MACD 做空信号</li>
+<li>这样过滤掉横盘震荡中的假信号</li>
+</ul>
+
+<h3>八、与 Day 8 和 Day 9 的连接</h3>
+<p>MACD 本身就是 EMA（Day 8）的衍生品。而 MACD 是<strong>趋势/动量</strong>指标，RSI（Day 9）是<strong>均值回归</strong>指标——两者互补。一个实战组合：用 MACD 确认趋势方向，用 RSI 寻找入场时机。</p>
+</div>
+
+<div class="en">
+<h2>🇺🇸 English Version</h2>
+
+<h3>1. What is MACD?</h3>
+<p>MACD (Moving Average Convergence Divergence), invented by Gerald Appel in the 1970s, is one of the most widely used <strong>trend-following + momentum</strong> indicators. At its core, it measures the "rate of change in distance" between two EMAs of different periods—when the fast EMA pulls away from the slow EMA, trend momentum is increasing; when they converge, momentum is fading.</p>
+
+<h3>2. Three Core Components</h3>
+<p><strong>1. MACD Line</strong>: Difference between fast EMA and slow EMA</p>
+<p><strong>2. Signal Line</strong>: EMA smoothing of the MACD Line</p>
+<p><strong>3. Histogram</strong>: Difference between MACD Line and Signal Line</p>
+
+<h3>3. Mathematical Formulas</h3>
+<div class="formula">
+EMA(t) = α × Price(t) + (1 - α) × EMA(t-1)<br>
+where α = 2 / (N + 1)<br><br>
+MACD Line = EMA(12) - EMA(26)<br>
+Signal Line = EMA(9, of MACD Line)<br>
+Histogram = MACD Line - Signal Line
+</div>
+
+<p>The default (12, 26, 9) parameters were Appel's original recommendation, roughly mapping to 2 weeks, 1 month, and 1.5 weeks of trading days. These are <strong>not sacred</strong>—different markets and timeframes may require different settings.</p>
+
+<h3>4. Four Classic Trading Signals</h3>
+<table>
+<tr><th>Signal</th><th>Condition</th><th>Meaning</th><th>Reliability</th></tr>
+<tr><td>Bullish Cross</td><td>MACD Line crosses above Signal</td><td>Rising momentum</td><td>⭐⭐⭐</td></tr>
+<tr><td>Bearish Cross</td><td>MACD Line crosses below Signal</td><td>Falling momentum</td><td>⭐⭐⭐</td></tr>
+<tr><td>Zero Line Cross</td><td>MACD Line crosses zero</td><td>Medium-term reversal</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td>Divergence</td><td>Price vs MACD disagree</td><td>Potential reversal</td><td>⭐⭐⭐⭐⭐</td></tr>
+</table>
+
+<h3>5. MACD Divergence — The Most Valuable Signal</h3>
+<p><strong>Bullish divergence</strong>: Price makes lower low, MACD makes higher low → bearish momentum exhausting<br>
+<strong>Bearish divergence</strong>: Price makes higher high, MACD makes lower high → bullish momentum exhausting</p>
+
+<div class="insight">
+<strong>💡 Key Insight</strong>: Divergence signals typically require additional confirmation (volume, support/resistance). Trading divergence alone is risky—markets can stay "divergent" for extended periods during strong trends (think tech stocks 2020-2021).
+</div>
+
+<h3>6. Limitations</h3>
+<div class="warning">
+<strong>⚠️ Critical Warnings</strong><br>
+1. <strong>Lagging</strong>: Built on EMAs, MACD is inherently lagging. By the time you see a crossover, a significant move may have already occurred.<br>
+2. <strong>Whipsaws in range markets</strong>: During consolidation, MACD generates frequent false crossover signals.<br>
+3. <strong>Parameter sensitivity</strong>: (12,26,9) isn't universal. Optimizing on historical data? Beware of overfitting.<br>
+4. <strong>No absolute levels</strong>: Unlike RSI, MACD has no fixed overbought/oversold thresholds.
+</div>
+
+<h3>7. Quant Practice: MACD + Trend Filter</h3>
+<p>Pure MACD crossover strategies backtest poorly. The professional approach adds a <strong>trend filter</strong>:</p>
+<ul>
+<li>Only take MACD long signals when price is above 200-day MA</li>
+<li>Only take MACD short signals when price is below 200-day MA</li>
+<li>This filters out false signals during consolidation</li>
+</ul>
+
+<h3>8. Connection to Day 8 & Day 9</h3>
+<p>MACD is a derivative of EMA (Day 8). While MACD is a <strong>trend/momentum</strong> indicator, RSI (Day 9) is a <strong>mean-reversion</strong> indicator—they complement each other. A practical combo: use MACD to confirm trend direction, RSI to find entry timing.</p>
+</div>
+</div>
+
+<h2>💻 Python Implementation / 代码实现</h2>
+
+<pre class="code"><span class="comment"># MACD Strategy with 200-day MA Trend Filter</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+<span class="keyword">import</span> yfinance <span class="keyword">as</span> yf
+
+<span class="keyword">def</span> <span class="func">compute_macd</span>(prices, fast=<span class="number">12</span>, slow=<span class="number">26</span>, signal=<span class="number">9</span>):
+    <span class="string">"""Compute MACD, Signal line, and Histogram."""</span>
+    ema_fast = prices.ewm(span=fast, adjust=<span class="keyword">False</span>).mean()
+    ema_slow = prices.ewm(span=slow, adjust=<span class="keyword">False</span>).mean()
+    macd_line = ema_fast - ema_slow
+    signal_line = macd_line.ewm(span=signal, adjust=<span class="keyword">False</span>).mean()
+    histogram = macd_line - signal_line
+    <span class="keyword">return</span> macd_line, signal_line, histogram
+
+<span class="comment"># Download SPY data</span>
+df = yf.download(<span class="string">"SPY"</span>, start=<span class="string">"2020-01-01"</span>, end=<span class="string">"2026-02-27"</span>)
+close = df[<span class="string">"Close"</span>].squeeze()
+
+<span class="comment"># Compute indicators</span>
+macd_line, signal_line, histogram = compute_macd(close)
+ma_200 = close.rolling(<span class="number">200</span>).mean()
+
+<span class="comment"># Generate signals with trend filter</span>
+signals = pd.DataFrame(index=df.index)
+signals[<span class="string">"macd_cross"</span>] = np.where(macd_line > signal_line, <span class="number">1</span>, -<span class="number">1</span>)
+signals[<span class="string">"trend"</span>] = np.where(close > ma_200, <span class="number">1</span>, -<span class="number">1</span>)
+
+<span class="comment"># Only trade with the trend</span>
+signals[<span class="string">"position"</span>] = np.where(
+    (signals[<span class="string">"macd_cross"</span>] == <span class="number">1</span>) & (signals[<span class="string">"trend"</span>] == <span class="number">1</span>), <span class="number">1</span>,   <span class="comment"># Long</span>
+    np.where(
+        (signals[<span class="string">"macd_cross"</span>] == -<span class="number">1</span>) & (signals[<span class="string">"trend"</span>] == -<span class="number">1</span>), -<span class="number">1</span>, <span class="comment"># Short</span>
+        <span class="number">0</span>  <span class="comment"># Flat — no signal or conflicting signals</span>
+    )
+)
+
+<span class="comment"># Backtest</span>
+returns = close.pct_change()
+strategy_returns = signals[<span class="string">"position"</span>].shift(<span class="number">1</span>) * returns  <span class="comment"># shift to avoid look-ahead</span>
+cumulative = (<span class="number">1</span> + strategy_returns).cumprod()
+
+<span class="comment"># Performance metrics</span>
+ann_return = strategy_returns.mean() * <span class="number">252</span>
+ann_vol = strategy_returns.std() * np.sqrt(<span class="number">252</span>)
+sharpe = ann_return / ann_vol <span class="keyword">if</span> ann_vol > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0</span>
+max_dd = (cumulative / cumulative.cummax() - <span class="number">1</span>).min()
+
+print(<span class="string">f"Annual Return:  {ann_return:.2%}"</span>)
+print(<span class="string">f"Annual Vol:     {ann_vol:.2%}"</span>)
+print(<span class="string">f"Sharpe Ratio:   {sharpe:.2f}"</span>)
+print(<span class="string">f"Max Drawdown:   {max_dd:.2%}"</span>)
+
+<span class="comment"># --- Detect Divergence (Advanced) ---</span>
+<span class="keyword">def</span> <span class="func">detect_divergence</span>(price, macd, lookback=<span class="number">20</span>):
+    <span class="string">"""Simple divergence detection using rolling windows."""</span>
+    bullish_div = (
+        (price == price.rolling(lookback).min()) &
+        (macd > macd.rolling(lookback).min())
+    )
+    bearish_div = (
+        (price == price.rolling(lookback).max()) &
+        (macd < macd.rolling(lookback).max())
+    )
+    <span class="keyword">return</span> bullish_div, bearish_div
+
+bull_div, bear_div = detect_divergence(close, macd_line)
+print(<span class="string">f"\nBullish divergences found: {bull_div.sum()}"</span>)
+print(<span class="string">f"Bearish divergences found: {bear_div.sum()}"</span>)
+</pre>
+
+<h2>📐 Histogram 的二阶信息 / Second-Order Information</h2>
+
+<div class="formula">
+Histogram = MACD Line - Signal Line<br><br>
+Histogram 增大 → 趋势动量在加速<br>
+Histogram 减小 → 趋势动量在减速（即使还在同一方向！）<br><br>
+这就像物理中的 "加速度 vs 速度"：<br>
+MACD Line ≈ 趋势的 "速度"<br>
+Histogram ≈ 趋势的 "加速度"<br>
+Histogram 转负但价格还在涨 → 汽车还在前进但正在踩刹车
+</div>
+
+<div class="insight">
+<strong>💡 Pro Tip</strong>: Many quant traders find the Histogram more useful than the crossover signal itself. A shrinking histogram is an <em>early warning</em> of trend weakening, giving you time to adjust position size or tighten stops—well before the crossover happens.
+</div>
+
+<h2>📖 References / 参考文献</h2>
+<div class="references">
+<ul>
+<li>Appel, Gerald. <em>Technical Analysis: Power Tools for Active Investors</em> (2005) — MACD inventor's own guide</li>
+<li>Murphy, John J. <em>Technical Analysis of the Financial Markets</em> — Chapter on oscillators and MACD</li>
+<li>Chan, Ernest. <em>Quantitative Trading</em> (2009) — Framework for backtesting indicators</li>
+<li>López de Prado, Marcos. <em>Advances in Financial Machine Learning</em> (2018) — Chapter 5: Fractionally differentiated features (alternative to lagging indicators)</li>
+<li>Kirkpatrick & Dahlquist. <em>Technical Analysis: The Complete Resource</em> — Comprehensive MACD treatment</li>
+<li>AQR Research: "The Case for Momentum" — Theoretical foundation for trend-following</li>
+</ul>
+</div>
+
+</body>
+</html>
