@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-02-28 - 布林带：波动率通道与突破策略</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+    .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .zh { border-left: 3px solid #c41e3a; padding-left: 15px; }
+    .en { border-left: 3px solid #1a73e8; padding-left: 15px; }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin-top: 30px; }
+    h3 { color: #34495e; }
+    .formula { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace; }
+    pre.code { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+    .insight { background: #eaf2f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .references { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    .warning { background: #fdecea; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin: 15px 0; }
+    .tag { display: inline-block; background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    th { background: #f2f2f2; }
+  </style>
+</head>
+<body>
+
+<h1>📈 Day 11 | 布林带 — 波动率通道与突破策略</h1>
+<p><span class="tag">Phase 2: Technical Indicators</span> <span class="tag">Bollinger Bands</span> <span class="tag">Volatility</span></p>
+
+<div class="bilingual">
+<div class="zh">
+<h2>🇨🇳 中文版</h2>
+
+<h3>1. 什么是布林带？</h3>
+<p>布林带（Bollinger Bands）由 John Bollinger 于 1980 年代发明，是技术分析中最优雅的指标之一。它的核心思想极其简单：<strong>价格大部分时间在均值附近波动，偏离越远，回归的概率越大</strong>。</p>
+
+<p>布林带由三条线组成：</p>
+<ul>
+  <li><strong>中轨</strong>：N 日简单移动平均线（通常 N=20）</li>
+  <li><strong>上轨</strong>：中轨 + K × 标准差（通常 K=2）</li>
+  <li><strong>下轨</strong>：中轨 − K × 标准差</li>
+</ul>
+
+<p>为什么用 2 倍标准差？如果价格服从正态分布，约 95.4% 的价格会落在 ±2σ 之内。当价格触及上下轨，说明它处于统计意义上的"极端"区域。</p>
+
+<h3>2. 布林带的核心特性</h3>
+
+<p><strong>自适应性：</strong>这是布林带相比固定百分比通道（如 Keltner Channel）的最大优势。波动率大时，带宽自动扩大；波动率小时，带宽自动收窄。它"呼吸"着市场的节奏。</p>
+
+<p><strong>布林带宽度（Bandwidth）</strong>：</p>
+<div class="formula">
+BandWidth = (Upper Band − Lower Band) / Middle Band<br>
+         = 2K × σ / SMA
+</div>
+
+<p><strong>%B 指标</strong> —— 价格在布林带中的相对位置：</p>
+<div class="formula">
+%B = (Price − Lower Band) / (Upper Band − Lower Band)
+</div>
+<ul>
+  <li>%B > 1：价格在上轨之上</li>
+  <li>%B = 0.5：价格在中轨</li>
+  <li>%B < 0：价格在下轨之下</li>
+</ul>
+
+<h3>3. 三大经典策略</h3>
+
+<h4>策略一：均值回归（Bollinger Bounce）</h4>
+<p>核心假设：价格像橡皮筋，拉得越远，弹回越猛。</p>
+<ul>
+  <li>买入：价格触及或穿越下轨（%B < 0），等待回穿下轨确认</li>
+  <li>卖出：价格触及或穿越上轨（%B > 1），等待回穿上轨确认</li>
+  <li><strong>最佳环境</strong>：横盘震荡市（无明显趋势）</li>
+</ul>
+
+<h4>策略二：布林带突破（Bollinger Squeeze / Breakout）</h4>
+<p>核心观察：<strong>波动率是均值回归的</strong>。低波动之后必有高波动。</p>
+<ul>
+  <li>当 BandWidth 达到近 N 期最小值（"Squeeze"），预示大行情即将到来</li>
+  <li>价格突破上轨 → 做多；突破下轨 → 做空</li>
+  <li><strong>关键</strong>：Squeeze 只告诉你"要动了"，不告诉你方向</li>
+</ul>
+
+<h4>策略三：Walking the Band（趋势跟踪）</h4>
+<p>在强趋势中，价格会持续"贴着"上轨或下轨运行。这时候均值回归策略会被反复止损。</p>
+<ul>
+  <li>价格连续收在上轨附近 + 中轨持续上移 = 强上升趋势，不应做空</li>
+  <li>结合 RSI/MACD 确认趋势强度</li>
+</ul>
+
+<div class="warning">
+<strong>⚠️ 致命陷阱</strong>：很多新手看到价格触及上轨就做空，触及下轨就做多。这在趋势行情中会反复亏损。布林带触轨 ≠ 反转信号，必须结合市场环境判断！
+</div>
+
+<h3>4. 数学深度：为什么用标准差？</h3>
+<p>标准差衡量的是"离散程度"。用滚动标准差构建通道，意味着通道宽度直接反映了近期价格的分散程度。但要注意：</p>
+<ul>
+  <li>金融时序的波动率具有<strong>聚集性</strong>（volatility clustering）—— 大波动后往往跟着大波动</li>
+  <li>收益率分布有<strong>厚尾</strong>（Day 4 讲过），所以"95%在±2σ内"并不准确</li>
+  <li>实际中触轨概率比正态假设更高，这正好给了我们更多交易信号</li>
+</ul>
+
+<h3>5. 与 Day 9 RSI、Day 10 MACD 的关系</h3>
+<p>布林带 + RSI 是经典组合：</p>
+<ul>
+  <li>价格触下轨 + RSI < 30 = 更强的超卖信号</li>
+  <li>价格触上轨 + RSI > 70 = 更强的超买信号</li>
+  <li>Bollinger Squeeze + MACD 穿越 = 突破方向确认</li>
+</ul>
+</div>
+
+<div class="en">
+<h2>🇬🇧 English Version</h2>
+
+<h3>1. What Are Bollinger Bands?</h3>
+<p>Invented by John Bollinger in the 1980s, Bollinger Bands are one of the most elegant technical indicators. The core idea: <strong>prices tend to revert to their mean, and extreme deviations are statistically rare</strong>.</p>
+
+<p>Three lines:</p>
+<ul>
+  <li><strong>Middle Band</strong>: N-period SMA (typically N=20)</li>
+  <li><strong>Upper Band</strong>: Middle + K × StdDev (typically K=2)</li>
+  <li><strong>Lower Band</strong>: Middle − K × StdDev</li>
+</ul>
+
+<p>Why 2 standard deviations? Under normal distribution, ~95.4% of observations fall within ±2σ. A touch of the band signals a statistically "extreme" price.</p>
+
+<h3>2. Key Properties</h3>
+
+<p><strong>Adaptive Nature:</strong> Unlike fixed-width channels, Bollinger Bands expand during volatile periods and contract during calm ones. They "breathe" with the market.</p>
+
+<p><strong>Bandwidth</strong>: Measures the relative width.</p>
+<div class="formula">
+BandWidth = (Upper − Lower) / Middle = 2K × σ / SMA
+</div>
+
+<p><strong>%B Indicator</strong> — Where price sits within the bands:</p>
+<div class="formula">
+%B = (Price − Lower) / (Upper − Lower)
+</div>
+<ul>
+  <li>%B > 1: Above the upper band</li>
+  <li>%B = 0.5: At the middle band</li>
+  <li>%B < 0: Below the lower band</li>
+</ul>
+
+<h3>3. Three Classic Strategies</h3>
+
+<h4>Strategy 1: Mean Reversion (Bollinger Bounce)</h4>
+<p>Assumption: Prices snap back like a rubber band.</p>
+<ul>
+  <li>Buy: Price touches/crosses lower band, re-enters from below</li>
+  <li>Sell: Price touches/crosses upper band, re-enters from above</li>
+  <li><strong>Best for</strong>: Range-bound, sideways markets</li>
+</ul>
+
+<h4>Strategy 2: Breakout (Bollinger Squeeze)</h4>
+<p>Key insight: <strong>Volatility is mean-reverting</strong>. Low vol → high vol explosion.</p>
+<ul>
+  <li>When BandWidth hits N-period low ("Squeeze"), a big move is coming</li>
+  <li>Breakout above upper band → long; below lower → short</li>
+  <li><strong>Caveat</strong>: Squeeze predicts magnitude, not direction</li>
+</ul>
+
+<h4>Strategy 3: Walking the Band (Trend Following)</h4>
+<p>In strong trends, price "walks" along the upper or lower band. Mean reversion strategies get destroyed here.</p>
+
+<div class="warning">
+<strong>⚠️ Critical Trap</strong>: Beginners short at the upper band and buy at the lower. In trending markets, this leads to repeated losses. Band touches ≠ reversal signals!
+</div>
+
+<h3>4. Mathematical Depth</h3>
+<p>Rolling standard deviation captures recent price dispersion. But remember from Day 4:</p>
+<ul>
+  <li>Financial returns exhibit <strong>volatility clustering</strong> (GARCH effects)</li>
+  <li>Fat tails mean the "95% within ±2σ" assumption is violated</li>
+  <li>In practice, band touches occur more frequently than the normal distribution predicts — which actually generates more trading signals</li>
+</ul>
+
+<h3>5. Connections to Previous Topics</h3>
+<p>Bollinger Bands + RSI (Day 9) is a classic combo:</p>
+<ul>
+  <li>Price at lower band + RSI < 30 = stronger oversold signal</li>
+  <li>Price at upper band + RSI > 70 = stronger overbought signal</li>
+  <li>Bollinger Squeeze + MACD crossover (Day 10) = directional confirmation</li>
+</ul>
+</div>
+</div>
+
+<h2>💻 Python 实现 / Implementation</h2>
+
+<pre class="code">
+import numpy as np
+import pandas as pd
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+# ── 1. 计算布林带 ──────────────────────────
+def bollinger_bands(df, window=20, num_std=2):
+    """Calculate Bollinger Bands, %B, and BandWidth."""
+    df = df.copy()
+    df['SMA'] = df['Close'].rolling(window).mean()
+    df['STD'] = df['Close'].rolling(window).std()
+    df['Upper'] = df['SMA'] + num_std * df['STD']
+    df['Lower'] = df['SMA'] - num_std * df['STD']
+    df['%B'] = (df['Close'] - df['Lower']) / (df['Upper'] - df['Lower'])
+    df['BandWidth'] = (df['Upper'] - df['Lower']) / df['SMA']
+    return df
+
+# ── 2. Bollinger Bounce 均值回归策略 ────────
+def bollinger_bounce_strategy(df, entry_pctb=0.0, exit_pctb=0.5):
+    """
+    Mean reversion: buy when %B < entry_pctb, sell when %B > (1 - entry_pctb).
+    Exit at middle band (%B ≈ 0.5).
+    """
+    df = df.copy()
+    df['Signal'] = 0
+    position = 0  # 0=flat, 1=long, -1=short
+    
+    for i in range(1, len(df)):
+        pctb = df['%B'].iloc[i]
+        if position == 0:
+            if pctb < entry_pctb:       # 触及下轨 → 做多
+                df.iloc[i, df.columns.get_loc('Signal')] = 1
+                position = 1
+            elif pctb > (1 - entry_pctb):  # 触及上轨 → 做空
+                df.iloc[i, df.columns.get_loc('Signal')] = -1
+                position = -1
+        elif position == 1:
+            if pctb >= exit_pctb:        # 回到中轨 → 平仓
+                df.iloc[i, df.columns.get_loc('Signal')] = 0
+                position = 0
+            else:
+                df.iloc[i, df.columns.get_loc('Signal')] = 1
+        elif position == -1:
+            if pctb <= exit_pctb:
+                df.iloc[i, df.columns.get_loc('Signal')] = 0
+                position = 0
+            else:
+                df.iloc[i, df.columns.get_loc('Signal')] = -1
+    return df
+
+# ── 3. Bollinger Squeeze 检测 ──────────────
+def detect_squeeze(df, lookback=120):
+    """Detect Squeeze: BandWidth at N-period low."""
+    df = df.copy()
+    df['BW_Min'] = df['BandWidth'].rolling(lookback).min()
+    df['Squeeze'] = df['BandWidth'] == df['BW_Min']
+    return df
+
+# ── 4. 回测 ────────────────────────────────
+def backtest(df):
+    """Simple vectorized backtest."""
+    df = df.copy()
+    df['Return'] = df['Close'].pct_change()
+    df['Strategy_Return'] = df['Signal'].shift(1) * df['Return']
+    df['Cum_Market'] = (1 + df['Return']).cumprod()
+    df['Cum_Strategy'] = (1 + df['Strategy_Return']).cumprod()
+    
+    # Performance metrics
+    total_return = df['Cum_Strategy'].iloc[-1] - 1
+    sharpe = df['Strategy_Return'].mean() / df['Strategy_Return'].std() * np.sqrt(252)
+    max_dd = (df['Cum_Strategy'] / df['Cum_Strategy'].cummax() - 1).min()
+    
+    print(f"Total Return: {total_return:.2%}")
+    print(f"Sharpe Ratio: {sharpe:.2f}")
+    print(f"Max Drawdown: {max_dd:.2%}")
+    return df
+
+# ── 5. 完整示例 ────────────────────────────
+if __name__ == "__main__":
+    # 获取数据
+    ticker = yf.download("AAPL", start="2023-01-01", end="2026-02-28")
+    
+    # 计算布林带
+    ticker = bollinger_bands(ticker)
+    
+    # 运行策略
+    ticker = bollinger_bounce_strategy(ticker)
+    
+    # 回测
+    result = backtest(ticker)
+    
+    # 检测 Squeeze
+    result = detect_squeeze(result)
+    squeeze_dates = result[result['Squeeze']].index
+    print(f"\nSqueeze events detected: {len(squeeze_dates)}")
+</pre>
+
+<div class="insight">
+<h3>🔑 关键洞察 / Key Insights</h3>
+<ul>
+  <li><strong>布林带的本质是波动率指标</strong>，不是趋势指标。它告诉你价格"有多极端"，而非"会去哪里"。</li>
+  <li><strong>Squeeze 是最有价值的信号</strong>。John Bollinger 本人认为 Squeeze 比触轨更重要 — 它预示波动率爆发。</li>
+  <li><strong>参数敏感性</strong>：(20, 2) 是默认值，但不同资产可能需要不同参数。日内交易常用 (10, 1.5)，周线用 (20, 2.5)。</li>
+  <li><strong>The bands are a volatility indicator</strong>, not a directional one. They tell you "how extreme" not "where next."</li>
+  <li><strong>Squeeze is the most actionable signal</strong>. Bollinger himself considers it more important than band touches.</li>
+  <li><strong>Always combine with another indicator</strong> (RSI, MACD, volume) for confirmation.</li>
+</ul>
+</div>
+
+<div class="references">
+<h3>📖 参考文献 / References</h3>
+<ul>
+  <li>Bollinger, J. (2001). <em>Bollinger on Bollinger Bands</em>. McGraw-Hill. — 布林带之父的权威著作</li>
+  <li>Chan, E. (2008). <em>Quantitative Trading</em>. Wiley. Chapter 4: Mean Reversion Strategies</li>
+  <li>López de Prado, M. (2018). <em>Advances in Financial Machine Learning</em>. Wiley. Chapter 5: Fractional Differentiation (波动率建模)</li>
+  <li>Bollinger, J. (1992). "Using Bollinger Bands." <em>Stocks & Commodities Magazine</em>, Vol. 10.</li>
+  <li>Lento, C. & Gradojevic, N. (2007). "The Profitability of Technical Trading Rules: A Combined Signal Approach." <em>Journal of Applied Finance</em>.</li>
+</ul>
+</div>
+
+<p style="text-align:center; color: #888; margin-top: 40px;">
+📚 Knowledge Push by Scholar | Day 11 | 2026-02-28
+</p>
+
+</body>
+</html>
