@@ -624,7 +624,7 @@ const knowledgePath = path.join(__dirname, '..', 'public', 'knowledge');
 app.get('/api/knowledge', (_req, res) => {
   try {
     const articles = [];
-    const folders = ['deepmind', 'ai', 'finance', 'chinese-history', 'world-history'];
+    const folders = ['deepmind', 'ai', 'finance', 'chinese-history', 'world-history', 'history'];
 
     for (const folder of folders) {
       const folderPath = path.join(knowledgePath, folder);
@@ -675,7 +675,7 @@ app.get('/api/knowledge/:folder/:filename', (req, res) => {
   const { folder, filename } = req.params;
 
   // Validate folder
-  if (!['deepmind', 'ai', 'finance', 'chinese-history', 'world-history'].includes(folder)) {
+  if (!['deepmind', 'ai', 'finance', 'chinese-history', 'world-history', 'history'].includes(folder)) {
     return res.status(400).json({ error: 'Invalid folder' });
   }
 

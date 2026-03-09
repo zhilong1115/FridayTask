@@ -15,7 +15,7 @@ interface KnowledgeModalProps {
 export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps) {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ai' | 'finance' | 'chinese-history' | 'world-history'>('ai');
+  const [activeTab, setActiveTab] = useState<'deepmind' | 'ai' | 'finance' | 'chinese-history' | 'world-history' | 'history'>('deepmind');
   const [selectedArticle, setSelectedArticle] = useState<KnowledgeArticle | null>(null);
   const [articleContent, setArticleContent] = useState<string>('');
   const [loadingContent, setLoadingContent] = useState(false);
@@ -72,10 +72,12 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
     }
   };
 
+  const deepmindArticles = articles.filter((a) => a.folder === 'deepmind');
   const aiArticles = articles.filter((a) => a.folder === 'ai');
   const financeArticles = articles.filter((a) => a.folder === 'finance');
   const chineseHistoryArticles = articles.filter((a) => a.folder === 'chinese-history');
   const worldHistoryArticles = articles.filter((a) => a.folder === 'world-history');
+  const historyArticles = articles.filter((a) => a.folder === 'history');
 
   const formatDate = (dateStr: string) => {
     // Parse as local date to avoid timezone shift (e.g. "2026-02-13" → Feb 12 in PST)
@@ -149,10 +151,25 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
           {/* Sidebar with tabs and articles */}
           <div className={`${selectedArticle ? 'hidden md:flex md:w-72 border-r border-[#dadce0]' : 'flex-1'} flex flex-col shrink-0 transition-all`}>
             {/* Tabs */}
-            <div className="flex border-b border-[#dadce0] px-4">
+            <div className="flex border-b border-[#dadce0] px-4 overflow-x-auto">
+              <button
+                onClick={() => { setActiveTab('deepmind'); setSelectedArticle(null); }}
+                className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap
+                  ${activeTab === 'deepmind'
+                    ? 'text-[#1a73e8]'
+                    : 'text-[#70757a] hover:text-[#3c4043]'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  🧠 DeepMind
+                </span>
+                {activeTab === 'deepmind' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a73e8]" />
+                )}
+              </button>
               <button
                 onClick={() => { setActiveTab('ai'); setSelectedArticle(null); }}
-                className={`px-4 py-3 text-sm font-medium transition-colors relative
+                className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap
                   ${activeTab === 'ai'
                     ? 'text-[#1a73e8]'
                     : 'text-[#70757a] hover:text-[#3c4043]'
@@ -173,7 +190,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
               </button>
               <button
                 onClick={() => { setActiveTab('finance'); setSelectedArticle(null); }}
-                className={`px-4 py-3 text-sm font-medium transition-colors relative
+                className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap
                   ${activeTab === 'finance'
                     ? 'text-[#1a73e8]'
                     : 'text-[#70757a] hover:text-[#3c4043]'
@@ -192,7 +209,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
               </button>
               <button
                 onClick={() => { setActiveTab('chinese-history'); setSelectedArticle(null); }}
-                className={`px-4 py-3 text-sm font-medium transition-colors relative
+                className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap
                   ${activeTab === 'chinese-history'
                     ? 'text-[#1a73e8]'
                     : 'text-[#70757a] hover:text-[#3c4043]'
@@ -213,7 +230,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
               </button>
               <button
                 onClick={() => { setActiveTab('world-history'); setSelectedArticle(null); }}
-                className={`px-4 py-3 text-sm font-medium transition-colors relative
+                className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap
                   ${activeTab === 'world-history'
                     ? 'text-[#1a73e8]'
                     : 'text-[#70757a] hover:text-[#3c4043]'
@@ -231,6 +248,21 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a73e8]" />
                 )}
               </button>
+              <button
+                onClick={() => { setActiveTab('history'); setSelectedArticle(null); }}
+                className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap
+                  ${activeTab === 'history'
+                    ? 'text-[#1a73e8]'
+                    : 'text-[#70757a] hover:text-[#3c4043]'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  📜 History (All)
+                </span>
+                {activeTab === 'history' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a73e8]" />
+                )}
+              </button>
             </div>
 
             {/* Articles list */}
@@ -242,7 +274,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                 </div>
               )}
 
-              {!loading && (activeTab === 'ai' ? aiArticles : activeTab === 'finance' ? financeArticles : activeTab === 'chinese-history' ? chineseHistoryArticles : worldHistoryArticles).length === 0 && (
+              {!loading && (activeTab === 'deepmind' ? deepmindArticles : activeTab === 'ai' ? aiArticles : activeTab === 'finance' ? financeArticles : activeTab === 'chinese-history' ? chineseHistoryArticles : activeTab === 'world-history' ? worldHistoryArticles : historyArticles).length === 0 && (
                 <div className="text-center py-8">
                   <svg className="w-10 h-10 mx-auto text-[#dadce0] mb-2" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
@@ -254,7 +286,7 @@ export default function KnowledgeModal({ isOpen, onClose }: KnowledgeModalProps)
                 </div>
               )}
 
-              {!loading && (activeTab === 'ai' ? aiArticles : activeTab === 'finance' ? financeArticles : activeTab === 'chinese-history' ? chineseHistoryArticles : worldHistoryArticles).map((article) => (
+              {!loading && (activeTab === 'deepmind' ? deepmindArticles : activeTab === 'ai' ? aiArticles : activeTab === 'finance' ? financeArticles : activeTab === 'chinese-history' ? chineseHistoryArticles : activeTab === 'world-history' ? worldHistoryArticles : historyArticles).map((article) => (
                 <button
                   key={`${article.folder}-${article.filename}`}
                   onClick={() => fetchArticleContent(article)}
