@@ -134,9 +134,33 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
     return chartData.buckets;
   }, [chartData, tokenMode]);
 
+  // For day view: always show all 24 hours (00h–23h), even if no data
+  const effectiveTimeKeys = useMemo(() => {
+    if (!chartData) return [];
+    if (period !== 'day') return chartData.timeKeys;
+    // Derive the PDT date for this offset
+    let datePrefix: string;
+    if (chartData.timeKeys.length > 0) {
+      datePrefix = chartData.timeKeys[0].split('T')[0];
+    } else {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      }).formatToParts(d);
+      const p: Record<string, string> = {};
+      for (const part of parts) p[part.type] = part.value;
+      datePrefix = `${p.year}-${p.month}-${p.day}`;
+    }
+    return Array.from({ length: 24 }, (_, h) => `${datePrefix}T${String(h).padStart(2, '0')}`);
+  }, [chartData, period, offset]);
+
   const chartRender = useMemo(() => {
-    if (!chartData || chartData.timeKeys.length === 0 || !activeBuckets) return null;
-    const { timeKeys, dimensions: rawDims } = chartData;
+    if (!chartData || !activeBuckets) return null;
+    const timeKeys = effectiveTimeKeys;
+    if (timeKeys.length === 0) return null;
+    const { dimensions: rawDims } = chartData;
     const buckets = activeBuckets;
     const dimTotals = new Map<string, number>();
     for (const d of rawDims) {
@@ -156,8 +180,10 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
   }, [chartData, activeBuckets]);
 
   const chartRenderDual = useMemo(() => {
-    if (!chartData || chartData.timeKeys.length === 0 || chartGroupBy !== 'none') return null;
-    const { timeKeys, dimensions: rawDims, billableBuckets, cacheBuckets } = chartData;
+    if (!chartData || chartGroupBy !== 'none') return null;
+    const timeKeys = effectiveTimeKeys;
+    if (timeKeys.length === 0) return null;
+    const { dimensions: rawDims, billableBuckets, cacheBuckets } = chartData;
     const dualDims = ['Billable', 'Cache'];
     let maxTotal = 0;
     const buckets: Record<string, Record<string, number>> = {};
