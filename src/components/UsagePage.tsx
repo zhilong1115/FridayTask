@@ -207,7 +207,7 @@ export default function UsagePage({ onBack }: { onBack: () => void }) {
   };
 
   const formatTimeLabel = (t: string) => {
-    if (period === 'day') return String(new Date(t + ':00:00Z').getHours()).padStart(2, '0') + 'h';
+    if (period === 'day') return (t.split('T')[1] || '00') + 'h';
     if (period === 'year') return SHORT_MONTHS[parseInt(t.slice(5, 7)) - 1] || t.slice(5);
     return t.slice(5);
   };
