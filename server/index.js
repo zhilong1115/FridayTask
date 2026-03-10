@@ -769,6 +769,28 @@ async function parseAllUsage() {
   return records;
 }
 
+// Convert a UTC ISO timestamp to a bucketed key in America/Los_Angeles timezone
+function toTZDateKey(timestamp, bucket) {
+  if (!timestamp) return null;
+  const d = new Date(timestamp);
+  if (isNaN(d.getTime())) return null;
+  const TZ = 'America/Los_Angeles';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const p = {};
+  for (const part of parts) p[part.type] = part.value;
+  const hour = p.hour === '24' ? '00' : p.hour; // normalize midnight edge case
+  if (bucket === 'hour') return `${p.year}-${p.month}-${p.day}T${hour}`;
+  if (bucket === 'month') return `${p.year}-${p.month}`;
+  return `${p.year}-${p.month}-${p.day}`; // day
+}
+
 app.get('/api/usage', async (req, res) => {
   try {
     const { from, to, groupBy } = req.query;
@@ -793,8 +815,8 @@ app.get('/api/usage', async (req, res) => {
       if (groupBy === 'model') key = r.model;
       else if (groupBy === 'provider') key = r.provider;
       else if (groupBy === 'agent') key = r.agent;
-      else if (groupBy === 'hour') key = r.timestamp?.slice(0, 13);
-      else if (groupBy === 'day') key = r.timestamp?.slice(0, 10);
+      else if (groupBy === 'hour') key = toTZDateKey(r.timestamp, 'hour');
+      else if (groupBy === 'day') key = toTZDateKey(r.timestamp, 'day');
       else key = 'all';
 
       if (!groups[key]) groups[key] = { key, cost: 0, tokens: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, count: 0 };
@@ -840,7 +862,7 @@ app.get('/api/usage/chart', async (req, res) => {
     const cacheBuckets = {};
     const dimSet = new Set();
     for (const r of records) {
-      const tKey = timeBucket === 'hour' ? r.timestamp?.slice(0, 13) : timeBucket === 'month' ? r.timestamp?.slice(0, 7) : r.timestamp?.slice(0, 10);
+      const tKey = toTZDateKey(r.timestamp, timeBucket);
       let dKey;
       if (dim === 'model') dKey = r.model;
       else if (dim === 'provider') dKey = r.provider;
