@@ -33,7 +33,6 @@ const ASSIGNEES = [
 ];
 
 const TAGS = [
-  { id: '家务', bg: 'bg-sky-100', text: 'text-sky-700', ring: 'ring-sky-300' },
   { id: '采购', bg: 'bg-lime-100', text: 'text-lime-700', ring: 'ring-lime-300' },
   { id: '宝宝', bg: 'bg-pink-100', text: 'text-pink-600', ring: 'ring-pink-300' },
   { id: '账单', bg: 'bg-violet-100', text: 'text-violet-700', ring: 'ring-violet-300' },
