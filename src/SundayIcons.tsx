@@ -124,6 +124,22 @@ export const CozyHouse = ({ size = 80, className = '' }: IconProps) => (
   </svg>
 );
 
+// Tag icon
+export const TagIcon = ({ size = 12, className = '' }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+    <circle cx="7" cy="7" r="1.5" fill="currentColor" />
+  </svg>
+);
+
+// Bell / reminder icon
+export const BellIcon = ({ size = 12, className = '' }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 01-3.46 0" />
+  </svg>
+);
+
 // Priority dot with soft glow
 export const PriorityDot = ({ level, size = 8 }: { level: string; size?: number }) => {
   const colors: Record<string, { fill: string; glow: string }> = {

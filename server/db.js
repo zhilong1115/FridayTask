@@ -49,6 +49,12 @@ if (!columnExists('tasks', 'all_day')) {
 if (!columnExists('tasks', 'project')) {
   db.exec(`ALTER TABLE tasks ADD COLUMN project TEXT DEFAULT '';`);
 }
+if (!columnExists('tasks', 'tags')) {
+  db.exec(`ALTER TABLE tasks ADD COLUMN tags TEXT DEFAULT '';`);
+}
+if (!columnExists('tasks', 'reminder_date')) {
+  db.exec(`ALTER TABLE tasks ADD COLUMN reminder_date TEXT;`);
+}
 
 // Create subtasks table
 db.exec(`

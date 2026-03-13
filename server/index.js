@@ -919,11 +919,11 @@ app.get('/api/sunday/tasks', (req, res) => {
 });
 
 app.post('/api/sunday/tasks', (req, res) => {
-  const { title, description, assignee, due_date, priority, status } = req.body;
+  const { title, description, assignee, due_date, priority, status, tags, reminder_date } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
   try {
-    const stmt = db.prepare(`INSERT INTO tasks (title, description, assignee, due_date, priority, status, all_day, project) VALUES (?, ?, ?, ?, ?, ?, 1, 'family')`);
-    const result = stmt.run(title, description || '', assignee || 'zhilong', due_date || null, priority || 'medium', status || 'approved');
+    const stmt = db.prepare(`INSERT INTO tasks (title, description, assignee, due_date, priority, status, all_day, project, tags, reminder_date) VALUES (?, ?, ?, ?, ?, ?, 1, 'family', ?, ?)`);
+    const result = stmt.run(title, description || '', assignee || 'zhilong', due_date || null, priority || 'medium', status || 'approved', tags || '', reminder_date || null);
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(task);
   } catch (err) {
@@ -936,10 +936,11 @@ app.put('/api/sunday/tasks/:id', (req, res) => {
   try {
     const existing = db.prepare("SELECT * FROM tasks WHERE id = ? AND project = 'family'").get(id);
     if (!existing) return res.status(404).json({ error: 'Task not found' });
-    const { title, description, assignee, due_date, priority, status } = req.body;
-    db.prepare(`UPDATE tasks SET title = ?, description = ?, assignee = ?, due_date = ?, priority = ?, status = ?, updated_at = datetime('now') WHERE id = ?`).run(
+    const { title, description, assignee, due_date, priority, status, tags, reminder_date } = req.body;
+    db.prepare(`UPDATE tasks SET title = ?, description = ?, assignee = ?, due_date = ?, priority = ?, status = ?, tags = ?, reminder_date = ?, updated_at = datetime('now') WHERE id = ?`).run(
       title ?? existing.title, description ?? existing.description, assignee ?? existing.assignee,
-      due_date ?? existing.due_date, priority ?? existing.priority, status ?? existing.status, id
+      due_date ?? existing.due_date, priority ?? existing.priority, status ?? existing.status,
+      tags !== undefined ? tags : (existing.tags || ''), reminder_date !== undefined ? reminder_date : existing.reminder_date, id
     );
     res.json(db.prepare('SELECT * FROM tasks WHERE id = ?').get(id));
   } catch (err) {

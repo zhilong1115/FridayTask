@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   SunLogo, FamilyIcon, PersonMale, PersonFemale,
   PlusIcon, CheckIcon, TrashIcon, CalendarIcon, ChecklistIcon,
-  CozyHouse, PriorityDot,
+  CozyHouse, PriorityDot, TagIcon, BellIcon,
 } from './SundayIcons';
 import type { Task, TaskStatus } from './types';
 
@@ -32,6 +32,48 @@ const ASSIGNEES = [
   { id: 'jessie', name: 'Jessie', Icon: PersonFemale, chipBg: 'bg-pink-50', chipText: 'text-pink-600' },
 ];
 
+const TAGS = [
+  { id: '家务', bg: 'bg-sky-100', text: 'text-sky-700', ring: 'ring-sky-300' },
+  { id: '采购', bg: 'bg-lime-100', text: 'text-lime-700', ring: 'ring-lime-300' },
+  { id: '宝宝', bg: 'bg-pink-100', text: 'text-pink-600', ring: 'ring-pink-300' },
+  { id: '账单', bg: 'bg-violet-100', text: 'text-violet-700', ring: 'ring-violet-300' },
+  { id: '健康', bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
+  { id: '预约', bg: 'bg-amber-100', text: 'text-amber-700', ring: 'ring-amber-300' },
+  { id: '出行', bg: 'bg-cyan-100', text: 'text-cyan-700', ring: 'ring-cyan-300' },
+  { id: '修理', bg: 'bg-orange-100', text: 'text-orange-700', ring: 'ring-orange-300' },
+];
+
+const getTagConfig = (tagId: string) => TAGS.find((t) => t.id === tagId) || { id: tagId, bg: 'bg-gray-100', text: 'text-gray-600', ring: 'ring-gray-300' };
+const parseTags = (tags: string | undefined): string[] => tags ? tags.split(',').filter(Boolean) : [];
+const serializeTags = (tags: string[]): string => tags.join(',');
+
+// ─── Tag Picker ──────────────────────────────────────────
+
+function TagPicker({ selected, onChange }: { selected: string[]; onChange: (tags: string[]) => void }) {
+  const toggle = (tagId: string) => {
+    onChange(selected.includes(tagId) ? selected.filter((t) => t !== tagId) : [...selected, tagId]);
+  };
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {TAGS.map((tag) => {
+        const active = selected.includes(tag.id);
+        return (
+          <button
+            key={tag.id}
+            type="button"
+            onClick={() => toggle(tag.id)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+              active ? `${tag.bg} ${tag.text} ring-1 ${tag.ring}` : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+            }`}
+          >
+            {tag.id}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Close Icon ──────────────────────────────────────────
 
 const CloseIcon = ({ size = 20 }: { size?: number }) => (
@@ -53,6 +95,8 @@ function TaskDetail({ task, onClose, onSave, onDelete }: {
   const [assignee, setAssignee] = useState(task.assignee);
   const [priority, setPriority] = useState(task.priority);
   const [dueDate, setDueDate] = useState(task.due_date || '');
+  const [tags, setTags] = useState<string[]>(parseTags((task as any).tags));
+  const [reminderDate, setReminderDate] = useState((task as any).reminder_date || '');
   const [dirty, setDirty] = useState(false);
 
   const handleSave = async () => {
@@ -63,7 +107,9 @@ function TaskDetail({ task, onClose, onSave, onDelete }: {
       assignee,
       priority,
       due_date: dueDate || null,
-    } as Partial<Task>);
+      tags: serializeTags(tags),
+      reminder_date: reminderDate || null,
+    } as any);
     onClose();
   };
 
@@ -130,7 +176,13 @@ function TaskDetail({ task, onClose, onSave, onDelete }: {
             ))}
           </div>
 
-          {/* Priority & Date row */}
+          {/* Tags */}
+          <div>
+            <label className="text-sm text-amber-600 mb-1.5 block">标签</label>
+            <TagPicker selected={tags} onChange={(v) => { setTags(v); setDirty(true); }} />
+          </div>
+
+          {/* Priority & Dates row */}
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="text-sm text-amber-600 mb-1.5 block">优先级</label>
@@ -160,6 +212,21 @@ function TaskDetail({ task, onClose, onSave, onDelete }: {
                 className="w-full px-3 py-1.5 rounded-lg bg-amber-50/50 border border-amber-200/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300/50"
               />
             </div>
+          </div>
+
+          {/* Reminder date */}
+          <div className="flex items-center gap-2">
+            <BellIcon size={14} className="text-amber-500 shrink-0" />
+            <label className="text-sm text-amber-600 shrink-0">提醒日期</label>
+            <input
+              type="date"
+              value={reminderDate}
+              onChange={(e) => handleChange(setReminderDate)(e.target.value)}
+              className="flex-1 px-3 py-1.5 rounded-lg bg-amber-50/50 border border-amber-200/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300/50"
+            />
+            {reminderDate && (
+              <button onClick={() => handleChange(setReminderDate)('')} className="text-gray-400 hover:text-gray-600 text-xs">清除</button>
+            )}
           </div>
         </div>
 
@@ -208,6 +275,8 @@ export default function SundayApp() {
   const [newAssignee, setNewAssignee] = useState('zhilong');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [newDueDate, setNewDueDate] = useState('');
+  const [newTags, setNewTags] = useState<string[]>([]);
+  const [newReminderDate, setNewReminderDate] = useState('');
 
   // Detail modal
   const [detailTask, setDetailTask] = useState<Task | null>(null);
@@ -258,12 +327,16 @@ export default function SundayApp() {
         assignee: newAssignee,
         priority: newPriority,
         due_date: newDueDate || null,
+        tags: serializeTags(newTags),
+        reminder_date: newReminderDate || null,
         status: 'approved',
       }),
     });
     setNewTitle('');
     setNewDescription('');
     setNewDueDate('');
+    setNewTags([]);
+    setNewReminderDate('');
     setShowCreate(false);
     await fetchTasks();
   };
@@ -425,10 +498,24 @@ export default function SundayApp() {
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${status.bg} ${status.color}`}>
                           {status.label}
                         </span>
+                        {parseTags((task as any).tags).map((tagId) => {
+                          const tc = getTagConfig(tagId);
+                          return (
+                            <span key={tagId} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${tc.bg} ${tc.text}`}>
+                              {tc.id}
+                            </span>
+                          );
+                        })}
                         {task.due_date && (
                           <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500">
                             <CalendarIcon size={10} />
                             {task.due_date}
+                          </span>
+                        )}
+                        {(task as any).reminder_date && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-violet-500">
+                            <BellIcon size={10} />
+                            {(task as any).reminder_date}
                           </span>
                         )}
                         {task.subtask_count > 0 && (
@@ -497,6 +584,12 @@ export default function SundayApp() {
               className="w-full px-4 py-3 rounded-xl bg-amber-50/30 border border-amber-200/30 text-sm text-gray-700 placeholder-amber-300/60 focus:outline-none focus:ring-2 focus:ring-amber-300/50 resize-none mb-4"
             />
 
+            {/* Tags */}
+            <div className="mb-4">
+              <label className="text-sm text-amber-600 mb-1.5 block">标签</label>
+              <TagPicker selected={newTags} onChange={setNewTags} />
+            </div>
+
             {/* Assignee */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-sm text-amber-600 shrink-0">谁来做：</span>
@@ -550,6 +643,18 @@ export default function SundayApp() {
                   className="w-full px-3 py-2 rounded-xl bg-amber-50/50 border border-amber-200/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300/50"
                 />
               </div>
+            </div>
+
+            {/* Reminder */}
+            <div className="flex items-center gap-2 mb-5">
+              <BellIcon size={14} className="text-amber-500 shrink-0" />
+              <label className="text-sm text-amber-600 shrink-0">提醒日期</label>
+              <input
+                type="date"
+                value={newReminderDate}
+                onChange={(e) => setNewReminderDate(e.target.value)}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-amber-50/50 border border-amber-200/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300/50"
+              />
             </div>
 
             <div className="flex gap-2">
