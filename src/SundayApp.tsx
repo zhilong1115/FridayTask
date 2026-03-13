@@ -30,6 +30,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 const ASSIGNEES = [
   { id: 'zhilong', name: 'Zhilong', Icon: PersonMale, chipBg: 'bg-blue-50', chipText: 'text-blue-600' },
   { id: 'jessie', name: 'Jessie', Icon: PersonFemale, chipBg: 'bg-pink-50', chipText: 'text-pink-600' },
+  { id: 'both', name: '一起', Icon: FamilyIcon, chipBg: 'bg-amber-50', chipText: 'text-amber-700' },
 ];
 
 const TAGS = [
@@ -347,17 +348,23 @@ export default function SundayApp() {
   };
 
   // Filters
+  // "both" tasks show up when filtering by either person
+  const matchAssignee = (t: Task) => {
+    if (!filterAssignee) return true;
+    return t.assignee === filterAssignee || t.assignee === 'both';
+  };
+
   const filtered = tasks.filter((t) => {
-    if (filterAssignee && t.assignee !== filterAssignee) return false;
+    if (!matchAssignee(t)) return false;
     if (filterTab === 'active') return t.status !== 'done' && t.status !== 'rejected';
     if (filterTab === 'done') return t.status === 'done';
     return true;
   });
 
   const counts = {
-    all: tasks.filter((t) => !filterAssignee || t.assignee === filterAssignee).length,
-    active: tasks.filter((t) => (t.status !== 'done' && t.status !== 'rejected') && (!filterAssignee || t.assignee === filterAssignee)).length,
-    done: tasks.filter((t) => t.status === 'done' && (!filterAssignee || t.assignee === filterAssignee)).length,
+    all: tasks.filter((t) => matchAssignee(t)).length,
+    active: tasks.filter((t) => (t.status !== 'done' && t.status !== 'rejected') && matchAssignee(t)).length,
+    done: tasks.filter((t) => t.status === 'done' && matchAssignee(t)).length,
   };
 
   // Group tasks by due_date for schedule view
