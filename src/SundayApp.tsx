@@ -360,6 +360,43 @@ export default function SundayApp() {
     done: tasks.filter((t) => t.status === 'done' && (!filterAssignee || t.assignee === filterAssignee)).length,
   };
 
+  // Group tasks by due_date for schedule view
+  const grouped = (() => {
+    const groups: Record<string, Task[]> = {};
+    for (const t of filtered) {
+      const key = t.due_date || '_no_date';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(t);
+    }
+    // Sort date keys: real dates first (ascending), then _no_date last
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === '_no_date') return 1;
+      if (b === '_no_date') return -1;
+      return a.localeCompare(b);
+    });
+    return sortedKeys.map((key) => ({ dateKey: key, tasks: groups[key] }));
+  })();
+
+  const formatDateHeader = (dateKey: string) => {
+    if (dateKey === '_no_date') return { weekday: '', day: '', month: '', isToday: false, label: '未定' };
+    const d = new Date(dateKey + 'T12:00:00'); // noon to avoid TZ issues
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const taskDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const isToday = today.getTime() === taskDate.getTime();
+    const isTomorrow = taskDate.getTime() - today.getTime() === 86400000;
+    const isYesterday = today.getTime() - taskDate.getTime() === 86400000;
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    return {
+      weekday: isToday ? '今天' : isTomorrow ? '明天' : isYesterday ? '昨天' : `周${weekdays[d.getDay()]}`,
+      day: String(d.getDate()),
+      month: months[d.getMonth()],
+      isToday,
+      label: '',
+    };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 flex items-center justify-center">
@@ -436,101 +473,116 @@ export default function SundayApp() {
           ))}
         </div>
 
-        {/* Task List */}
-        <div className="space-y-2.5">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center py-16">
-              <CozyHouse size={88} />
-              <p className="mt-4 text-amber-600/60 text-sm">
-                {filterTab === 'done' ? '还没有完成的任务' : '没有待办事项，享受周末吧！'}
-              </p>
-            </div>
-          ) : (
-            filtered.map((task) => {
-              const status = STATUS_CONFIG[task.status] || STATUS_CONFIG['approved'];
-              const assignee = ASSIGNEES.find((a) => a.id === task.assignee) || ASSIGNEES[0];
-
+        {/* Schedule View — grouped by date */}
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center py-16">
+            <CozyHouse size={88} />
+            <p className="mt-4 text-amber-600/60 text-sm">
+              {filterTab === 'done' ? '还没有完成的任务' : '没有待办事项，享受周末吧！'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-0">
+            {grouped.map(({ dateKey, tasks: dateTasks }) => {
+              const dh = formatDateHeader(dateKey);
               return (
-                <div
-                  key={task.id}
-                  onClick={() => setDetailTask(task)}
-                  className={`group bg-white/90 rounded-2xl p-4 shadow-sm border border-amber-100/60 transition-all hover:shadow-md hover:bg-white cursor-pointer ${
-                    task.status === 'done' ? 'opacity-55' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Status toggle — click stops propagation */}
-                    <button
-                      onClick={(e) => toggleStatus(task, e)}
-                      className={`mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                        task.status === 'done'
-                          ? 'bg-emerald-400 border-emerald-400 text-white'
-                          : task.status === 'in-progress'
-                          ? 'border-amber-400 bg-amber-50 hover:bg-amber-100'
-                          : 'border-amber-200 hover:border-amber-400 hover:bg-amber-50'
-                      }`}
-                    >
-                      {task.status === 'done' && <CheckIcon size={14} />}
-                      {task.status === 'in-progress' && (
-                        <div className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse" />
-                      )}
-                    </button>
+                <div key={dateKey} className="flex gap-0">
+                  {/* Date column — sticky left side */}
+                  <div className="w-16 shrink-0 pt-3 pr-3 text-right">
+                    {dh.label ? (
+                      <span className="text-xs font-medium text-amber-400">{dh.label}</span>
+                    ) : (
+                      <>
+                        <div className={`text-[11px] font-semibold tracking-wide ${dh.isToday ? 'text-amber-600' : 'text-amber-400'}`}>
+                          {dh.weekday}
+                        </div>
+                        <div className={`text-2xl font-bold leading-tight ${dh.isToday ? 'text-white bg-amber-500 rounded-full w-9 h-9 flex items-center justify-center ml-auto' : 'text-amber-800'}`}>
+                          {dh.day}
+                        </div>
+                        <div className="text-[10px] text-amber-400 mt-0.5">{dh.month}</div>
+                      </>
+                    )}
+                  </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`text-[15px] font-medium leading-snug ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
-                          {task.title}
-                        </span>
-                        <PriorityDot level={task.priority} size={5} />
-                      </div>
+                  {/* Tasks column */}
+                  <div className="flex-1 border-l-2 border-amber-200/40 pl-4 pb-6 space-y-2">
+                    {dateTasks.map((task) => {
+                      const status = STATUS_CONFIG[task.status] || STATUS_CONFIG['approved'];
+                      const assignee = ASSIGNEES.find((a) => a.id === task.assignee) || ASSIGNEES[0];
 
-                      {task.description && (
-                        <p className="text-xs text-gray-400 mb-1.5 line-clamp-2">{task.description}</p>
-                      )}
+                      return (
+                        <div
+                          key={task.id}
+                          onClick={() => setDetailTask(task)}
+                          className={`group bg-white/90 rounded-xl p-3.5 shadow-sm border border-amber-100/60 transition-all hover:shadow-md hover:bg-white cursor-pointer ${
+                            task.status === 'done' ? 'opacity-55' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Status toggle */}
+                            <button
+                              onClick={(e) => toggleStatus(task, e)}
+                              className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                                task.status === 'done'
+                                  ? 'bg-emerald-400 border-emerald-400 text-white'
+                                  : task.status === 'in-progress'
+                                  ? 'border-amber-400 bg-amber-50 hover:bg-amber-100'
+                                  : 'border-amber-200 hover:border-amber-400 hover:bg-amber-50'
+                              }`}
+                            >
+                              {task.status === 'done' && <CheckIcon size={12} />}
+                              {task.status === 'in-progress' && (
+                                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                              )}
+                            </button>
 
-                      <div className="flex items-center gap-2 flex-wrap mt-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${assignee.chipBg} ${assignee.chipText}`}>
-                          <assignee.Icon size={10} />
-                          {assignee.name}
-                        </span>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${status.bg} ${status.color}`}>
-                          {status.label}
-                        </span>
-                        {parseTags((task as any).tags).map((tagId) => {
-                          const tc = getTagConfig(tagId);
-                          return (
-                            <span key={tagId} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${tc.bg} ${tc.text}`}>
-                              {tc.id}
-                            </span>
-                          );
-                        })}
-                        {task.due_date && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500">
-                            <CalendarIcon size={10} />
-                            {task.due_date}
-                          </span>
-                        )}
-                        {(task as any).reminder_date && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] text-violet-500">
-                            <BellIcon size={10} />
-                            {(task as any).reminder_date}
-                          </span>
-                        )}
-                        {task.subtask_count > 0 && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500">
-                            <ChecklistIcon size={10} />
-                            {task.subtask_completed}/{task.subtask_count}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={`text-sm font-medium leading-snug ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                  {task.title}
+                                </span>
+                                <PriorityDot level={task.priority} size={4} />
+                              </div>
+
+                              {task.description && (
+                                <p className="text-xs text-gray-400 mb-1 line-clamp-1">{task.description}</p>
+                              )}
+
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${assignee.chipBg} ${assignee.chipText}`}>
+                                  <assignee.Icon size={9} />
+                                  {assignee.name}
+                                </span>
+                                <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${status.bg} ${status.color}`}>
+                                  {status.label}
+                                </span>
+                                {parseTags((task as any).tags).map((tagId) => {
+                                  const tc = getTagConfig(tagId);
+                                  return (
+                                    <span key={tagId} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${tc.bg} ${tc.text}`}>
+                                      {tc.id}
+                                    </span>
+                                  );
+                                })}
+                                {(task as any).reminder_date && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-violet-500">
+                                    <BellIcon size={9} />
+                                    {(task as any).reminder_date}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </main>
 
       {/* FAB */}
