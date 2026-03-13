@@ -79,7 +79,7 @@ app.use(express.static(publicPath));
 
 // List tasks with optional filters (includes subtasks)
 app.get('/api/tasks', (req, res) => {
-  const { assignee, status, from, to } = req.query;
+  const { assignee, status, from, to, project } = req.query;
   let sql = 'SELECT * FROM tasks WHERE 1=1';
   const params = [];
 
@@ -98,6 +98,10 @@ app.get('/api/tasks', (req, res) => {
   if (to) {
     sql += ' AND due_date <= ?';
     params.push(to);
+  }
+  if (project) {
+    sql += ' AND project = ?';
+    params.push(project);
   }
 
   sql += ' ORDER BY due_date ASC, priority DESC';
