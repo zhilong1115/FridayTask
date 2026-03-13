@@ -892,6 +892,73 @@ app.get('/api/usage/chart', async (req, res) => {
   }
 });
 
+// ─── Sunday API (no auth, family project only) ──────────
+
+app.get('/api/sunday/tasks', (req, res) => {
+  const { assignee, status } = req.query;
+  let sql = "SELECT * FROM tasks WHERE project = 'family'";
+  const params = [];
+
+  if (assignee) { sql += ' AND assignee = ?'; params.push(assignee); }
+  if (status) { sql += ' AND status = ?'; params.push(status); }
+  sql += ' ORDER BY due_date ASC, priority DESC';
+
+  try {
+    const tasks = db.prepare(sql).all(...params);
+    const subtaskStmt = db.prepare('SELECT * FROM subtasks WHERE task_id = ? ORDER BY sort_order ASC, id ASC');
+    const commentCountStmt = db.prepare('SELECT COUNT(*) as cnt FROM comments WHERE task_id = ?');
+    const tasksWithSubtasks = tasks.map((task) => {
+      const subtasks = subtaskStmt.all(task.id);
+      const commentCount = commentCountStmt.get(task.id);
+      return { ...task, subtasks, subtask_count: subtasks.length, subtask_completed: subtasks.filter((s) => s.completed === 1).length, comment_count: commentCount.cnt };
+    });
+    res.json(tasksWithSubtasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sunday/tasks', (req, res) => {
+  const { title, description, assignee, due_date, priority, status } = req.body;
+  if (!title) return res.status(400).json({ error: 'Title is required' });
+  try {
+    const stmt = db.prepare(`INSERT INTO tasks (title, description, assignee, due_date, priority, status, all_day, project) VALUES (?, ?, ?, ?, ?, ?, 1, 'family')`);
+    const result = stmt.run(title, description || '', assignee || 'zhilong', due_date || null, priority || 'medium', status || 'approved');
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/sunday/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    const existing = db.prepare("SELECT * FROM tasks WHERE id = ? AND project = 'family'").get(id);
+    if (!existing) return res.status(404).json({ error: 'Task not found' });
+    const { title, description, assignee, due_date, priority, status } = req.body;
+    db.prepare(`UPDATE tasks SET title = ?, description = ?, assignee = ?, due_date = ?, priority = ?, status = ?, updated_at = datetime('now') WHERE id = ?`).run(
+      title ?? existing.title, description ?? existing.description, assignee ?? existing.assignee,
+      due_date ?? existing.due_date, priority ?? existing.priority, status ?? existing.status, id
+    );
+    res.json(db.prepare('SELECT * FROM tasks WHERE id = ?').get(id));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/sunday/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    const existing = db.prepare("SELECT * FROM tasks WHERE id = ? AND project = 'family'").get(id);
+    if (!existing) return res.status(404).json({ error: 'Task not found' });
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── SPA fallback ────────────────────────────────────────
 
 app.get('*', (_req, res) => {
