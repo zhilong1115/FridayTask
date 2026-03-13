@@ -32,6 +32,167 @@ const ASSIGNEES = [
   { id: 'jessie', name: 'Jessie', Icon: PersonFemale, chipBg: 'bg-pink-50', chipText: 'text-pink-600' },
 ];
 
+// ─── Close Icon ──────────────────────────────────────────
+
+const CloseIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
+
+// ─── Task Detail Modal ───────────────────────────────────
+
+function TaskDetail({ task, onClose, onSave, onDelete }: {
+  task: Task;
+  onClose: () => void;
+  onSave: (id: number, data: Partial<Task>) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
+}) {
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description || '');
+  const [assignee, setAssignee] = useState(task.assignee);
+  const [priority, setPriority] = useState(task.priority);
+  const [dueDate, setDueDate] = useState(task.due_date || '');
+  const [dirty, setDirty] = useState(false);
+
+  const handleSave = async () => {
+    if (!title.trim()) return;
+    await onSave(task.id, {
+      title: title.trim(),
+      description: description.trim(),
+      assignee,
+      priority,
+      due_date: dueDate || null,
+    } as Partial<Task>);
+    onClose();
+  };
+
+  const handleChange = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v);
+    setDirty(true);
+  };
+
+  const status = STATUS_CONFIG[task.status] || STATUS_CONFIG['approved'];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <div className="flex items-center gap-2">
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${status.bg} ${status.color}`}>
+              {status.label}
+            </span>
+            <PriorityDot level={task.priority} size={5} />
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <CloseIcon size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="px-5 pb-5 space-y-4">
+          {/* Title */}
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => handleChange(setTitle)(e.target.value)}
+            className="w-full text-lg font-semibold text-gray-800 bg-transparent border-none focus:outline-none placeholder-amber-300"
+            placeholder="任务标题"
+          />
+
+          {/* Description */}
+          <textarea
+            value={description}
+            onChange={(e) => handleChange(setDescription)(e.target.value)}
+            placeholder="添加详细内容..."
+            rows={4}
+            className="w-full px-4 py-3 rounded-xl bg-amber-50/40 border border-amber-200/40 text-sm text-gray-700 placeholder-amber-300/70 focus:outline-none focus:ring-2 focus:ring-amber-300/50 resize-none"
+          />
+
+          {/* Assignee */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-amber-600 shrink-0">负责人：</span>
+            {ASSIGNEES.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => handleChange(setAssignee)(a.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                  assignee === a.id
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                }`}
+              >
+                <a.Icon size={14} />
+                {a.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Priority & Date row */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-sm text-amber-600 mb-1.5 block">优先级</label>
+              <div className="flex gap-1.5">
+                {(['low', 'medium', 'high'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => handleChange(setPriority)(p)}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      priority === p
+                        ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300'
+                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                    }`}
+                  >
+                    <PriorityDot level={p} size={3} />
+                    {p === 'low' ? '低' : p === 'medium' ? '中' : '高'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="text-sm text-amber-600 mb-1.5 block">截止日期</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => handleChange(setDueDate)(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-amber-50/50 border border-amber-200/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300/50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-5 py-4 border-t border-amber-100/60 bg-amber-50/30">
+          <button
+            onClick={async () => { await onDelete(task.id); onClose(); }}
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
+          >
+            <TrashIcon size={14} />
+            删除
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-amber-600 hover:bg-amber-100 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!title.trim() || !dirty}
+              className="px-5 py-2 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 disabled:opacity-40 transition-all shadow-sm"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── App ─────────────────────────────────────────────────
 
 export default function SundayApp() {
@@ -43,9 +204,13 @@ export default function SundayApp() {
   // Create task form
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
   const [newAssignee, setNewAssignee] = useState('zhilong');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [newDueDate, setNewDueDate] = useState('');
+
+  // Detail modal
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -61,13 +226,23 @@ export default function SundayApp() {
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  const toggleStatus = async (task: Task) => {
+  const toggleStatus = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation(); // Don't open detail
     const nextStatus = STATUS_FLOW[task.status];
     if (!nextStatus) return;
     await fetch(`${API}/tasks/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: nextStatus }),
+    });
+    await fetchTasks();
+  };
+
+  const updateTask = async (id: number, data: Partial<Task>) => {
+    await fetch(`${API}/tasks/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     });
     await fetchTasks();
   };
@@ -79,6 +254,7 @@ export default function SundayApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: newTitle.trim(),
+        description: newDescription.trim(),
         assignee: newAssignee,
         priority: newPriority,
         due_date: newDueDate || null,
@@ -86,6 +262,7 @@ export default function SundayApp() {
       }),
     });
     setNewTitle('');
+    setNewDescription('');
     setNewDueDate('');
     setShowCreate(false);
     await fetchTasks();
@@ -204,14 +381,15 @@ export default function SundayApp() {
               return (
                 <div
                   key={task.id}
-                  className={`group bg-white/90 rounded-2xl p-4 shadow-sm border border-amber-100/60 transition-all hover:shadow-md hover:bg-white ${
+                  onClick={() => setDetailTask(task)}
+                  className={`group bg-white/90 rounded-2xl p-4 shadow-sm border border-amber-100/60 transition-all hover:shadow-md hover:bg-white cursor-pointer ${
                     task.status === 'done' ? 'opacity-55' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    {/* Status toggle */}
+                    {/* Status toggle — click stops propagation */}
                     <button
-                      onClick={() => toggleStatus(task)}
+                      onClick={(e) => toggleStatus(task, e)}
                       className={`mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                         task.status === 'done'
                           ? 'bg-emerald-400 border-emerald-400 text-white'
@@ -228,7 +406,7 @@ export default function SundayApp() {
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 mb-0.5">
                         <span className={`text-[15px] font-medium leading-snug ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
                           {task.title}
                         </span>
@@ -236,10 +414,10 @@ export default function SundayApp() {
                       </div>
 
                       {task.description && (
-                        <p className="text-xs text-gray-400 mb-2 line-clamp-1">{task.description}</p>
+                        <p className="text-xs text-gray-400 mb-1.5 line-clamp-2">{task.description}</p>
                       )}
 
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap mt-1">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${assignee.chipBg} ${assignee.chipText}`}>
                           <assignee.Icon size={10} />
                           {assignee.name}
@@ -261,14 +439,6 @@ export default function SundayApp() {
                         )}
                       </div>
                     </div>
-
-                    {/* Delete */}
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all shrink-0 mt-1"
-                    >
-                      <TrashIcon size={15} />
-                    </button>
                   </div>
                 </div>
               );
@@ -278,13 +448,23 @@ export default function SundayApp() {
       </main>
 
       {/* FAB */}
-      {!showCreate && (
+      {!showCreate && !detailTask && (
         <button
           onClick={() => setShowCreate(true)}
           className="fixed bottom-6 right-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 text-white shadow-lg shadow-amber-300/50 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
         >
           <PlusIcon size={28} />
         </button>
+      )}
+
+      {/* Task Detail Modal */}
+      {detailTask && (
+        <TaskDetail
+          task={detailTask}
+          onClose={() => setDetailTask(null)}
+          onSave={updateTask}
+          onDelete={deleteTask}
+        />
       )}
 
       {/* Create Task Sheet */}
@@ -298,14 +478,23 @@ export default function SundayApp() {
               新任务
             </h3>
 
+            {/* Title */}
             <input
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="要做什么？"
-              className="w-full px-4 py-3 rounded-xl bg-amber-50/50 border border-amber-200/50 text-gray-800 placeholder-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300/50 mb-4 text-[15px]"
+              className="w-full px-4 py-3 rounded-xl bg-amber-50/50 border border-amber-200/50 text-gray-800 placeholder-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300/50 mb-3 text-[15px]"
               autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && createTask()}
+            />
+
+            {/* Description (optional) */}
+            <textarea
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="详细内容（可选）"
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-amber-50/30 border border-amber-200/30 text-sm text-gray-700 placeholder-amber-300/60 focus:outline-none focus:ring-2 focus:ring-amber-300/50 resize-none mb-4"
             />
 
             {/* Assignee */}
@@ -384,8 +573,8 @@ export default function SundayApp() {
 
       <style>{`
         @keyframes slide-up {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
+          from { transform: translateY(100%); opacity: 0.5; }
+          to { transform: translateY(0); opacity: 1; }
         }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
