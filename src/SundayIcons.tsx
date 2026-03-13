@@ -5,41 +5,21 @@ interface IconProps {
   className?: string;
 }
 
-// App logo — warm sun with soft rays
+// App logo — clean minimal sun
 export const SunLogo = ({ size = 32, className = '' }: IconProps) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" className={className}>
-    <defs>
-      <linearGradient id="sun-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#fbbf24" />
-        <stop offset="100%" stopColor="#f59e0b" />
-      </linearGradient>
-      <linearGradient id="face-grad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#fff7ed" />
-        <stop offset="100%" stopColor="#fef3c7" />
-      </linearGradient>
-    </defs>
-    <rect width="40" height="40" rx="10" fill="url(#sun-grad)" />
-    {/* Soft rays */}
-    <g opacity="0.5">
-      <ellipse cx="20" cy="6" rx="2.5" ry="3" fill="#fde68a" />
-      <ellipse cx="20" cy="34" rx="2.5" ry="3" fill="#fde68a" />
-      <ellipse cx="6" cy="20" rx="3" ry="2.5" fill="#fde68a" />
-      <ellipse cx="34" cy="20" rx="3" ry="2.5" fill="#fde68a" />
-      <ellipse cx="10" cy="10" rx="2.5" ry="2.5" fill="#fde68a" transform="rotate(45 10 10)" />
-      <ellipse cx="30" cy="30" rx="2.5" ry="2.5" fill="#fde68a" transform="rotate(45 30 30)" />
-      <ellipse cx="30" cy="10" rx="2.5" ry="2.5" fill="#fde68a" transform="rotate(-45 30 10)" />
-      <ellipse cx="10" cy="30" rx="2.5" ry="2.5" fill="#fde68a" transform="rotate(-45 10 30)" />
+  <svg width={size} height={size} viewBox="0 0 32 32" className={className}>
+    <rect width="32" height="32" rx="8" fill="#f59e0b" />
+    <circle cx="16" cy="16" r="5.5" fill="white" />
+    <g stroke="white" strokeWidth="2" strokeLinecap="round">
+      <line x1="16" y1="4.5" x2="16" y2="7" />
+      <line x1="16" y1="25" x2="16" y2="27.5" />
+      <line x1="4.5" y1="16" x2="7" y2="16" />
+      <line x1="25" y1="16" x2="27.5" y2="16" />
+      <line x1="8.5" y1="8.5" x2="10.3" y2="10.3" />
+      <line x1="21.7" y1="21.7" x2="23.5" y2="23.5" />
+      <line x1="23.5" y1="8.5" x2="21.7" y2="10.3" />
+      <line x1="10.3" y1="21.7" x2="8.5" y2="23.5" />
     </g>
-    {/* Sun face */}
-    <circle cx="20" cy="20" r="9" fill="url(#face-grad)" />
-    {/* Smile */}
-    <path d="M16 21.5c0 0 1.5 2.5 4 2.5s4-2.5 4-2.5" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    {/* Eyes — happy closed */}
-    <path d="M15.5 17.5c0 0 0.8-1.5 1.8 0" stroke="#f59e0b" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-    <path d="M22.7 17.5c0 0 0.8-1.5 1.8 0" stroke="#f59e0b" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-    {/* Rosy cheeks */}
-    <circle cx="14.5" cy="21" r="1.5" fill="#fcd34d" opacity="0.5" />
-    <circle cx="25.5" cy="21" r="1.5" fill="#fcd34d" opacity="0.5" />
   </svg>
 );
 
